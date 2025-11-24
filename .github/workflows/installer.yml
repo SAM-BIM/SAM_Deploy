@@ -1,82 +1,92 @@
-name: Build & Release SAM‑BIM Installer
+name: Build & Release SAM-BIM Installer
 
 on:
   push:
     tags:
-      - 'v*'                   # build & release when you push a tag like v20251121.1
+      - 'v*'  # e.g. v20251124.1
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (e.g. v20251121.1). If tagging, this is ignored.'
+        description: 'Version (e.g. v20251124.1). If tagging, this is ignored.'
         required: false
         default: ''
 
 jobs:
   build:
     runs-on: windows-2022
-
+    outputs:
+      version: ${{ steps.ver.outputs.version }}   # <-- Fix 2: expose version
+    permissions:
+      contents: read
     steps:
-      - name: Checkout (with submodules)
+      - name: Checkout (with private submodules)
         uses: actions/checkout@v4
         with:
-          submodules: recursive
           fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.SUBMODULES_PAT }}     # <-- Fix 1: use PAT for private submodules
+
+      - name: Sync submodule URLs
+        shell: pwsh
+        run: |
+          git submodule sync --recursive
+          git submodule foreach --recursive 'git remote -v'
+
+      - name: Clean submodules (avoid dirty trees)
+        shell: pwsh
+        run: |
+          git submodule foreach --recursive 'git reset --hard'
+          git submodule foreach --recursive 'git clean -xfd'
 
       - name: Compute version
         id: ver
         shell: pwsh
         run: |
-          $tag = "${{ github.ref_name }}"
+          $tag = "$env:GITHUB_REF_NAME"
           if (-not $tag -or -not $tag.StartsWith('v')) { $tag = "${{ github.event.inputs.version }}" }
           if (-not $tag) { $tag = "v$(Get-Date -Format yyyyMMdd).${{ github.run_number }}" }
-          "version=$tag" >> $env:GITHUB_OUTPUT
+          "version=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Host "Version: $tag"
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
-        with:
-          vs-version: '17'  # VS 2022
 
-      - name: Restore & Build (Release)
+      # Restore & build your aggregator project (adjust filename if different)
+      - name: Restore
+        shell: pwsh
+        run: msbuild .\BuildAll_Release_net.csproj /t:Restore /p:Configuration=Release /m
+
+      - name: Rebuild
+        shell: pwsh
+        run: msbuild .\BuildAll_Release_net.csproj /t:Rebuild /p:Configuration=Release /m
+
+      - name: Gather installer
         shell: pwsh
         run: |
-          if (Test-Path .\BuildAll_Release.csproj) {
-            nuget restore .\BuildAll_Release.csproj
-            msbuild .\BuildAll_Release.csproj /m /p:Configuration=Release
-          } elseif (Test-Path .\BuildAll_release.bat) {
-            .\BuildAll_release.bat
-          } else {
-            throw "No BuildAll project or script found."
-          }
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $exe = Get-ChildItem -Recurse -Filter 'SAM_Install*.exe' | Select-Object -First 1
+          if (-not $exe) { throw "Could not find SAM_Install*.exe after build." }
+          Copy-Item $exe.FullName -Destination dist/
+          Get-ChildItem dist
 
-      - name: Install Inno Setup
-        run: choco install innosetup --no-progress -y
-
-      - name: Compile installer
-        shell: pwsh
-        run: |
-          $iss = Get-ChildItem -Path ".\SAM_Installer" -Filter "*.iss" -Recurse | Select-Object -First 1
-          if (-not $iss) { throw "No .iss installer script found under SAM_Installer" }
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ steps.ver.outputs.version }}" "$($iss.FullName)"
-
-      - name: Locate installer
-        id: find
-        shell: pwsh
-        run: |
-          $exe = Get-ChildItem -Recurse -Filter "*Install*.exe" | Select-Object -First 1
-          if (-not $exe) { throw "Installer .exe not found" }
-          "installer=$($exe.FullName)" >> $env:GITHUB_OUTPUT
-
-      - name: Upload artifact (short retention)
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: SAM_Install
-          path: ${{ steps.find.outputs.installer }}
-          retention-days: 5
+          path: dist/*.exe
+          if-no-files-found: error
 
   release:
     needs: build
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: windows-2022
+    permissions:
+      contents: write   # required to create a release
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -88,5 +98,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.build.outputs.version }}
-          name: ${{ needs.build.outputs.version }}
-          files: ./dist/**/*.exe
+          name:     ${{ needs.build.outputs.version }}
+          files:    ./dist/*.exe
