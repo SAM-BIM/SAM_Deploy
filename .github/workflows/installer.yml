@@ -1,0 +1,92 @@
+name: Build & Release SAM‑BIM Installer
+
+on:
+  push:
+    tags:
+      - 'v*'                   # build & release when you push a tag like v20251121.1
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. v20251121.1). If tagging, this is ignored.'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Compute version
+        id: ver
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if (-not $tag -or -not $tag.StartsWith('v')) { $tag = "${{ github.event.inputs.version }}" }
+          if (-not $tag) { $tag = "v$(Get-Date -Format yyyyMMdd).${{ github.run_number }}" }
+          "version=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: '17'  # VS 2022
+
+      - name: Restore & Build (Release)
+        shell: pwsh
+        run: |
+          if (Test-Path .\BuildAll_Release.csproj) {
+            nuget restore .\BuildAll_Release.csproj
+            msbuild .\BuildAll_Release.csproj /m /p:Configuration=Release
+          } elseif (Test-Path .\BuildAll_release.bat) {
+            .\BuildAll_release.bat
+          } else {
+            throw "No BuildAll project or script found."
+          }
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Compile installer
+        shell: pwsh
+        run: |
+          $iss = Get-ChildItem -Path ".\SAM_Installer" -Filter "*.iss" -Recurse | Select-Object -First 1
+          if (-not $iss) { throw "No .iss installer script found under SAM_Installer" }
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ steps.ver.outputs.version }}" "$($iss.FullName)"
+
+      - name: Locate installer
+        id: find
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Recurse -Filter "*Install*.exe" | Select-Object -First 1
+          if (-not $exe) { throw "Installer .exe not found" }
+          "installer=$($exe.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Upload artifact (short retention)
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAM_Install
+          path: ${{ steps.find.outputs.installer }}
+          retention-days: 5
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    runs-on: windows-2022
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: SAM_Install
+          path: ./dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build.outputs.version }}
+          name: ${{ needs.build.outputs.version }}
+          files: ./dist/**/*.exe
