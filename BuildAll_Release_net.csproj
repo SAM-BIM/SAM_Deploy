@@ -57,7 +57,7 @@
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
     <Solution Include="SAM_OpenStudio/SAM_OpenStudio.sln">
-      <Properties>Configuration=Release;Platform=Any CPU</Properties>
+      <Properties>Configuration=Release;Platform=x64</Properties>
     </Solution>
 	<!--
     <Solution Include="SAM_Origin/SAM_Origin.sln">
