@@ -55,22 +55,8 @@
     <SolutionCore Include="SAM_OpenStudio/SAM_OpenStudio.sln">
       <Properties>Configuration=Release;Platform=x64</Properties>
     </SolutionCore>
-
-    <!-- Revit 2025/2026 also in CORE -->
-    <SolutionCore Include="SAM_Revit/SAM_Revit.sln">
-      <Properties>Configuration=Release2025;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
-    </SolutionCore>
-    <SolutionCore Include="SAM_Revit_UI/SAM_Revit_UI.sln">
-      <Properties>Configuration=Release2025;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
-    </SolutionCore>
-    <SolutionCore Include="SAM_Revit/SAM_Revit.sln">
-      <Properties>Configuration=Release2026;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
-    </SolutionCore>
-    <SolutionCore Include="SAM_Revit_UI/SAM_Revit_UI.sln">
-      <Properties>Configuration=Release2026;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
-    </SolutionCore>
-
-    <!-- UI (build after we have SAM_Windows binaries) -->
+	
+	    <!-- UI (build after we have SAM_Windows binaries) -->
     <SolutionUI Include="SAM_UI/SAM_UI.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </SolutionUI>
@@ -81,6 +67,20 @@
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </SolutionUI>
   </ItemGroup>
+
+    <!-- Revit 2025/2026 also in CORE -->
+    <SolutionUI Include="SAM_Revit/SAM_Revit.sln">
+      <Properties>Configuration=Release2025;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
+    </SolutionUI>
+    <SolutionUI Include="SAM_Revit_UI/SAM_Revit_UI.sln">
+      <Properties>Configuration=Release2025;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
+    </SolutionUI>
+    <SolutionUI Include="SAM_Revit/SAM_Revit.sln">
+      <Properties>Configuration=Release2026;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
+    </SolutionUI>
+    <SolutionUI Include="SAM_Revit_UI/SAM_Revit_UI.sln">
+      <Properties>Configuration=Release2026;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
+    </SolutionUI>
 
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
