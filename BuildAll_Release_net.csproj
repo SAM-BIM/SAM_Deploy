@@ -55,8 +55,8 @@
     <SolutionCore Include="SAM_OpenStudio/SAM_OpenStudio.sln">
       <Properties>Configuration=Release;Platform=x64</Properties>
     </SolutionCore>
-	
-	    <!-- UI (build after we have SAM_Windows binaries) -->
+
+    <!-- UI (build after we have SAM_Windows binaries) -->
     <SolutionUI Include="SAM_UI/SAM_UI.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </SolutionUI>
@@ -66,7 +66,7 @@
     <SolutionUI Include="SAM_Multitasker/SAM_Multitasker.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </SolutionUI>
-    <!-- Revit 2025/2026 (keep with UI) -->
+    <!-- Revit 2025/2026 run after UI(keep with SolutionUI) -->
     <SolutionUI Include="SAM_Revit/SAM_Revit.sln">
       <Properties>Configuration=Release2025;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
     </SolutionUI>
@@ -79,7 +79,6 @@
     <SolutionUI Include="SAM_Revit_UI/SAM_Revit_UI.sln">
       <Properties>Configuration=Release2026;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
     </SolutionUI>
-	
   </ItemGroup>
 
   <PropertyGroup>
@@ -88,16 +87,22 @@
     <BuildInParallel>false</BuildInParallel>
   </PropertyGroup>
 
-  <!-- Find SAM.Analytical.Windows.dll and build a ReferencePath string -->
-  <ItemGroup>
-    <WindowsDll Include="SAM_Windows\**\bin\Release\**\SAM.Analytical.Windows.dll" />
-    <!-- Convert dll items to their directories -->
-    <WindowsRefDir Include="@(WindowsDll->'%(RootDir)%(Directory)')" />
-  </ItemGroup>
-  <PropertyGroup>
-    <!-- Semicolon-joined list of directories -->
-    <WindowsRefPath>@(WindowsRefDir)</WindowsRefPath>
-  </PropertyGroup>
+  <!-- ===== Helper target: compute ReferencePath AFTER SAM_Windows is built ===== -->
+  <Target Name="ComputeWindowsRefPath">
+    <!-- Find dlls in 'build' (your current structure) and also support 'bin' as fallback -->
+    <ItemGroup>
+      <WindowsDll Include="SAM_Windows\build\**\SAM.Analytical.Windows.dll" />
+      <WindowsDll Include="SAM_Windows\**\bin\**\SAM.Analytical.Windows.dll" />
+      <!-- Transform to directories -->
+      <WindowsRefDir Include="@(WindowsDll->'%(RootDir)%(Directory)')" />
+    </ItemGroup>
+    <PropertyGroup>
+      <WindowsRefPath>@(WindowsRefDir)</WindowsRefPath>
+    </PropertyGroup>
+    <Message Text="Computed WindowsRefPath=$(WindowsRefPath)" Importance="high" />
+    <!-- Fail early if not found -->
+    <Error Condition="'$(WindowsRefPath)'==''" Text="Could not locate SAM.Analytical.Windows.dll under SAM_Windows. Check build output path." />
+  </Target>
 
   <!-- ===== Targets ===== -->
   <Target Name="Restore">
@@ -110,17 +115,16 @@
     <MSBuild Projects="@(SolutionUI)"   Targets="Clean"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties)" />
   </Target>
 
+  <!-- Build core first, then compute ReferencePath, then build UI -->
   <Target Name="Build">
-    <!-- Build core first (produces SAM.Analytical.Windows.dll) -->
     <MSBuild Projects="@(SolutionCore)" Targets="Build"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionCore.Properties)" />
-    <!-- Then build UI and inject ReferencePath as a plain property -->
-    <Message Text="ReferencePath for UI: $(WindowsRefPath)" Importance="high" />
+    <CallTarget Targets="ComputeWindowsRefPath" />
     <MSBuild Projects="@(SolutionUI)"   Targets="Build"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties);ReferencePath=$(WindowsRefPath)" />
   </Target>
 
   <Target Name="Rebuild">
     <MSBuild Projects="@(SolutionCore)" Targets="Rebuild" BuildInParallel="$(BuildInParallel)" Properties="%(SolutionCore.Properties)" />
-    <Message Text="ReferencePath for UI: $(WindowsRefPath)" Importance="high" />
+    <CallTarget Targets="ComputeWindowsRefPath" />
     <MSBuild Projects="@(SolutionUI)"   Targets="Rebuild" BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties);ReferencePath=$(WindowsRefPath)" />
   </Target>
 
