@@ -1,66 +1,66 @@
 [submodule "SAM_Revit"]
 	path = SAM_Revit
-	url = https://github.com/HoareLea/SAM_Revit.git
+	url = https://github.com/SAM-BIM/SAM_Revit.git
 [submodule "SAM_Solver"]
 	path = SAM_Solver
-	url = https://github.com/HoareLea/SAM_Solver.git
+	url = https://github.com/SAM-BIM/SAM_Solver.git
 [submodule "SAM_Topologic"]
 	path = SAM_Topologic
-	url = https://github.com/HoareLea/SAM_Topologic.git
+	url = https://github.com/SAM-BIM/SAM_Topologic.git
 [submodule "SAM_LadybugTools"]
 	path = SAM_LadybugTools
-	url = https://github.com/HoareLea/SAM_LadybugTools.git
+	url = https://github.com/SAM-BIM/SAM_LadybugTools.git
 [submodule "SAM_gbXML"]
 	path = SAM_gbXML
-	url = https://github.com/HoareLea/SAM_gbXML.git
+	url = https://github.com/SAM-BIM/SAM_gbXML.git
 [submodule "SAM_Tas"]
 	path = SAM_Tas
-	url = https://github.com/HoareLea/SAM_Tas.git
+	url = https://github.com/SAM-BIM/SAM_Tas.git
 [submodule "SAM_GEM"]
 	path = SAM_GEM
-	url = https://github.com/HoareLea/SAM_GEM.git
+	url = https://github.com/SAM-BIM/SAM_GEM.git
 [submodule "SAM_BHoM"]
 	path = SAM_BHoM
-	url = https://github.com/HoareLea/SAM_BHoM.git
+	url = https://github.com/SAM-BIM/SAM_BHoM.git
 [submodule "SAM_Excel"]
 	path = SAM_Excel
-	url = https://github.com/HoareLea/SAM_Excel.git
+	url = https://github.com/SAM-BIM/SAM_Excel.git
 [submodule "SAM"]
 	path = SAM
-	url = https://github.com/HoareLea/SAM.git
+	url = https://github.com/SAM-BIM/SAM.git
 [submodule "SAM_IFC"]
 	path = SAM_IFC
-	url = https://github.com/HoareLea/SAM_IFC.git
+	url = https://github.com/SAM-BIM/SAM_IFC.git
 [submodule "SAM_OpenStudio"]
 	path = SAM_OpenStudio
-	url = https://github.com/HoareLea/SAM_OpenStudio.git
+	url = https://github.com/SAM-BIM/SAM_OpenStudio.git
 [submodule "SAM_SQLite"]
 	path = SAM_SQLite
-	url = https://github.com/HoareLea/SAM_SQLite.git
+	url = https://github.com/SAM-BIM/SAM_SQLite.git
 [submodule "SAM_Psychrometrics"]
 	path = SAM_Psychrometrics
-	url = https://github.com/HoareLea/SAM_Psychrometrics.git
+	url = https://github.com/SAM-BIM/SAM_Psychrometrics.git
 [submodule "SAM_SolarCalculator"]
 	path = SAM_SolarCalculator
-	url = https://github.com/HoareLea/SAM_SolarCalculator.git
+	url = https://github.com/SAM-BIM/SAM_SolarCalculator.git
 [submodule "SAM_Windows"]
 	path = SAM_Windows
-	url = https://github.com/HoareLea/SAM_Windows.git
+	url = https://github.com/SAM-BIM/SAM_Windows.git
 [submodule "SAM_Rhino_UI"]
 	path = SAM_Rhino_UI
-	url = https://github.com/HoareLea/SAM_Rhino_UI.git
+	url = https://github.com/SAM-BIM/SAM_Rhino_UI.git
 [submodule "SAM_Revit_UI"]
 	path = SAM_Revit_UI
-	url = https://github.com/HoareLea/SAM_Revit_UI.git
+	url = https://github.com/SAM-BIM/SAM_Revit_UI.git
 [submodule "SAM_UI"]
 	path = SAM_UI
-	url = https://github.com/HoareLea/SAM_UI.git
+	url = https://github.com/SAM-BIM/SAM_UI.git
 [submodule "SAM_Mollier"]
 	path = SAM_Mollier
-	url = https://github.com/HoareLea/SAM_Mollier.git
+	url = https://github.com/SAM-BIM/SAM_Mollier.git
 [submodule "SAM_Systems"]
 	path = SAM_Systems
-	url = https://github.com/HoareLea/SAM_Systems.git
+	url = https://github.com/SAM-BIM/SAM_Systems.git
 [submodule "SAM_Multitasker"]
 	path = SAM_Multitasker
-	url = https://github.com/HoareLea/SAM_Multitasker.git
+	url = https://github.com/SAM-BIM/SAM_Multitasker.git

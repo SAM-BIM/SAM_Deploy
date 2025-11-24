@@ -3,7 +3,7 @@
 This is the managed release repository for SAM.
 
 To find out more about sam visit
-https://github.com/HoareLea/SAM
+https://github.com/SAM-BIM/SAM
 
 [![Build Status](https://hldigitalinnovation.visualstudio.com/HLApps/_apis/build/status/SAM-deploy-All%20in%20One?branchName=master)](https://hldigitalinnovation.visualstudio.com/HLApps/_build/latest?definitionId=21&branchName=master)
 
@@ -13,11 +13,11 @@ https://github.com/HoareLea/SAM
 
 Dowload latest release here:
 
-https://github.com/HoareLea/SAM_Deploy/releases/latest/download/SAM_Install.exe
+https://github.com/SAM-BIM/SAM_Deploy/releases/latest/download/SAM_Install.exe
 
 <h2>*Add New Repository to deploy</h2>   
     
-    git submodule add https://github.com/HoareLea/SAM_OpenStudio.git
+    git submodule add https://github.com/SAM-BIM/SAM_OpenStudio.git
 
 <h2>Debugging or building it yourself</h2>
 
@@ -29,7 +29,7 @@ https://blog.tech-fellow.net/2019/05/09/effectively-work-with-git-submodules/
 
 To clone with all submodules included do:
 
-    git clone --recurse-submodules https://github.com/HoareLea/SAM_Deploy.git
+    git clone --recurse-submodules https://github.com/SAM-BIM/SAM_Deploy.git
 
 or, if you've already cloned it:
 
