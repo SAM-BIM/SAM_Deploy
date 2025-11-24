@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemGroup>
+    <!-- Core solutions -->
+    <Solution Include="SAM/SAM.sln">
+      <Properties>Configuration=Release;Platform=Any CPU</Properties>
+    </Solution>
+    <Solution Include="SAM_Systems/SAM_Systems.sln">
+      <Properties>Configuration=Release;Platform=Any CPU</Properties>
+    </Solution>
+    <Solution Include="SAM_Psychrometrics/SAM_Psychrometrics.sln">
+      <Properties>Configuration=Release;Platform=Any CPU</Properties>
+    </Solution>
+    <Solution Include="SAM_Mollier/SAM_Mollier.sln">
+      <Properties>Configuration=Release;Platform=Any CPU</Properties>
+    </Solution>
+    <Solution Include="SAM_Windows/SAM_Windows.sln">
+      <Properties>Configuration=Release;Platform=Any CPU</Properties>
+    </Solution>
+
+    
+  </ItemGroup>
+
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+  </PropertyGroup>
+
+  <Target Name="Build">
+    <MSBuild Projects="@(Solution)" BuildInParallel="false" Targets="Build" Properties="%(Solution.Properties)" />
+  </Target>
+
+  <Target Name="Clean">
+    <MSBuild Projects="@(Solution)" BuildInParallel="false" Targets="Clean" Properties="%(Solution.Properties)" />
+  </Target>
+
+  <Target Name="Rebuild">
+    <MSBuild Projects="@(Solution)" BuildInParallel="false" Targets="Rebuild" Properties="%(Solution.Properties)" />
+  </Target>
+
+  <Target Name="Restore">
+    <MSBuild Projects="@(Solution)" BuildInParallel="false" Targets="Restore" Properties="%(Solution.Properties)" />
+  </Target>
+
+  <!-- Unified entry like in buildAlls -->
+  <Target Name="RestoreCleanRebuild" DependsOnTargets="Restore;Clean;Rebuild" />
+
+</Project>
