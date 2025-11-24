@@ -24,9 +24,11 @@
     <Solution Include="SAM_Topologic/SAM_Topologic.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
+	<!--
     <Solution Include="SAM_Acoustic/SAM_Acoustic.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
+	-->
     <Solution Include="SAM_BHom/SAM_BHom.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
@@ -57,9 +59,11 @@
     <Solution Include="SAM_OpenStudio/SAM_OpenStudio.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
+	<!--
     <Solution Include="SAM_Origin/SAM_Origin.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
+	-->
 
     <!-- Revit 2025 -->
     <Solution Include="SAM_Revit/SAM_Revit.sln">
