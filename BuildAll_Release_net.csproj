@@ -1,120 +1,126 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <!-- ========== SOLUTION GROUPS ========== -->
   <ItemGroup>
-    <!-- Core solutions -->
-    <Solution Include="SAM/SAM.sln">
+    <!-- CORE (build first) -->
+    <SolutionCore Include="SAM/SAM.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_Systems/SAM_Systems.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_Systems/SAM_Systems.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_Psychrometrics/SAM_Psychrometrics.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_Psychrometrics/SAM_Psychrometrics.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_Mollier/SAM_Mollier.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_Mollier/SAM_Mollier.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_Windows/SAM_Windows.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_Windows/SAM_Windows.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_IFC/SAM_IFC.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_IFC/SAM_IFC.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_Topologic/SAM_Topologic.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_Topologic/SAM_Topologic.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-	<!--
-    <Solution Include="SAM_Acoustic/SAM_Acoustic.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_BHom/SAM_BHom.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-	-->
-    <Solution Include="SAM_BHom/SAM_BHom.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_gbXML/SAM_gbXML.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_gbXML/SAM_gbXML.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_GEM/SAM_GEM.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_GEM/SAM_GEM.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_LadybugTools/SAM_LadybugTools.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_LadybugTools/SAM_LadybugTools.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_Solver/SAM_Solver.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_Solver/SAM_Solver.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_SolarCalculator/SAM_SolarCalculator.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_SolarCalculator/SAM_SolarCalculator.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_Tas/SAM_Tas.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_Tas/SAM_Tas.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_Excel/SAM_Excel.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_Excel/SAM_Excel.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_SQLite/SAM_SQLite.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_SQLite/SAM_SQLite.sln">
-      <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_OpenStudio/SAM_OpenStudio.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_OpenStudio/SAM_OpenStudio.sln">
       <Properties>Configuration=Release;Platform=x64</Properties>
-    </Solution>
-	<!--
-    <Solution Include="SAM_Origin/SAM_Origin.sln">
-      <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-	-->
+    </SolutionCore>
 
-    <!-- Revit 2025 -->
-    <Solution Include="SAM_Revit/SAM_Revit.sln">
+    <!-- Revit 2025/2026 also in CORE -->
+    <SolutionCore Include="SAM_Revit/SAM_Revit.sln">
       <Properties>Configuration=Release2025;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
-    </Solution>
-    <Solution Include="SAM_Revit_UI/SAM_Revit_UI.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_Revit_UI/SAM_Revit_UI.sln">
       <Properties>Configuration=Release2025;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
-    </Solution>
-
-    <!-- Revit 2026 -->
-    <Solution Include="SAM_Revit/SAM_Revit.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_Revit/SAM_Revit.sln">
       <Properties>Configuration=Release2026;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
-    </Solution>
-    <Solution Include="SAM_Revit_UI/SAM_Revit_UI.sln">
+    </SolutionCore>
+    <SolutionCore Include="SAM_Revit_UI/SAM_Revit_UI.sln">
       <Properties>Configuration=Release2026;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
-    </Solution>
+    </SolutionCore>
 
-    <!-- UIs and tools -->
-    <Solution Include="SAM_UI/SAM_UI.sln">
+    <!-- UI (build after we have SAM_Windows binaries) -->
+    <SolutionUI Include="SAM_UI/SAM_UI.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_Rhino_UI/SAM_Rhino_UI.sln">
+    </SolutionUI>
+    <SolutionUI Include="SAM_Rhino_UI/SAM_Rhino_UI.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_Multitasker/SAM_Multitasker.sln">
+    </SolutionUI>
+    <SolutionUI Include="SAM_Multitasker/SAM_Multitasker.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
+    </SolutionUI>
   </ItemGroup>
 
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <BuildInParallel>false</BuildInParallel>
   </PropertyGroup>
 
-  <Target Name="Build">
-    <MSBuild Projects="@(Solution)" BuildInParallel="false" Targets="Build" Properties="%(Solution.Properties)" />
+  <!-- Gather SAM_Windows output paths (any TFM) -->
+  <ItemGroup>
+    <WindowsDll Include="SAM_Windows\**\bin\Release\**\SAM.Analytical.Windows.dll" />
+  </ItemGroup>
+  <PropertyGroup>
+    <!-- Semicolon-joined list of directories containing the dll -->
+    <WindowsRefPath>@(WindowsDll->'%(RootDir)%(Directory)')</WindowsRefPath>
+  </PropertyGroup>
+
+  <!-- ===== Targets ===== -->
+  <Target Name="Restore">
+    <MSBuild Projects="@(SolutionCore)" Targets="Restore" BuildInParallel="$(BuildInParallel)" Properties="%(SolutionCore.Properties)" />
+    <MSBuild Projects="@(SolutionUI)"   Targets="Restore" BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties)" />
   </Target>
 
   <Target Name="Clean">
-    <MSBuild Projects="@(Solution)" BuildInParallel="false" Targets="Clean" Properties="%(Solution.Properties)" />
+    <MSBuild Projects="@(SolutionCore)" Targets="Clean"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionCore.Properties)" />
+    <MSBuild Projects="@(SolutionUI)"   Targets="Clean"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties)" />
+  </Target>
+
+  <Target Name="Build">
+    <!-- Build all core (this builds SAM_Windows) -->
+    <MSBuild Projects="@(SolutionCore)" Targets="Build"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionCore.Properties)" />
+    <!-- Then build UI with ReferencePath pointing to SAM_Windows output(s) -->
+    <Message Text="ReferencePath for UI: $(WindowsRefPath)" Importance="high" />
+    <MSBuild Projects="@(SolutionUI)"   Targets="Build"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties);ReferencePath=$(WindowsRefPath)" />
   </Target>
 
   <Target Name="Rebuild">
-    <MSBuild Projects="@(Solution)" BuildInParallel="false" Targets="Rebuild" Properties="%(Solution.Properties)" />
+    <MSBuild Projects="@(SolutionCore)" Targets="Rebuild" BuildInParallel="$(BuildInParallel)" Properties="%(SolutionCore.Properties)" />
+    <Message Text="ReferencePath for UI: $(WindowsRefPath)" Importance="high" />
+    <MSBuild Projects="@(SolutionUI)"   Targets="Rebuild" BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties);ReferencePath=$(WindowsRefPath)" />
   </Target>
 
-  <Target Name="Restore">
-    <MSBuild Projects="@(Solution)" BuildInParallel="false" Targets="Restore" Properties="%(Solution.Properties)" />
-  </Target>
-
-  <!-- Unified entry like in buildAlls -->
   <Target Name="RestoreCleanRebuild" DependsOnTargets="Restore;Clean;Rebuild" />
-
 </Project>
