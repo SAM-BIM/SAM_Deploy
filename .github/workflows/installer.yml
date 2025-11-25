@@ -15,7 +15,7 @@ jobs:
   build:
     runs-on: windows-2022
     outputs:
-      version: ${{ steps.ver.outputs.version }}   # <-- Fix 2: expose version
+      version: ${{ steps.ver.outputs.version }}   # expose version to release job
     permissions:
       contents: read
     steps:
@@ -24,7 +24,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-          token: ${{ secrets.SUBMODULES_PAT }}     # <-- Fix 1: use PAT for private submodules
+          token: ${{ secrets.SUBMODULES_PAT }}  # PAT with read access to private submodules
 
       - name: Sync submodule URLs
         shell: pwsh
@@ -56,14 +56,25 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      # Restore & build your aggregator project (adjust filename if different)
-      - name: Restore
+      - name: Restore (single node, no reuse, shared compiler off, postbuild disabled)
         shell: pwsh
-        run: msbuild .\BuildAll_Release_net.csproj /t:Restore /p:Configuration=Release /m
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $props = '/p:Configuration=Release /p:UseSharedCompilation=false /p:RunPostBuildEvent=OnOutputUpdated /p:PostBuildEvent='
+          $args  = "/t:Restore $props /m:1 /v:m"
+          Write-Host "msbuild .\BuildAll_Release_net.csproj $args"
+          msbuild .\BuildAll_Release_net.csproj $args
 
-      - name: Rebuild
+      - name: Rebuild (single node, no reuse, shared compiler off, postbuild disabled)
         shell: pwsh
-        run: msbuild .\BuildAll_Release_net.csproj /t:Rebuild /p:Configuration=Release /m
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $props = '/p:Configuration=Release /p:UseSharedCompilation=false /p:RunPostBuildEvent=OnOutputUpdated /p:PostBuildEvent='
+          $args  = "/t:Rebuild $props /m:1 /v:m"
+          Write-Host "msbuild .\BuildAll_Release_net.csproj $args"
+          msbuild .\BuildAll_Release_net.csproj $args
 
       - name: Gather installer
         shell: pwsh
