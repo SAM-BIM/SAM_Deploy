@@ -27,6 +27,8 @@
     <SolutionUI Include="SAM_UI/SAM_UI.sln"><Properties>Configuration=Release;Platform=Any CPU</Properties></SolutionUI>
     <SolutionUI Include="SAM_Rhino_UI/SAM_Rhino_UI.sln"><Properties>Configuration=Release;Platform=Any CPU</Properties></SolutionUI>
     <SolutionUI Include="SAM_Multitasker/SAM_Multitasker.sln"><Properties>Configuration=Release;Platform=Any CPU</Properties></SolutionUI>
+
+    <!-- Revit 2025/2026 -->
     <SolutionUI Include="SAM_Revit/SAM_Revit.sln"><Properties>Configuration=Release2025;Platform=Any CPU;TargetFramework=net8.0-windows</Properties></SolutionUI>
     <SolutionUI Include="SAM_Revit_UI/SAM_Revit_UI.sln"><Properties>Configuration=Release2025;Platform=Any CPU;TargetFramework=net8.0-windows</Properties></SolutionUI>
     <SolutionUI Include="SAM_Revit/SAM_Revit.sln"><Properties>Configuration=Release2026;Platform=Any CPU;TargetFramework=net8.0-windows</Properties></SolutionUI>
@@ -37,41 +39,21 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
 
-    <!-- We drive inner builds sequentially -->
+    <!-- Drive inner builds sequentially to avoid file locks -->
     <BuildInParallel>false</BuildInParallel>
 
-    <!-- Reference path to SAM_Windows output -->
+    <!-- Reference path to SAM_Windows output (constant paths; no item transforms) -->
     <WindowsRefPath>$(MSBuildThisFileDirectory)SAM_Windows\build;$(MSBuildThisFileDirectory)SAM_Windows\build\Release</WindowsRefPath>
-
-    <!-- Disable PostBuild steps (those copy into user profiles) -->
-    <DisablePostBuildProps>PostBuildEvent=;RunPostBuildEvent=OnOutputUpdated</DisablePostBuildProps>
-
-    <!-- Turn off C# compiler server to avoid CS2012 file locks -->
-    <NoSharedCompilation>false</NoSharedCompilation> <!-- informational -->
   </PropertyGroup>
 
   <!-- ===== Targets ===== -->
   <Target Name="Restore">
-    <MSBuild Projects="@(SolutionCore)" Targets="Restore" Properties="%(SolutionCore.Properties);BuildInParallel=false;UseSharedCompilation=false;$(DisablePostBuildProps)" />
-    <MSBuild Projects="@(SolutionUI)"   Targets="Restore" Properties="%(SolutionUI.Properties);BuildInParallel=false;UseSharedCompilation=false;$(DisablePostBuildProps)" />
+    <MSBuild Projects="@(SolutionCore)"
+             Targets="Restore"
+             Properties="%(SolutionCore.Properties);BuildInParallel=false;UseSharedCompilation=false;RunPostBuildEvent=OnOutputUpdated;PostBuildEvent=" />
+    <MSBuild Projects="@(SolutionUI)"
+             Targets="Restore"
+             Properties="%(SolutionUI.Properties);BuildInParallel=false;UseSharedCompilation=false;RunPostBuildEvent=OnOutputUpdated;PostBuildEvent=" />
   </Target>
 
   <Target Name="Clean">
-    <MSBuild Projects="@(SolutionCore)" Targets="Clean"   Properties="%(SolutionCore.Properties);BuildInParallel=false;UseSharedCompilation=false;$(DisablePostBuildProps)" />
-    <MSBuild Projects="@(SolutionUI)"   Targets="Clean"   Properties="%(SolutionUI.Properties);BuildInParallel=false;UseSharedCompilation=false;$(DisablePostBuildProps)" />
-  </Target>
-
-  <Target Name="Build">
-    <MSBuild Projects="@(SolutionCore)" Targets="Build"   Properties="%(SolutionCore.Properties);BuildInParallel=false;UseSharedCompilation=false;$(DisablePostBuildProps)" />
-    <Message Text="Using ReferencePath for UI: $(WindowsRefPath)" Importance="high" />
-    <MSBuild Projects="@(SolutionUI)"   Targets="Build"   Properties="%(SolutionUI.Properties);ReferencePath=$(WindowsRefPath);BuildInParallel=false;UseSharedCompilation=false;$(DisablePostBuildProps)" />
-  </Target>
-
-  <Target Name="Rebuild">
-    <MSBuild Projects="@(SolutionCore)" Targets="Rebuild" Properties="%(SolutionCore.Properties);BuildInParallel=false;UseSharedCompilation=false;$(DisablePostBuildProps)" />
-    <Message Text="Using ReferencePath for UI: $(WindowsRefPath)" Importance="high" />
-    <MSBuild Projects="@(SolutionUI)"   Targets="Rebuild" Properties="%(SolutionUI.Properties);ReferencePath=$(WindowsRefPath);BuildInParallel=false;UseSharedCompilation=false;$(DisablePostBuildProps)" />
-  </Target>
-
-  <Target Name="RestoreCleanRebuild" DependsOnTargets="Restore;Clean;Rebuild" />
-</Project>
