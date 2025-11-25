@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="RestoreCleanRebuild" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <!-- ========== SOLUTION GROUPS ========== -->
+  <!-- ===== CORE (build first) ===== -->
   <ItemGroup>
-    <!-- CORE (build first) -->
     <SolutionCore Include="SAM/SAM.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </SolutionCore>
@@ -55,8 +54,10 @@
     <SolutionCore Include="SAM_OpenStudio/SAM_OpenStudio.sln">
       <Properties>Configuration=Release;Platform=x64</Properties>
     </SolutionCore>
+  </ItemGroup>
 
-    <!-- UI (build after we have SAM_Windows binaries) -->
+  <!-- ===== UI (after core) ===== -->
+  <ItemGroup>
     <SolutionUI Include="SAM_UI/SAM_UI.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </SolutionUI>
@@ -66,7 +67,7 @@
     <SolutionUI Include="SAM_Multitasker/SAM_Multitasker.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </SolutionUI>
-    <!-- Revit 2025/2026 run after UI(keep with SolutionUI) -->
+    <!-- Revit 2025/2026 -->
     <SolutionUI Include="SAM_Revit/SAM_Revit.sln">
       <Properties>Configuration=Release2025;Platform=Any CPU;TargetFramework=net8.0-windows</Properties>
     </SolutionUI>
@@ -85,47 +86,33 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <BuildInParallel>false</BuildInParallel>
+    <!-- Fixed reference path to SAM_Windows output (your layout) -->
+    <WindowsRefPath>$(MSBuildThisFileDirectory)SAM_Windows\build;$(MSBuildThisFileDirectory)SAM_Windows\build\Release</WindowsRefPath>
+    <!-- Disable PostBuild events globally (avoid profile copies on CI) -->
+    <DisablePostBuildProps>PostBuildEvent=;RunPostBuildEvent=OnOutputUpdated</DisablePostBuildProps>
   </PropertyGroup>
-
-  <!-- ===== Helper target: compute ReferencePath AFTER SAM_Windows is built ===== -->
-  <Target Name="ComputeWindowsRefPath">
-    <!-- Find dlls in 'build' (your current structure) and also support 'bin' as fallback -->
-    <ItemGroup>
-      <WindowsDll Include="SAM_Windows\build\**\SAM.Analytical.Windows.dll" />
-      <WindowsDll Include="SAM_Windows\**\bin\**\SAM.Analytical.Windows.dll" />
-      <!-- Transform to directories -->
-      <WindowsRefDir Include="@(WindowsDll->'%(RootDir)%(Directory)')" />
-    </ItemGroup>
-    <PropertyGroup>
-      <WindowsRefPath>@(WindowsRefDir)</WindowsRefPath>
-    </PropertyGroup>
-    <Message Text="Computed WindowsRefPath=$(WindowsRefPath)" Importance="high" />
-    <!-- Fail early if not found -->
-    <Error Condition="'$(WindowsRefPath)'==''" Text="Could not locate SAM.Analytical.Windows.dll under SAM_Windows. Check build output path." />
-  </Target>
 
   <!-- ===== Targets ===== -->
   <Target Name="Restore">
-    <MSBuild Projects="@(SolutionCore)" Targets="Restore" BuildInParallel="$(BuildInParallel)" Properties="%(SolutionCore.Properties)" />
-    <MSBuild Projects="@(SolutionUI)"   Targets="Restore" BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties)" />
+    <MSBuild Projects="@(SolutionCore)" Targets="Restore" BuildInParallel="$(BuildInParallel)" Properties="%(SolutionCore.Properties);$(DisablePostBuildProps)" />
+    <MSBuild Projects="@(SolutionUI)"   Targets="Restore" BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties);$(DisablePostBuildProps)" />
   </Target>
 
   <Target Name="Clean">
-    <MSBuild Projects="@(SolutionCore)" Targets="Clean"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionCore.Properties)" />
-    <MSBuild Projects="@(SolutionUI)"   Targets="Clean"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties)" />
+    <MSBuild Projects="@(SolutionCore)" Targets="Clean"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionCore.Properties);$(DisablePostBuildProps)" />
+    <MSBuild Projects="@(SolutionUI)"   Targets="Clean"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties);$(DisablePostBuildProps)" />
   </Target>
 
-  <!-- Build core first, then compute ReferencePath, then build UI -->
   <Target Name="Build">
-    <MSBuild Projects="@(SolutionCore)" Targets="Build"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionCore.Properties)" />
-    <CallTarget Targets="ComputeWindowsRefPath" />
-    <MSBuild Projects="@(SolutionUI)"   Targets="Build"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties);ReferencePath=$(WindowsRefPath)" />
+    <MSBuild Projects="@(SolutionCore)" Targets="Build"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionCore.Properties);$(DisablePostBuildProps)" />
+    <Message Text="Using ReferencePath for UI: $(WindowsRefPath)" Importance="high" />
+    <MSBuild Projects="@(SolutionUI)"   Targets="Build"   BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties);ReferencePath=$(WindowsRefPath);$(DisablePostBuildProps)" />
   </Target>
 
   <Target Name="Rebuild">
-    <MSBuild Projects="@(SolutionCore)" Targets="Rebuild" BuildInParallel="$(BuildInParallel)" Properties="%(SolutionCore.Properties)" />
-    <CallTarget Targets="ComputeWindowsRefPath" />
-    <MSBuild Projects="@(SolutionUI)"   Targets="Rebuild" BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties);ReferencePath=$(WindowsRefPath)" />
+    <MSBuild Projects="@(SolutionCore)" Targets="Rebuild" BuildInParallel="$(BuildInParallel)" Properties="%(SolutionCore.Properties);$(DisablePostBuildProps)" />
+    <Message Text="Using ReferencePath for UI: $(WindowsRefPath)" Importance="high" />
+    <MSBuild Projects="@(SolutionUI)"   Targets="Rebuild" BuildInParallel="$(BuildInParallel)" Properties="%(SolutionUI.Properties);ReferencePath=$(WindowsRefPath);$(DisablePostBuildProps)" />
   </Target>
 
   <Target Name="RestoreCleanRebuild" DependsOnTargets="Restore;Clean;Rebuild" />
