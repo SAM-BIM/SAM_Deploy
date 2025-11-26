@@ -32,7 +32,7 @@ AppSupportURL=https://github.com/SAM-BIM/SAM
 AppUpdatesURL=https://github.com/SAM-BIM/SAM
 
 AppVersion={#AppVersion}
-VersionInfoVersion={#FileVersion}
+VersionInfoVersion=1.0.0.0
 
 DefaultDirName={userappdata}\SAM
 DisableDirPage=yes
