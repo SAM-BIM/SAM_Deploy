@@ -46,8 +46,8 @@ Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=lowest
 
-; Use a relative path; compiler runs with the script folder as CWD
-SetupIconFile=SAM20new.ico
+; Use absolute path so CI never loses the icon
+SetupIconFile={#SourceRoot}\SAM_Installer\SAM20new.ico
 
 ; ----------------
 ; Directories
