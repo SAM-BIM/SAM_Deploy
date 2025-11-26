@@ -16,23 +16,26 @@
   #define SourceRoot "."
 #endif
 #ifndef FileVersion
-  #define FileVersion "1.0.0.0"
+  #define FileVersion "1.0.0.0"    ; must be a.b.c.d ; CI passes /DFileVersion=YYYY.MM.DD.N
 #endif
 
 ; ----------------
 ; Setup metadata
 ; ----------------
 [Setup]
-; NOTE: Use double braces around the GUID to emit literal braces
+; Double braces to emit literal { } around GUID
 AppId={{6770DD83-5694-4607-8703-B3D3AC3CFD3C}}
+
 AppName=SAM
 AppPublisher=SAM-BIM
 AppPublisherURL=https://github.com/SAM-BIM/SAM
 AppSupportURL=https://github.com/SAM-BIM/SAM
 AppUpdatesURL=https://github.com/SAM-BIM/SAM
 
+; Visible version (can be vYYYYMMDD.N)
 AppVersion={#AppVersion}
-VersionInfoVersion=1.0.0.0
+; File/Product version (must be numeric 4-part)
+VersionInfoVersion={#FileVersion}
 
 DefaultDirName={userappdata}\SAM
 DisableDirPage=yes
@@ -42,6 +45,8 @@ OutputBaseFilename=SAM_Install
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=lowest
+
+; Use a relative path; compiler runs with the script folder as CWD
 SetupIconFile=SAM20new.ico
 
 ; ----------------
@@ -53,16 +58,14 @@ Name: "{userappdata}\SAM"
 ; ----------------
 ; Files to install
 ; ----------------
-; We copy from the CI staging area that the workflow creates:
-;   SAM_Installer\build\
-; If running locally, either pre-create this folder (via your GenBuild.bat)
-; or set /DSourceRoot="C:\path\to\repo" when compiling.
+; We copy from the CI staging folder created by the workflow:
+;   SAM_Installer\build\...
 
 [Files]
 ; Core SAM payload
 Source: "{#SourceRoot}\SAM_Installer\build\SAM\*";               DestDir: "{userappdata}\SAM"; Flags: ignoreversion createallsubdirs recursesubdirs
 
-; Dependencies
+; Dependencies & Rhino.Inside refs
 Source: "{#SourceRoot}\SAM_Installer\build\SAMdependencies\*";   DestDir: "{userappdata}\SAM\SAMdependencies"; Flags: ignoreversion createallsubdirs recursesubdirs
 Source: "{#SourceRoot}\SAM_Installer\build\Rhino.Inside\*";      DestDir: "{userappdata}\SAM\Rhino.Inside";    Flags: ignoreversion createallsubdirs recursesubdirs
 
@@ -81,7 +84,6 @@ Source: "{#SourceRoot}\SAM_Installer\build\user\Documents\*";    DestDir: "{user
 ; Post-install actions
 ; ----------------
 [Run]
-; Register add-ins, environment etc. (quiet)
 Filename: "register.bat"; WorkingDir: "{userappdata}\SAM";                Flags: runascurrentuser runhidden
 Filename: "install.bat";  WorkingDir: "{userappdata}\SAM\SAMdependencies"; Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\SAMdependencies\install.bat'))
 
