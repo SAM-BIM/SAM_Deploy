@@ -79,7 +79,6 @@ jobs:
           )
           msbuild .\BuildAll_Release_net.csproj @msbuildArgs
 
-      # ---------- Create SAM_Installer\build staging ----------
       - name: Prepare installer staging (CI)
         shell: pwsh
         run: |
@@ -95,11 +94,7 @@ jobs:
             } else { Write-Host "WARN: $src not found (skipped)" }
           }
 
-          foreach ($p in @('Install','SAM_Installer\Install')) {
-            $src = Join-Path $root $p
-            if (Test-Path $src) { Copy-Item "$src\*" $stage -Recurse -Force }
-          }
-
+          # Rooted build outputs
           Copy-IfExists (Join-Path $root 'SAM_UI\build')           (Join-Path $stage 'SAM')
           Copy-IfExists (Join-Path $root 'SAM_Windows\build')      (Join-Path $stage 'SAMdependencies')
           Copy-IfExists (Join-Path $root 'SAM_Revit\references')   (Join-Path $stage 'Rhino.Inside')
@@ -134,18 +129,24 @@ jobs:
           $icon = Join-Path $issDir 'SAM20new.ico'
           if (-not (Test-Path $icon)) { throw "Icon not found: $icon" }
 
-          $tag         = '${{ steps.ver.outputs.version }}'
-          $outBase     = "SAM_Install_${tag}_Build_Installer"
+          $rawTag  = '${{ steps.ver.outputs.version }}'
+          $safeTag = $rawTag -replace '[^0-9A-Za-z_.-]', '_'
+          if (-not $safeTag) { $safeTag = 'v_unknown' }
 
-          # Compile from inside SAM_Installer so relative icon path works
+          Write-Host "Version (metadata): $rawTag"
+          Write-Host "Version (filename): $safeTag"
+
+          $outBase = "SAM_Install_${safeTag}_Build_Installer"
+
           Push-Location $issDir
           try {
             & "$iscc" `
               "/Qp" `
+              "/LOG=$outDir\iscc.log" `
               "/O=$outDir" `
               "/F=$outBase" `
-              "/DVersion=$tag" `
-              "/DAppVersion=$tag" `
+              "/DVersion=$rawTag" `
+              "/DAppVersion=$rawTag" `
               "/DSourceRoot=$(Split-Path $issDir -Parent)" `
               "Build_Installer.iss"
             if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
