@@ -9,6 +9,9 @@
 #ifndef AppVersion
   #define AppVersion Version
 #endif
+#ifndef samversion
+  #define samversion AppVersion
+#endif
 #ifndef SourceRoot
   #define SourceRoot "."
 #endif
