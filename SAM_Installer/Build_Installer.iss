@@ -15,7 +15,7 @@
   #define SourceRoot "."
 #endif
 #ifndef FileVersion
-  #define FileVersion "1.0.0.0"    ; CI passes /DFileVersion=YYYY.MM.DD.N
+  #define FileVersion "1.0.0.0"
 #endif
 
 [Setup]
@@ -26,8 +26,9 @@ AppPublisherURL=https://github.com/SAM-BIM/SAM
 AppSupportURL=https://github.com/SAM-BIM/SAM
 AppUpdatesURL=https://github.com/SAM-BIM/SAM
 
-AppVersion={#AppVersion}           ; visible version (can be vYYYYMMDD.N)
-VersionInfoVersion={#FileVersion}  ; must be numeric a.b.c.d
+; Use the tag as visible version and in file metadata as text
+AppVersion={#AppVersion}
+VersionInfoTextVersion={#AppVersion}
 
 DefaultDirName={userappdata}\SAM
 DisableDirPage=yes
@@ -37,7 +38,7 @@ OutputBaseFilename=SAM_Install
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=lowest
-SetupIconFile=SAM20new.ico         ; relative to this .iss file
+SetupIconFile={#SourceRoot}\SAM_Installer\SAM20new.ico
 
 [Dirs]
 Name: "{userappdata}\SAM"
