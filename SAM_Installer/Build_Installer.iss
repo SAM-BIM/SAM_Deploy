@@ -16,7 +16,7 @@
   #define SourceRoot "."
 #endif
 #ifndef FileVersion
-  #define FileVersion "1.0.0.0"   ; fallback if CI doesn't pass it
+  #define FileVersion "1.0.0.0"
 #endif
 
 ; ----------------
@@ -25,7 +25,6 @@
 [Setup]
 ; NOTE: Use double braces around the GUID to emit literal braces
 AppId={{6770DD83-5694-4607-8703-B3D3AC3CFD3C}}
-
 AppName=SAM
 AppPublisher=SAM-BIM
 AppPublisherURL=https://github.com/SAM-BIM/SAM
@@ -33,7 +32,7 @@ AppSupportURL=https://github.com/SAM-BIM/SAM
 AppUpdatesURL=https://github.com/SAM-BIM/SAM
 
 AppVersion={#AppVersion}
-VersionInfoVersion={#FileVersion}   ; <-- must be numeric a.b.c.d
+VersionInfoVersion={#FileVersion}
 
 DefaultDirName={userappdata}\SAM
 DisableDirPage=yes
