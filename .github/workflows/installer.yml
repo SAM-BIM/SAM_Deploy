@@ -116,6 +116,41 @@ jobs:
       - name: Install Inno Setup
         shell: pwsh
         run: choco install innosetup -y
+        
+        - name: Preflight ISS + preprocess view
+          shell: pwsh
+          run: |
+            $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
+            $script = Join-Path $issDir 'Build_Installer.iss'
+            Write-Host "First 60 lines of: $script"
+            Get-Content $script | Select-Object -First 60 | %{ '{0,3}: {1}' -f ++$i, $_ }
+
+            # Make sure icon exists in repo (even if commented out for now)
+            $icon = Join-Path $issDir 'SAM20new.ico'
+            if (Test-Path $icon) { Write-Host "ICON OK: $icon" } else { Write-Host "ICON MISSING: $icon" }
+
+            # Produce a preprocessed script file so we can see the actual values ISCC uses
+            $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+            if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
+            $outDir = Join-Path $pwd 'dist'
+            New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+
+            $repoRoot = $pwd
+            $tag = '${{ steps.ver.outputs.version }}'
+            $raw = $tag.TrimStart('v')
+            if ($raw -match '^(\d{4})(\d{2})(\d{2})\.(\d+)$') { $fileVer = "$($Matches[1]).$($Matches[2]).$($Matches[3]).$($Matches[4])" } else { $fileVer = "1.0.0.${{ github.run_number }}" }
+
+            Push-Location $issDir
+            try {
+              & "$iscc" "/Preprocess" `
+                "/DVersion=$tag" "/DAppVersion=$tag" "/DFileVersion=$fileVer" "/DSourceRoot=$repoRoot" `
+                "Build_Installer.iss" | Out-File (Join-Path $outDir 'preprocessed.iss') -Encoding utf8
+            } finally { Pop-Location }
+
+            # Show the key lines Inno will actually see
+            Select-String -Path (Join-Path $outDir 'preprocessed.iss') -Pattern '^\s*(SetupIconFile|VersionInfoVersion|AppId)=' -SimpleMatch |
+              ForEach-Object { $_.Line }
+
 
       # ---------- Compile exactly SAM_Installer/Build_Installer.iss ----------
       - name: Package installer

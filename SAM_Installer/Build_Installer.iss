@@ -28,7 +28,8 @@ AppVersion={#AppVersion}
 ; (We can reintroduce VersionInfoVersion later once the build is green)
 ; VersionInfoTextVersion shows the tag in EXE metadata
 ; VersionInfoTextVersion={#AppVersion}
-VersionInfoVersion=1.0.0.0
+; VersionInfoVersion=1.0.0.0
+VersionInfoVersion={#FileVersion}
 
 
 DefaultDirName={userappdata}\SAM
@@ -41,7 +42,7 @@ SolidCompression=yes
 PrivilegesRequired=lowest
 
 ; IMPORTANT: relative to THIS .iss file
-SetupIconFile=SAM20new.ico
+;SetupIconFile=SAM20new.ico
 
 [Dirs]
 Name: "{userappdata}\SAM"
