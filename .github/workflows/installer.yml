@@ -2,12 +2,11 @@ name: Build & Release SAM-BIM Installer
 
 on:
   push:
-    tags:
-      - 'v*'  # e.g. v20251124.1
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (e.g. v20251124.1). If tagging, this is ignored.'
+        description: 'Version (e.g. v20251126.1). If tagging, this is ignored.'
         required: false
         default: ''
 
@@ -18,6 +17,7 @@ jobs:
       version: ${{ steps.ver.outputs.version }}
     permissions:
       contents: read
+
     steps:
       - name: Checkout (with private submodules)
         uses: actions/checkout@v4
@@ -26,20 +26,14 @@ jobs:
           submodules: recursive
           token: ${{ secrets.SUBMODULES_PAT }}
 
-      - name: Sync submodule URLs
+      - name: Sync & clean submodules
         shell: pwsh
         run: |
           git submodule sync --recursive
-          git submodule foreach --recursive 'git remote -v'
-
-      - name: Clean submodules (avoid dirty trees)
-        shell: pwsh
-        run: |
           git submodule foreach --recursive 'git reset --hard'
           git submodule foreach --recursive 'git clean -xfd'
 
       - name: Compute version
-      # expose vYYYYMMDD.<run> if no tag or manual input
         id: ver
         shell: pwsh
         run: |
@@ -63,16 +57,12 @@ jobs:
           MSBUILDDISABLENODEREUSE: '1'
         run: |
           $msbuildArgs = @(
-            '/t:Restore',
-            '/m:1',
-            '/nr:false',
-            '/v:m',
+            '/t:Restore','/m:1','/nr:false','/v:m',
             '/p:Configuration=Release',
             '/p:UseSharedCompilation=false',
             '/p:RunPostBuildEvent=OnOutputUpdated',
             '/p:PostBuildEvent='
           )
-          Write-Host "msbuild .\BuildAll_Release_net.csproj $($msbuildArgs -join ' ')"
           msbuild .\BuildAll_Release_net.csproj @msbuildArgs
 
       - name: Rebuild (single node, no reuse, shared compiler off, postbuild disabled)
@@ -81,52 +71,113 @@ jobs:
           MSBUILDDISABLENODEREUSE: '1'
         run: |
           $msbuildArgs = @(
-            '/t:Rebuild',
-            '/m:1',
-            '/nr:false',
-            '/v:m',
+            '/t:Rebuild','/m:1','/nr:false','/v:m',
             '/p:Configuration=Release',
             '/p:UseSharedCompilation=false',
             '/p:RunPostBuildEvent=OnOutputUpdated',
             '/p:PostBuildEvent='
           )
-          Write-Host "msbuild .\BuildAll_Release_net.csproj $($msbuildArgs -join ' ')"
           msbuild .\BuildAll_Release_net.csproj @msbuildArgs
 
-      # ---------- NEW: package installer with Inno Setup ----------
+      # ---------- NEW: Stage files for Inno Setup (creates SAM_Installer\build) ----------
+      - name: Prepare installer staging (CI)
+        shell: pwsh
+        run: |
+          $root  = (Get-Location).Path
+          $stage = Join-Path $root 'SAM_Installer\build'
+          if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+
+          # 1) Copy installer scripts (register.bat, install.bat, deregister.bat, etc.)
+          foreach ($p in @('Install','SAM_Installer\Install')) {
+            $src = Join-Path $root $p
+            if (Test-Path $src) { Copy-Item "$src\*" $stage -Recurse -Force }
+          }
+
+          # 2) SAM binaries from project build outputs
+          $copy = {
+            param($src,$dest)
+            if (Test-Path $src) {
+              New-Item -ItemType Directory -Force -Path $dest | Out-Null
+              Copy-Item "$src\*" $dest -Recurse -Force
+            } else {
+              Write-Host "WARN: $src not found (skipped)"
+            }
+          }
+
+          # SAM core UI payload
+          & $copy (Join-Path $root 'SAM_UI\build') (Join-Path $stage 'SAM')
+
+          # Windows libs as dependencies
+          & $copy (Join-Path $root 'SAM_Windows\build') (Join-Path $stage 'SAMdependencies')
+
+          # Rhino.Inside references for Revit
+          & $copy (Join-Path $root 'SAM_Revit\references') (Join-Path $stage 'Rhino.Inside')
+
+          # Rhino UI package (if your solution drops to a build folder)
+          & $copy (Join-Path $root 'SAM_Rhino_UI\build') (Join-Path $stage 'SAM_Rhino_UI')
+
+          # Revit add-in manifest
+          $addin = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
+          if (Test-Path $addin) {
+            New-Item -ItemType Directory -Force -Path (Join-Path $stage 'SAM') | Out-Null
+            Copy-Item $addin (Join-Path $stage 'SAM') -Force
+          } else {
+            Write-Host "WARN: Revit add-in manifest not found at $addin"
+          }
+
+          # Optional user docs (only if present)
+          if (Test-Path (Join-Path $root 'Documents\SAM')) {
+            & $copy (Join-Path $root 'Documents\SAM') (Join-Path $stage 'user\Documents\SAM')
+          }
+
+          Write-Host "Staging complete at $stage"
+          Get-ChildItem $stage -Recurse | Select-Object FullName | Out-String | Write-Host
+
+      # ---------- Package with Inno Setup ----------
       - name: Install Inno Setup
         shell: pwsh
         run: choco install innosetup -y
 
-      - name: Package installer (Inno Setup)
+      - name: Package installers (compile SAM_Installer\*.iss)
         shell: pwsh
         env:
-          # CHANGE THIS if your .iss file is elsewhere
-          ISS_FILE: installer\Installer.iss
+          ISS_DIR: SAM_Installer
         run: |
-          $script = Resolve-Path $env:ISS_FILE -ErrorAction Stop
+          $issDir = Resolve-Path $env:ISS_DIR -ErrorAction Stop
           $outDir = Join-Path $pwd 'dist'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
-          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found." }
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install." }
 
-          & "$iscc" `
-            "/Qp" `
-            "/O=$outDir" `
-            "/F=SAM_Install_${{ steps.ver.outputs.version }}" `
-            "/DAppVersion=${{ steps.ver.outputs.version }}" `
-            "/DSourceRoot=$pwd" `
-            "$script"
+          $issFiles = Get-ChildItem $issDir -Filter *.iss -Recurse
+          if (-not $issFiles) { throw "No .iss files found under $issDir" }
 
-      - name: Gather installer
+          foreach ($f in $issFiles) {
+            $base = [IO.Path]::GetFileNameWithoutExtension($f.Name)
+            $outBase = "SAM_Install_${{ steps.ver.outputs.version }}_$base"
+
+            & "$iscc" `
+              "/Qp" `
+              "/O=$outDir" `
+              "/F=$outBase" `
+              "/DVersion=${{ steps.ver.outputs.version }}" `
+              "/DAppVersion=${{ steps.ver.outputs.version }}" `
+              "/DSourceRoot=$pwd" `
+              "$($f.FullName)"
+
+            if ($LASTEXITCODE -ne 0) { throw "ISCC failed for $($f.FullName) with exit code $LASTEXITCODE" }
+          }
+
+      - name: Verify installers
         shell: pwsh
         run: |
           if (-not (Test-Path dist)) { throw "dist folder missing" }
-          $exe = Get-ChildItem dist -Filter 'SAM_Install*.exe' | Select-Object -First 1
-          if (-not $exe) { throw "Installer did not produce SAM_Install*.exe in dist." }
-          Get-ChildItem dist
+          $exes = Get-ChildItem dist -Filter 'SAM_Install*.exe'
+          if (-not $exes) { throw "Installer did not produce SAM_Install*.exe in dist." }
+          $exes | Format-Table Name,Length,LastWriteTime -AutoSize
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
