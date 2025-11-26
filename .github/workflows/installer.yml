@@ -2,7 +2,7 @@ name: Build & Release SAM-BIM Installer
 
 on:
   push:
-    tags: ['v*']   # e.g. v20251126.3
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       version:
@@ -51,35 +51,28 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Restore (single node, no reuse, shared compiler off, postbuild disabled)
+      - name: Restore
         shell: pwsh
-        env:
-          MSBUILDDISABLENODEREUSE: '1'
+        env: { MSBUILDDISABLENODEREUSE: '1' }
         run: |
-          $msbuildArgs = @(
+          $args = @(
             '/t:Restore','/m:1','/nr:false','/v:m',
-            '/p:Configuration=Release',
-            '/p:UseSharedCompilation=false',
-            '/p:RunPostBuildEvent=OnOutputUpdated',
-            '/p:PostBuildEvent='
+            '/p:Configuration=Release','/p:UseSharedCompilation=false',
+            '/p:RunPostBuildEvent=OnOutputUpdated','/p:PostBuildEvent='
           )
-          msbuild .\BuildAll_Release_net.csproj @msbuildArgs
+          msbuild .\BuildAll_Release_net.csproj @args
 
-      - name: Rebuild (single node, no reuse, shared compiler off, postbuild disabled)
+      - name: Rebuild
         shell: pwsh
-        env:
-          MSBUILDDISABLENODEREUSE: '1'
+        env: { MSBUILDDISABLENODEREUSE: '1' }
         run: |
-          $msbuildArgs = @(
+          $args = @(
             '/t:Rebuild','/m:1','/nr:false','/v:m',
-            '/p:Configuration=Release',
-            '/p:UseSharedCompilation=false',
-            '/p:RunPostBuildEvent=OnOutputUpdated',
-            '/p:PostBuildEvent='
+            '/p:Configuration=Release','/p:UseSharedCompilation=false',
+            '/p:RunPostBuildEvent=OnOutputUpdated','/p:PostBuildEvent='
           )
-          msbuild .\BuildAll_Release_net.csproj @msbuildArgs
+          msbuild .\BuildAll_Release_net.csproj @args
 
-      # ---------- Create SAM_Installer\build staging from solution outputs ----------
       - name: Prepare installer staging (CI)
         shell: pwsh
         run: |
@@ -92,49 +85,35 @@ jobs:
             if (Test-Path $src) {
               New-Item -ItemType Directory -Force -Path $dest | Out-Null
               Copy-Item "$src\*" $dest -Recurse -Force
-            } else {
-              Write-Host "WARN: $src not found (skipped)"
-            }
+            } else { Write-Host "WARN: $src not found (skipped)" }
           }
 
-          # 1) scripts (register/install/deregister)
           foreach ($p in @('Install','SAM_Installer\Install')) {
             $src = Join-Path $root $p
             if (Test-Path $src) { Copy-Item "$src\*" $stage -Recurse -Force }
           }
 
-          # 2) payloads
           Copy-IfExists (Join-Path $root 'SAM_UI\build')           (Join-Path $stage 'SAM')
           Copy-IfExists (Join-Path $root 'SAM_Windows\build')      (Join-Path $stage 'SAMdependencies')
           Copy-IfExists (Join-Path $root 'SAM_Revit\references')   (Join-Path $stage 'Rhino.Inside')
           Copy-IfExists (Join-Path $root 'SAM_Rhino_UI\build')     (Join-Path $stage 'SAM_Rhino_UI')
 
-          # 3) Revit add-in manifest
           $addin = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
           if (Test-Path $addin) {
             New-Item -ItemType Directory -Force -Path (Join-Path $stage 'SAM') | Out-Null
             Copy-Item $addin (Join-Path $stage 'SAM') -Force
-          } else {
-            Write-Host "WARN: Revit add-in manifest not found at $addin"
-          }
+          } else { Write-Host "WARN: Revit add-in manifest not found at $addin" }
 
-          # 4) optional docs
           Copy-IfExists (Join-Path $root 'Documents\SAM') (Join-Path $stage 'user\Documents\SAM')
 
-          Write-Host "Staging complete at $stage"
-          Get-ChildItem $stage -Recurse | Select-Object FullName | Out-String | Write-Host
-
-      # ---------- Package with Inno Setup ----------
       - name: Install Inno Setup
         shell: pwsh
         run: choco install innosetup -y
 
       - name: Package installers (compile SAM_Installer\*.iss)
         shell: pwsh
-        env:
-          ISS_DIR: SAM_Installer
         run: |
-          $issDir = Resolve-Path $env:ISS_DIR -ErrorAction Stop
+          $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
           $outDir = Join-Path $pwd 'dist'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
@@ -142,10 +121,9 @@ jobs:
           if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
           if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install." }
 
-          $issFiles = Get-ChildItem $issDir -Filter *.iss -Recurse
+          $issFiles = Get-ChildItem $issDir -Filter *.iss -File
           if (-not $issFiles) { throw "No .iss files found under $issDir" }
 
-          # Build a numeric 4-part FileVersion from the tag (YYYY.MM.DD.N)
           $tag = '${{ steps.ver.outputs.version }}'
           $raw = $tag.TrimStart('v')
           if ($raw -match '^(\d{4})(\d{2})(\d{2})\.(\d+)$') {
@@ -157,22 +135,28 @@ jobs:
           }
           Write-Host "FileVersion for VersionInfoVersion: $fileVersion"
 
-          foreach ($f in $issFiles) {
-            $base = [IO.Path]::GetFileNameWithoutExtension($f.Name)
-            $outBase = "SAM_Install_${{ steps.ver.outputs.version }}_$base"
+          $icon = Join-Path $issDir 'SAM20new.ico'
+          if (-not (Test-Path $icon)) { throw "Icon not found: $icon" }
 
-            & "$iscc" `
-              "/Qp" `
-              "/O=$outDir" `
-              "/F=$outBase" `
-              "/DVersion=${{ steps.ver.outputs.version }}" `
-              "/DAppVersion=${{ steps.ver.outputs.version }}" `
-              "/Dsamversion=${{ steps.ver.outputs.version }}" `
-              "/DFileVersion=$fileVersion" `
-              "/DSourceRoot=$pwd" `
-              "$($f.FullName)"
-
-            if ($LASTEXITCODE -ne 0) { throw "ISCC failed for $($f.FullName) with exit code $LASTEXITCODE" }
+          Push-Location $issDir
+          try {
+            $repoRoot = Split-Path $issDir -Parent
+            foreach ($f in $issFiles) {
+              $outBase = "SAM_Install_${{ steps.ver.outputs.version }}_$($f.BaseName)"
+              & "$iscc" `
+                "/Qp" `
+                "/O=$outDir" `
+                "/F=$outBase" `
+                "/DVersion=${{ steps.ver.outputs.version }}" `
+                "/DAppVersion=${{ steps.ver.outputs.version }}" `
+                "/Dsamversion=${{ steps.ver.outputs.version }}" `
+                "/DFileVersion=$fileVersion" `
+                "/DSourceRoot=$repoRoot" `
+                "$($f.Name)"
+              if ($LASTEXITCODE -ne 0) { throw "ISCC failed for $($f.FullName) with exit code $LASTEXITCODE" }
+            }
+          } finally {
+            Pop-Location
           }
 
       - name: Verify installers
