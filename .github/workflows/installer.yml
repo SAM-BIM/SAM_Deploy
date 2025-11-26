@@ -2,11 +2,11 @@ name: Build & Release SAM-BIM Installer
 
 on:
   push:
-    tags: ['v*']
+    tags: ['v*']   # e.g. v20251126.1
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (e.g. v20251126.3). If tagging, this is ignored.'
+        description: 'Version (e.g. v20251126.1). If tagging, this is ignored.'
         required: false
         default: ''
 
@@ -51,28 +51,35 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Restore
+      - name: Restore (single node)
         shell: pwsh
-        env: { MSBUILDDISABLENODEREUSE: '1' }
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
         run: |
-          $args = @(
+          $msbuildArgs = @(
             '/t:Restore','/m:1','/nr:false','/v:m',
-            '/p:Configuration=Release','/p:UseSharedCompilation=false',
-            '/p:RunPostBuildEvent=OnOutputUpdated','/p:PostBuildEvent='
+            '/p:Configuration=Release',
+            '/p:UseSharedCompilation=false',
+            '/p:RunPostBuildEvent=OnOutputUpdated',
+            '/p:PostBuildEvent='
           )
-          msbuild .\BuildAll_Release_net.csproj @args
+          msbuild .\BuildAll_Release_net.csproj @msbuildArgs
 
-      - name: Rebuild
+      - name: Rebuild (single node)
         shell: pwsh
-        env: { MSBUILDDISABLENODEREUSE: '1' }
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
         run: |
-          $args = @(
+          $msbuildArgs = @(
             '/t:Rebuild','/m:1','/nr:false','/v:m',
-            '/p:Configuration=Release','/p:UseSharedCompilation=false',
-            '/p:RunPostBuildEvent=OnOutputUpdated','/p:PostBuildEvent='
+            '/p:Configuration=Release',
+            '/p:UseSharedCompilation=false',
+            '/p:RunPostBuildEvent=OnOutputUpdated',
+            '/p:PostBuildEvent='
           )
-          msbuild .\BuildAll_Release_net.csproj @args
+          msbuild .\BuildAll_Release_net.csproj @msbuildArgs
 
+      # ---------- Create SAM_Installer\build staging ----------
       - name: Prepare installer staging (CI)
         shell: pwsh
         run: |
@@ -110,59 +117,45 @@ jobs:
         shell: pwsh
         run: choco install innosetup -y
 
-      - name: Package installers (compile SAM_Installer\*.iss)
+      # ---------- Compile exactly SAM_Installer/Build_Installer.iss ----------
+      - name: Package installer
         shell: pwsh
         run: |
           $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
-          $outDir = Join-Path $pwd 'dist'
-          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
           if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install." }
 
-          $issFiles = Get-ChildItem $issDir -Filter *.iss -File
-          if (-not $issFiles) { throw "No .iss files found under $issDir" }
+          $outDir = Join-Path $pwd 'dist'
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
-          $tag = '${{ steps.ver.outputs.version }}'
-          $raw = $tag.TrimStart('v')
-          if ($raw -match '^(\d{4})(\d{2})(\d{2})\.(\d+)$') {
-            $fileVersion = "$($Matches[1]).$($Matches[2]).$($Matches[3]).$($Matches[4])"
-          } elseif ($raw -match '^\d+\.\d+\.\d+\.\d+$') {
-            $fileVersion = $raw
-          } else {
-            $fileVersion = "1.0.0.${{ github.run_number }}"
-          }
-          Write-Host "FileVersion for VersionInfoVersion: $fileVersion"
-
+          $issFile = Join-Path $issDir 'Build_Installer.iss'
+          if (-not (Test-Path $issFile)) { throw "Missing $issFile" }
           $icon = Join-Path $issDir 'SAM20new.ico'
           if (-not (Test-Path $icon)) { throw "Icon not found: $icon" }
 
+          $tag         = '${{ steps.ver.outputs.version }}'
+          $outBase     = "SAM_Install_${tag}_Build_Installer"
+
+          # Compile from inside SAM_Installer so relative icon path works
           Push-Location $issDir
           try {
-            $repoRoot = Split-Path $issDir -Parent
-            foreach ($f in $issFiles) {
-              $outBase = "SAM_Install_${{ steps.ver.outputs.version }}_$($f.BaseName)"
-              & "$iscc" `
-                "/Qp" `
-                "/O=$outDir" `
-                "/F=$outBase" `
-                "/DVersion=${{ steps.ver.outputs.version }}" `
-                "/DAppVersion=${{ steps.ver.outputs.version }}" `
-                "/Dsamversion=${{ steps.ver.outputs.version }}" `
-                "/DFileVersion=$fileVersion" `
-                "/DSourceRoot=$repoRoot" `
-                "$($f.Name)"
-              if ($LASTEXITCODE -ne 0) { throw "ISCC failed for $($f.FullName) with exit code $LASTEXITCODE" }
-            }
+            & "$iscc" `
+              "/Qp" `
+              "/O=$outDir" `
+              "/F=$outBase" `
+              "/DVersion=$tag" `
+              "/DAppVersion=$tag" `
+              "/DSourceRoot=$(Split-Path $issDir -Parent)" `
+              "Build_Installer.iss"
+            if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
           } finally {
             Pop-Location
           }
 
-      - name: Verify installers
+      - name: Verify installer
         shell: pwsh
         run: |
-          if (-not (Test-Path dist)) { throw "dist folder missing" }
           $exes = Get-ChildItem dist -Filter 'SAM_Install*.exe'
           if (-not $exes) { throw "Installer did not produce SAM_Install*.exe in dist." }
           $exes | Format-Table Name,Length,LastWriteTime -AutoSize
