@@ -61,20 +61,34 @@ jobs:
         env:
           MSBUILDDISABLENODEREUSE: '1'
         run: |
-          $props = '/p:Configuration=Release /p:UseSharedCompilation=false /p:RunPostBuildEvent=OnOutputUpdated /p:PostBuildEvent='
-          $args  = "/t:Restore $props /m:1 /v:m"
-          Write-Host "msbuild .\BuildAll_Release_net.csproj $args"
-          msbuild .\BuildAll_Release_net.csproj $args
+          $msbuildArgs = @(
+            '/t:Restore',
+            '/m:1',
+            '/v:m',
+            '/p:Configuration=Release',
+            '/p:UseSharedCompilation=false',
+            '/p:RunPostBuildEvent=OnOutputUpdated',
+            '/p:PostBuildEvent='
+          )
+          Write-Host "msbuild .\BuildAll_Release_net.csproj $($msbuildArgs -join ' ')"
+          msbuild .\BuildAll_Release_net.csproj @msbuildArgs
 
       - name: Rebuild (single node, no reuse, shared compiler off, postbuild disabled)
         shell: pwsh
         env:
           MSBUILDDISABLENODEREUSE: '1'
         run: |
-          $props = '/p:Configuration=Release /p:UseSharedCompilation=false /p:RunPostBuildEvent=OnOutputUpdated /p:PostBuildEvent='
-          $args  = "/t:Rebuild $props /m:1 /v:m"
-          Write-Host "msbuild .\BuildAll_Release_net.csproj $args"
-          msbuild .\BuildAll_Release_net.csproj $args
+          $msbuildArgs = @(
+            '/t:Rebuild',
+            '/m:1',
+            '/v:m',
+            '/p:Configuration=Release',
+            '/p:UseSharedCompilation=false',
+            '/p:RunPostBuildEvent=OnOutputUpdated',
+            '/p:PostBuildEvent='
+          )
+          Write-Host "msbuild .\BuildAll_Release_net.csproj $($msbuildArgs -join ' ')"
+          msbuild .\BuildAll_Release_net.csproj @msbuildArgs
 
       - name: Gather installer
         shell: pwsh
