@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="RestoreCleanRebuild" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
-  <!-- ===== CORE (build first) ===== -->
   <ItemGroup>
     <SolutionCore Include="SAM/SAM.sln"><Properties>Configuration=Release;Platform=Any CPU</Properties></SolutionCore>
     <SolutionCore Include="SAM_Systems/SAM_Systems.sln"><Properties>Configuration=Release;Platform=Any CPU</Properties></SolutionCore>
@@ -22,13 +20,10 @@
     <SolutionCore Include="SAM_OpenStudio/SAM_OpenStudio.sln"><Properties>Configuration=Release;Platform=x64</Properties></SolutionCore>
   </ItemGroup>
 
-  <!-- ===== UI (after core) ===== -->
   <ItemGroup>
     <SolutionUI Include="SAM_UI/SAM_UI.sln"><Properties>Configuration=Release;Platform=Any CPU</Properties></SolutionUI>
     <SolutionUI Include="SAM_Rhino_UI/SAM_Rhino_UI.sln"><Properties>Configuration=Release;Platform=Any CPU</Properties></SolutionUI>
     <SolutionUI Include="SAM_Multitasker/SAM_Multitasker.sln"><Properties>Configuration=Release;Platform=Any CPU</Properties></SolutionUI>
-
-    <!-- Revit 2025/2026 -->
     <SolutionUI Include="SAM_Revit/SAM_Revit.sln"><Properties>Configuration=Release2025;Platform=Any CPU;TargetFramework=net8.0-windows</Properties></SolutionUI>
     <SolutionUI Include="SAM_Revit_UI/SAM_Revit_UI.sln"><Properties>Configuration=Release2025;Platform=Any CPU;TargetFramework=net8.0-windows</Properties></SolutionUI>
     <SolutionUI Include="SAM_Revit/SAM_Revit.sln"><Properties>Configuration=Release2026;Platform=Any CPU;TargetFramework=net8.0-windows</Properties></SolutionUI>
@@ -38,22 +33,39 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-
-    <!-- Drive inner builds sequentially to avoid file locks -->
     <BuildInParallel>false</BuildInParallel>
-
-    <!-- Reference path to SAM_Windows output (constant paths; no item transforms) -->
     <WindowsRefPath>$(MSBuildThisFileDirectory)SAM_Windows\build;$(MSBuildThisFileDirectory)SAM_Windows\build\Release</WindowsRefPath>
   </PropertyGroup>
 
-  <!-- ===== Targets ===== -->
   <Target Name="Restore">
-    <MSBuild Projects="@(SolutionCore)"
-             Targets="Restore"
+    <MSBuild Projects="@(SolutionCore)" Targets="Restore"
              Properties="%(SolutionCore.Properties);BuildInParallel=false;UseSharedCompilation=false;RunPostBuildEvent=OnOutputUpdated;PostBuildEvent=" />
-    <MSBuild Projects="@(SolutionUI)"
-             Targets="Restore"
+    <MSBuild Projects="@(SolutionUI)" Targets="Restore"
              Properties="%(SolutionUI.Properties);BuildInParallel=false;UseSharedCompilation=false;RunPostBuildEvent=OnOutputUpdated;PostBuildEvent=" />
   </Target>
 
   <Target Name="Clean">
+    <MSBuild Projects="@(SolutionCore)" Targets="Clean"
+             Properties="%(SolutionCore.Properties);BuildInParallel=false;UseSharedCompilation=false;RunPostBuildEvent=OnOutputUpdated;PostBuildEvent=" />
+    <MSBuild Projects="@(SolutionUI)" Targets="Clean"
+             Properties="%(SolutionUI.Properties);BuildInParallel=false;UseSharedCompilation=false;RunPostBuildEvent=OnOutputUpdated;PostBuildEvent=" />
+  </Target>
+
+  <Target Name="Build">
+    <MSBuild Projects="@(SolutionCore)" Targets="Build"
+             Properties="%(SolutionCore.Properties);BuildInParallel=false;UseSharedCompilation=false;RunPostBuildEvent=OnOutputUpdated;PostBuildEvent=" />
+    <Message Text="Using ReferencePath for UI: $(WindowsRefPath)" Importance="high" />
+    <MSBuild Projects="@(SolutionUI)" Targets="Build"
+             Properties="%(SolutionUI.Properties);ReferencePath=$(WindowsRefPath);BuildInParallel=false;UseSharedCompilation=false;RunPostBuildEvent=OnOutputUpdated;PostBuildEvent=" />
+  </Target>
+
+  <Target Name="Rebuild">
+    <MSBuild Projects="@(SolutionCore)" Targets="Rebuild"
+             Properties="%(SolutionCore.Properties);BuildInParallel=false;UseSharedCompilation=false;RunPostBuildEvent=OnOutputUpdated;PostBuildEvent=" />
+    <Message Text="Using ReferencePath for UI: $(WindowsRefPath)" Importance="high" />
+    <MSBuild Projects="@(SolutionUI)" Targets="Rebuild"
+             Properties="%(SolutionUI.Properties);ReferencePath=$(WindowsRefPath);BuildInParallel=false;UseSharedCompilation=false;RunPostBuildEvent=OnOutputUpdated;PostBuildEvent=" />
+  </Target>
+
+  <Target Name="RestoreCleanRebuild" DependsOnTargets="Restore;Clean;Rebuild" />
+</Project>
