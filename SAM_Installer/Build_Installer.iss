@@ -15,6 +15,9 @@
 #ifndef SourceRoot
   #define SourceRoot "."
 #endif
+#ifndef FileVersion
+  #define FileVersion "1.0.0.0"   ; fallback if CI doesn't pass it
+#endif
 
 ; ----------------
 ; Setup metadata
@@ -29,18 +32,14 @@ AppPublisherURL=https://github.com/SAM-BIM/SAM
 AppSupportURL=https://github.com/SAM-BIM/SAM
 AppUpdatesURL=https://github.com/SAM-BIM/SAM
 
-; CI injects these via /DVersion=... /DAppVersion=...
 AppVersion={#AppVersion}
-VersionInfoVersion={#Version}
+VersionInfoVersion={#FileVersion}   ; <-- must be numeric a.b.c.d
 
 DefaultDirName={userappdata}\SAM
 DisableDirPage=yes
 DefaultGroupName=SAM
 DisableProgramGroupPage=yes
-
-; GitHub Actions step overrides the output filename using /F=
 OutputBaseFilename=SAM_Install
-
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=lowest
