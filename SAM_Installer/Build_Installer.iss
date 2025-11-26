@@ -41,7 +41,7 @@ SolidCompression=yes
 PrivilegesRequired=lowest
 
 ; IMPORTANT: relative to THIS .iss file
-SetupIconFile=SAM20new.ico
+;SetupIconFile=SAM20new.ico
 
 [Dirs]
 Name: "{userappdata}\SAM"
