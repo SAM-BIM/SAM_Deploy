@@ -1,4 +1,15 @@
-- name: Build & Release SAM-BIM Installer
+name: Build & Release SAM-BIM Installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. v20251126.1)'
+        required: false
+        default: ''
+  push:
+    tags:
+      - 'v*'
 
 - name: Package installer
   shell: pwsh
