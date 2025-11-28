@@ -116,6 +116,18 @@ jobs:
         shell: pwsh
         run: |
           Get-Content SAM_Installer\Build_Installer.iss | Select-Object -First 60 | Write-Host
+          
+      - name: Assert .iss has no OutputBaseFilename
+        shell: pwsh
+        run: |
+          $p = 'SAM_Installer\Build_Installer.iss'
+          Write-Host "Checking $p ..."
+          if (Select-String -Path $p -Pattern '^\s*OutputBaseFile(Name)?\s*=' -SimpleMatch) {
+            Write-Host 'Found OutputBaseFilename in script (should be removed).'
+            Get-Content $p | nl -ba | Select-String 'OutputBaseFile' | ForEach-Object { $_.ToString() } | Write-Host
+            exit 1
+          }
+          Get-Content $p | Select-Object -First 40 | Write-Host
 
       # ---------- Compile exactly SAM_Installer/Build_Installer.iss ----------
       - name: Package installer
