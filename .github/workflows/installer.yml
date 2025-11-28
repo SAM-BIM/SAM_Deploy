@@ -1,185 +1,40 @@
-name: Build & Release SAM-BIM Installer
+- name: Package installer
+  shell: pwsh
+  run: |
+    $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
+    $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+    if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
+    if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install." }
 
-on:
-  push:
-    tags: ['v*']   # e.g. v20251126.1
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version (e.g. v20251126.1). If tagging, this is ignored.'
-        required: false
-        default: ''
+    $outDir = Join-Path $pwd 'dist'
+    New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
-jobs:
-  build:
-    runs-on: windows-2022
-    outputs:
-      version: ${{ steps.ver.outputs.version }}
-    permissions:
-      contents: read
+    $issFile = Join-Path $issDir 'Build_Installer.iss'
+    if (-not (Test-Path $issFile)) { throw "Missing $issFile" }
+    if (-not (Test-Path (Join-Path $issDir 'SAM20new.ico'))) { throw "Icon not found: SAM20new.ico" }
 
-    steps:
-      - name: Checkout (with private submodules)
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: recursive
-          token: ${{ secrets.SUBMODULES_PAT }}
+    $rawTag  = '${{ steps.ver.outputs.version }}'
+    $safeTag = $rawTag -replace '[^0-9A-Za-z_.-]', '_'
+    if (-not $safeTag) { $safeTag = 'v_unknown' }
+    $outBase = "SAM_Install_${safeTag}_Build_Installer"
+    $log     = Join-Path $outDir 'iscc.log'
 
-      - name: Sync & clean submodules
-        shell: pwsh
-        run: |
-          git submodule sync --recursive
-          git submodule foreach --recursive 'git reset --hard'
-          git submodule foreach --recursive 'git clean -xfd'
-
-      - name: Compute version
-        id: ver
-        shell: pwsh
-        run: |
-          $tag = "$env:GITHUB_REF_NAME"
-          if (-not $tag -or -not $tag.StartsWith('v')) { $tag = "${{ github.event.inputs.version }}" }
-          if (-not $tag) { $tag = "v$(Get-Date -Format yyyyMMdd).${{ github.run_number }}" }
-          "version=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          Write-Host "Version: $tag"
-
-      - name: Setup .NET 8
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.x'
-
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Restore (single node)
-        shell: pwsh
-        env:
-          MSBUILDDISABLENODEREUSE: '1'
-        run: |
-          $msbuildArgs = @(
-            '/t:Restore','/m:1','/nr:false','/v:m',
-            '/p:Configuration=Release',
-            '/p:UseSharedCompilation=false',
-            '/p:RunPostBuildEvent=OnOutputUpdated',
-            '/p:PostBuildEvent='
-          )
-          msbuild .\BuildAll_Release_net.csproj @msbuildArgs
-
-      - name: Rebuild (single node)
-        shell: pwsh
-        env:
-          MSBUILDDISABLENODEREUSE: '1'
-        run: |
-          $msbuildArgs = @(
-            '/t:Rebuild','/m:1','/nr:false','/v:m',
-            '/p:Configuration=Release',
-            '/p:UseSharedCompilation=false',
-            '/p:RunPostBuildEvent=OnOutputUpdated',
-            '/p:PostBuildEvent='
-          )
-          msbuild .\BuildAll_Release_net.csproj @msbuildArgs
-
-      - name: Prepare installer staging (CI)
-        shell: pwsh
-        run: |
-          $root  = (Get-Location).Path
-          $stage = Join-Path $root 'SAM_Installer\build'
-          if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
-          New-Item -ItemType Directory -Force -Path $stage | Out-Null
-
-          function Copy-IfExists([string]$src,[string]$dest) {
-            if (Test-Path $src) {
-              New-Item -ItemType Directory -Force -Path $dest | Out-Null
-              Copy-Item "$src\*" $dest -Recurse -Force
-            } else { Write-Host "WARN: $src not found (skipped)" }
-          }
-
-          # Rooted build outputs
-          Copy-IfExists (Join-Path $root 'SAM_UI\build')           (Join-Path $stage 'SAM')
-          Copy-IfExists (Join-Path $root 'SAM_Windows\build')      (Join-Path $stage 'SAMdependencies')
-          Copy-IfExists (Join-Path $root 'SAM_Revit\references')   (Join-Path $stage 'Rhino.Inside')
-          Copy-IfExists (Join-Path $root 'SAM_Rhino_UI\build')     (Join-Path $stage 'SAM_Rhino_UI')
-
-          $addin = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
-          if (Test-Path $addin) {
-            New-Item -ItemType Directory -Force -Path (Join-Path $stage 'SAM') | Out-Null
-            Copy-Item $addin (Join-Path $stage 'SAM') -Force
-          } else { Write-Host "WARN: Revit add-in manifest not found at $addin" }
-
-          Copy-IfExists (Join-Path $root 'Documents\SAM') (Join-Path $stage 'user\Documents\SAM')
-
-      - name: Install Inno Setup
-        shell: pwsh
-        run: choco install innosetup -y
-
-      # ---------- Compile exactly SAM_Installer/Build_Installer.iss ----------
-      - name: Package installer
-        shell: pwsh
-        run: |
-            $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
-            $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-            if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
-            if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install." }
-
-            $outDir = Join-Path $pwd 'dist'
-            New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-
-            $issFile = Join-Path $issDir 'Build_Installer.iss'
-            if (-not (Test-Path $issFile)) { throw "Missing $issFile" }
-            $icon = Join-Path $issDir 'SAM20new.ico'
-            if (-not (Test-Path $icon)) { throw "Icon not found: $icon" }
-
-            $rawTag  = '${{ steps.ver.outputs.version }}'
-            $safeTag = $rawTag -replace '[^0-9A-Za-z_.-]', '_'
-            if (-not $safeTag) { $safeTag = 'v_unknown' }
-            $outBase = "SAM_Install_${safeTag}_Build_Installer"
-
-            Push-Location $issDir
-            try {
-              & "$iscc" `
-                "/Qp" `
-                "/O=$outDir" `
-                "/F=$outBase" `
-                "/DVersion=$rawTag" `
-                "/DAppVersion=$rawTag" `
-                "/DSourceRoot=$(Split-Path $issDir -Parent)" `
-                "Build_Installer.iss" 2>&1 | Tee-Object -FilePath (Join-Path $outDir 'iscc.log')
-              if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
-            } finally {
-              Pop-Location
-            }
-
-
-      - name: Verify installer
-        shell: pwsh
-        run: |
-          $exes = Get-ChildItem dist -Filter 'SAM_Install*.exe'
-          if (-not $exes) { throw "Installer did not produce SAM_Install*.exe in dist." }
-          $exes | Format-Table Name,Length,LastWriteTime -AutoSize
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: SAM_Install
-          path: dist/*.exe
-          if-no-files-found: error
-
-  release:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
-    runs-on: windows-2022
-    permissions:
-      contents: write
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: SAM_Install
-          path: ./dist
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.build.outputs.version }}
-          name:     ${{ needs.build.outputs.version }}
-          files:    ./dist/*.exe
+    Push-Location $issDir
+    try {
+      $args = @(
+        '/Qp',
+        "/O`"$outDir`"",
+        "/F`"$outBase`"",
+        "/DVersion=$rawTag",
+        "/DAppVersion=$rawTag",
+        'Build_Installer.iss'
+      )
+      & "$iscc" @args 2>&1 | Tee-Object -FilePath $log
+      if ($LASTEXITCODE -ne 0) {
+        Write-Host "===== iscc.log ====="
+        Get-Content $log | Write-Host
+        throw "ISCC failed with exit code $LASTEXITCODE"
+      }
+    } finally {
+      Pop-Location
+    }
