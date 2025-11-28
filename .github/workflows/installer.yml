@@ -137,7 +137,6 @@ jobs:
             Push-Location $issDir
             try {
               & "$iscc" `
-                "/Qp" `
                 "/O=$outDir" `
                 "/F=$outBase" `
                 "/DVersion=$rawTag" `

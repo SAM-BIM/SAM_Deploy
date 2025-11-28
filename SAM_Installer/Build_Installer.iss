@@ -26,7 +26,8 @@ OutputBaseFilename=SAM_Install
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=lowest
-SetupIconFile=SAM20new.ico
+;SetupIconFile=SAM20new.ico
+SetupIconFile={#SourcePath}SAM20new.ico
 
 
 [Dirs]
@@ -36,22 +37,32 @@ Name: "{userappdata}\SAM"
 ; Files copied from CI staging created at: SAM_Installer\build\
 ; ----------------
 [Files]
-; all paths relative to this .iss
-Source: "build\SAM\*";                    DestDir: "{userappdata}\SAM";                                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAMdependencies\*";        DestDir: "{userappdata}\SAM\SAMdependencies";                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\Rhino.Inside\*";           DestDir: "{userappdata}\SAM\Rhino.Inside";                   Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\register.bat";             DestDir: "{userappdata}\SAM";                                Flags: ignoreversion skipifsourcedoesntexist
-Source: "build\deregister.bat";           DestDir: "{userappdata}\SAM";                                Flags: ignoreversion skipifsourcedoesntexist
-Source: "build\SAM_Rhino_UI\*";           DestDir: "{userappdata}\McNeel\Rhinoceros\packages\7.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAM_Rhino_UI\*";           DestDir: "{userappdata}\McNeel\Rhinoceros\packages\8.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\user\Documents\SAM\*";     DestDir: "{userdocs}\SAM";                                   Flags: onlyifdoesntexist recursesubdirs createallsubdirs skipifsourcedoesntexist
+; Core SAM bits
+Source: "{#SourceRoot}\SAM_Installer\build\SAM\*";              DestDir: "{userappdata}\SAM";                               Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "{#SourceRoot}\SAM_Installer\build\SAMdependencies\*";  DestDir: "{userappdata}\SAM\SAMdependencies";               Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "{#SourceRoot}\SAM_Installer\build\Rhino.Inside\*";     DestDir: "{userappdata}\SAM\Rhino.Inside";                  Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+
+; Helper scripts (optional)
+Source: "{#SourceRoot}\SAM_Installer\build\register.bat";       DestDir: "{userappdata}\SAM";                               Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#SourceRoot}\SAM_Installer\build\deregister.bat";     DestDir: "{userappdata}\SAM";                               Flags: ignoreversion skipifsourcedoesntexist
+
+; Rhino packages (optional)
+Source: "{#SourceRoot}\SAM_Installer\build\SAM_Rhino_UI\*";     DestDir: "{userappdata}\McNeel\Rhinoceros\packages\7.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "{#SourceRoot}\SAM_Installer\build\SAM_Rhino_UI\*";     DestDir: "{userappdata}\McNeel\Rhinoceros\packages\8.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+
+; Seed user documents (optional)
+Source: "{#SourceRoot}\SAM_Installer\build\user\Documents\SAM\*"; DestDir: "{userdocs}\SAM";                               Flags: onlyifdoesntexist recursesubdirs createallsubdirs skipifsourcedoesntexist
 
 [Run]
-Filename: "{userappdata}\SAM\register.bat";                WorkingDir: "{userappdata}\SAM";                 Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\register.bat'))
-Filename: "{userappdata}\SAM\SAMdependencies\install.bat"; WorkingDir: "{userappdata}\SAM\SAMdependencies"; Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\SAMdependencies\install.bat'))
+; Register SAM (if script present)
+Filename: "{userappdata}\SAM\register.bat";                  WorkingDir: "{userappdata}\SAM";                Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\register.bat'))
+
+; Install dependencies (if present)
+Filename: "{userappdata}\SAM\SAMdependencies\install.bat";   WorkingDir: "{userappdata}\SAM\SAMdependencies"; Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\SAMdependencies\install.bat'))
 
 [UninstallRun]
-Filename: "{userappdata}\SAM\deregister.bat";              WorkingDir: "{userappdata}\SAM";                 Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\deregister.bat'))
+; Deregister SAM (if script present)
+Filename: "{userappdata}\SAM\deregister.bat";                WorkingDir: "{userappdata}\SAM";                Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\deregister.bat'))
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{userappdata}\SAM"
