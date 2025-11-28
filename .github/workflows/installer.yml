@@ -112,22 +112,18 @@ jobs:
         shell: pwsh
         run: choco install innosetup -y
 
-      - name: Show first 60 lines of Build_Installer.iss
-        shell: pwsh
-        run: |
-          Get-Content SAM_Installer\Build_Installer.iss | Select-Object -First 60 | Write-Host
-          
-      - name: Assert .iss has no OutputBaseFilename
+      - name: Sanitize installer script (strip OutputBaseFilename if present)
         shell: pwsh
         run: |
           $p = 'SAM_Installer\Build_Installer.iss'
-          Write-Host "Checking $p ..."
-          if (Select-String -Path $p -Pattern '^\s*OutputBaseFile(Name)?\s*=' -SimpleMatch) {
-            Write-Host 'Found OutputBaseFilename in script (should be removed).'
-            Get-Content $p | nl -ba | Select-String 'OutputBaseFile' | ForEach-Object { $_.ToString() } | Write-Host
-            exit 1
+          $raw = Get-Content -Raw -LiteralPath $p
+          $fixed = [regex]::Replace($raw,'(?im)^\s*OutputBaseFile(Name)?\s*=.*\r?\n','')
+          if ($fixed -ne $raw) {
+            Set-Content -LiteralPath $p -Value $fixed -Encoding UTF8
+            Write-Host "Removed OutputBaseFilename from $p"
           }
-          Get-Content $p | Select-Object -First 40 | Write-Host
+          $hits = Select-String -Path $p -Pattern '(?i)^\s*OutputBaseFile' -List
+          if ($hits) { $hits | ForEach-Object { Write-Host $_.ToString() }; throw "OutputBaseFilename still present." }
 
       # ---------- Compile exactly SAM_Installer/Build_Installer.iss ----------
       - name: Package installer
@@ -146,7 +142,7 @@ jobs:
           if (-not (Test-Path (Join-Path $issDir 'SAM20new.ico'))) { throw "Icon not found: SAM20new.ico" }
 
           $rawTag  = '${{ steps.ver.outputs.version }}'
-          $safeTag = $rawTag -replace '[^0-9A-Za-z_.-]', '_'
+          $safeTag = $rawTag -replace '[^0-9A-Za-z_-]','_'   # stricter: no dots/spaces
           if (-not $safeTag) { $safeTag = 'v_unknown' }
           $outBase = "SAM_Install_${safeTag}_Build_Installer"
           $log     = Join-Path $outDir 'iscc.log'
