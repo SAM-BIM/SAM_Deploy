@@ -116,37 +116,44 @@ jobs:
       - name: Package installer
         shell: pwsh
         run: |
-            $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
-            $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-            if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
-            if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install." }
+          $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install." }
 
-            $outDir = Join-Path $pwd 'dist'
-            New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+          $outDir = Join-Path $pwd 'dist'
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
-            $issFile = Join-Path $issDir 'Build_Installer.iss'
-            if (-not (Test-Path $issFile)) { throw "Missing $issFile" }
-            $icon = Join-Path $issDir 'SAM20new.ico'
-            if (-not (Test-Path $icon)) { throw "Icon not found: $icon" }
+          $issFile = Join-Path $issDir 'Build_Installer.iss'
+          if (-not (Test-Path $issFile)) { throw "Missing $issFile" }
+          if (-not (Test-Path (Join-Path $issDir 'SAM20new.ico'))) { throw "Icon not found: SAM20new.ico" }
 
-            $rawTag  = '${{ steps.ver.outputs.version }}'
-            $safeTag = $rawTag -replace '[^0-9A-Za-z_.-]', '_'
-            if (-not $safeTag) { $safeTag = 'v_unknown' }
-            $outBase = "SAM_Install_${safeTag}_Build_Installer"
+          $rawTag  = '${{ steps.ver.outputs.version }}'
+          $safeTag = $rawTag -replace '[^0-9A-Za-z_.-]', '_'
+          if (-not $safeTag) { $safeTag = 'v_unknown' }
+          $outBase = "SAM_Install_${safeTag}_Build_Installer"
+          $log     = Join-Path $outDir 'iscc.log'
 
-            Push-Location $issDir
-            try {
-              & "$iscc" `
-                "/O=$outDir" `
-                "/F=$outBase" `
-                "/DVersion=$rawTag" `
-                "/DAppVersion=$rawTag" `
-                "Build_Installer.iss" 2>&1 | Tee-Object -FilePath (Join-Path $outDir 'iscc.log')
-              if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
-            } finally {
-              Pop-Location
+          Push-Location $issDir
+          try {
+            $args = @(
+              # remove '/Qp' if you want verbose output
+              "/O`"$outDir`"",
+              "/F`"$outBase`"",
+              "/DVersion=$rawTag",
+              "/DAppVersion=$rawTag",
+              "/DSourceRoot=`"$(Split-Path $issDir -Parent)`"",
+              "Build_Installer.iss"
+            )
+            & "$iscc" @args 2>&1 | Tee-Object -FilePath $log
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "===== iscc.log ====="
+              Get-Content $log | Write-Host
+              throw "ISCC failed with exit code $LASTEXITCODE"
             }
-
+          } finally {
+            Pop-Location
+          }
 
       - name: Verify installer
         shell: pwsh
