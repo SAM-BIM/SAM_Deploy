@@ -112,6 +112,11 @@ jobs:
         shell: pwsh
         run: choco install innosetup -y
 
+      - name: Show first 60 lines of Build_Installer.iss
+        shell: pwsh
+        run: |
+          Get-Content SAM_Installer\Build_Installer.iss | Select-Object -First 60 | Write-Host
+
       # ---------- Compile exactly SAM_Installer/Build_Installer.iss ----------
       - name: Package installer
         shell: pwsh

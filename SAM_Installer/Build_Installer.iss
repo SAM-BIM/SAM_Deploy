@@ -31,7 +31,7 @@ SetupIconFile={#SourcePath}SAM20new.ico
 Name: "{userappdata}\SAM"
 
 [Files]
-; all paths relative to this .iss
+; all sources are relative to this .iss
 Source: "build\SAM\*";                    DestDir: "{userappdata}\SAM";                                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\SAMdependencies\*";        DestDir: "{userappdata}\SAM\SAMdependencies";                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\Rhino.Inside\*";           DestDir: "{userappdata}\SAM\Rhino.Inside";                   Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
