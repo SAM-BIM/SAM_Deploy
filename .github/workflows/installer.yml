@@ -142,7 +142,6 @@ jobs:
                 "/F=$outBase" `
                 "/DVersion=$rawTag" `
                 "/DAppVersion=$rawTag" `
-                "/DSourceRoot=$(Split-Path $issDir -Parent)" `
                 "Build_Installer.iss" 2>&1 | Tee-Object -FilePath (Join-Path $outDir 'iscc.log')
               if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
             } finally {
