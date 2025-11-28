@@ -22,7 +22,6 @@ DefaultDirName={userappdata}\SAM
 DisableDirPage=yes
 DefaultGroupName=SAM
 DisableProgramGroupPage=yes
-OutputBaseFilename=setup
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=lowest
