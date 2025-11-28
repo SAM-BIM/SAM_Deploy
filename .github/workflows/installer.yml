@@ -112,24 +112,27 @@ jobs:
         shell: pwsh
         run: choco install innosetup -y
 
-      - name: Sanitize installer script (strip OutputBaseFilename if present)
-        shell: pwsh
-        run: |
-          $p = 'SAM_Installer\Build_Installer.iss'
-          $raw = Get-Content -Raw -LiteralPath $p
-          $fixed = [regex]::Replace($raw,'(?im)^\s*OutputBaseFile(Name)?\s*=.*\r?\n','')
-          if ($fixed -ne $raw) {
-            Set-Content -LiteralPath $p -Value $fixed -Encoding UTF8
-            Write-Host "Removed OutputBaseFilename from $p"
-          }
-          $hits = Select-String -Path $p -Pattern '(?i)^\s*OutputBaseFile' -List
-          if ($hits) { $hits | ForEach-Object { Write-Host $_.ToString() }; throw "OutputBaseFilename still present." }
-
-      # ---------- Compile exactly SAM_Installer/Build_Installer.iss ----------
+      # ---------- Sanitize .iss and compile ----------
       - name: Package installer
         shell: pwsh
         run: |
-          $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
+          $issDir  = Resolve-Path 'SAM_Installer' -ErrorAction Stop
+          $issSrc  = Join-Path $issDir 'Build_Installer.iss'
+          $issCI   = Join-Path $issDir 'Build_Installer.CI.iss'
+          $icon    = Join-Path $issDir 'SAM20new.ico'
+
+          if (-not (Test-Path $issSrc)) { throw "Missing $issSrc" }
+          if (-not (Test-Path $icon))   { throw "Icon not found: $icon" }
+
+          # Strip any OutputBaseFilename/OutputBaseFileName lines and write a CI copy
+          $raw   = Get-Content -Raw -LiteralPath $issSrc
+          $fixed = [regex]::Replace($raw,'(?im)^\s*OutputBaseFile(Name)?\s*=.*$','; removed by CI')
+          Set-Content -LiteralPath $issCI -Value $fixed -Encoding UTF8
+
+          if (Select-String -Path $issCI -Pattern '(?i)^\s*OutputBaseFile(Name)?\s*=' ) {
+            throw "OutputBaseFilename still present in $issCI"
+          }
+
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
           if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install." }
@@ -137,28 +140,19 @@ jobs:
           $outDir = Join-Path $pwd 'dist'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
-          $issFile = Join-Path $issDir 'Build_Installer.iss'
-          if (-not (Test-Path $issFile)) { throw "Missing $issFile" }
-          if (-not (Test-Path (Join-Path $issDir 'SAM20new.ico'))) { throw "Icon not found: SAM20new.ico" }
-
-          $rawTag  = '${{ steps.ver.outputs.version }}'
-          $safeTag = $rawTag -replace '[^0-9A-Za-z_-]','_'   # stricter: no dots/spaces
-          if (-not $safeTag) { $safeTag = 'v_unknown' }
-          $outBase = "SAM_Install_${safeTag}_Build_Installer"
-          $log     = Join-Path $outDir 'iscc.log'
+          $rawTag = '${{ steps.ver.outputs.version }}'
+          $log    = Join-Path $outDir 'iscc.log'
 
           Push-Location $issDir
           try {
-            $args = @(
-              # remove '/Qp' if you want verbose output
-              "/O`"$outDir`"",
-              "/F`"$outBase`"",
-              "/DVersion=$rawTag",
-              "/DAppVersion=$rawTag",
-              "/DSourceRoot=`"$(Split-Path $issDir -Parent)`"",
-              "Build_Installer.iss"
-            )
-            & "$iscc" @args 2>&1 | Tee-Object -FilePath $log
+            & "$iscc" `
+              "/O`"$outDir`"" `
+              "/Fsetup" `
+              "/DVersion=$rawTag" `
+              "/DAppVersion=$rawTag" `
+              "/DSourceRoot=`"$(Split-Path $issDir -Parent)`"" `
+              "$issCI" 2>&1 | Tee-Object -FilePath $log
+
             if ($LASTEXITCODE -ne 0) {
               Write-Host "===== iscc.log ====="
               Get-Content $log | Write-Host
@@ -171,8 +165,8 @@ jobs:
       - name: Verify installer
         shell: pwsh
         run: |
-          $exes = Get-ChildItem dist -Filter 'SAM_Install*.exe'
-          if (-not $exes) { throw "Installer did not produce SAM_Install*.exe in dist." }
+          $exes = Get-ChildItem dist -Filter '*.exe'
+          if (-not $exes) { throw "Installer did not produce any .exe in dist." }
           $exes | Format-Table Name,Length,LastWriteTime -AutoSize
 
       - name: Upload artifact
