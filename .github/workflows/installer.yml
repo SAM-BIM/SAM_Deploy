@@ -1,14 +1,14 @@
 name: Build & Release SAM-BIM Installer
 
 on:
-  push:
-    tags: ['v*']   # e.g. v20251126.1
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (e.g. v20251126.1). If tagging, this is ignored.'
+        description: 'Version (e.g. v20251215.1). If empty a timestamp is used.'
         required: false
         default: ''
+  push:
+    tags: ['v*']
 
 jobs:
   build:
@@ -25,13 +25,6 @@ jobs:
           fetch-depth: 0
           submodules: recursive
           token: ${{ secrets.SUBMODULES_PAT }}
-
-      - name: Sync & clean submodules
-        shell: pwsh
-        run: |
-          git submodule sync --recursive
-          git submodule foreach --recursive 'git reset --hard'
-          git submodule foreach --recursive 'git clean -xfd'
 
       - name: Compute version
         id: ver
@@ -56,34 +49,25 @@ jobs:
         env:
           MSBUILDDISABLENODEREUSE: '1'
         run: |
-          $msbuildArgs = @(
-            '/t:Restore','/m:1','/nr:false','/v:m',
-            '/p:Configuration=Release',
-            '/p:UseSharedCompilation=false',
-            '/p:RunPostBuildEvent=OnOutputUpdated',
-            '/p:PostBuildEvent='
-          )
-          msbuild .\BuildAll_Release_net.csproj @msbuildArgs
+          msbuild .\BuildAll_Release_net.csproj /t:Restore /m:1 /nr:false /v:m `
+            /p:Configuration=Release /p:UseSharedCompilation=false `
+            /p:RunPostBuildEvent=OnOutputUpdated /p:PostBuildEvent=
 
       - name: Rebuild (single node)
         shell: pwsh
         env:
           MSBUILDDISABLENODEREUSE: '1'
         run: |
-          $msbuildArgs = @(
-            '/t:Rebuild','/m:1','/nr:false','/v:m',
-            '/p:Configuration=Release',
-            '/p:UseSharedCompilation=false',
-            '/p:RunPostBuildEvent=OnOutputUpdated',
-            '/p:PostBuildEvent='
-          )
-          msbuild .\BuildAll_Release_net.csproj @msbuildArgs
+          msbuild .\BuildAll_Release_net.csproj /t:Rebuild /m:1 /nr:false /v:m `
+            /p:Configuration=Release /p:UseSharedCompilation=false `
+            /p:RunPostBuildEvent=OnOutputUpdated /p:PostBuildEvent=
 
-      - name: Prepare installer staging (CI)
+      - name: Stage payload for installer
         shell: pwsh
         run: |
           $root  = (Get-Location).Path
-          $stage = Join-Path $root 'SAM_Installer\build'
+          $issDir = Join-Path $root 'SAM_Installer'
+          $stage = Join-Path $issDir 'build'
           if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
 
@@ -94,80 +78,47 @@ jobs:
             } else { Write-Host "WARN: $src not found (skipped)" }
           }
 
-          # Rooted build outputs
           Copy-IfExists (Join-Path $root 'SAM_UI\build')           (Join-Path $stage 'SAM')
           Copy-IfExists (Join-Path $root 'SAM_Windows\build')      (Join-Path $stage 'SAMdependencies')
           Copy-IfExists (Join-Path $root 'SAM_Revit\references')   (Join-Path $stage 'Rhino.Inside')
           Copy-IfExists (Join-Path $root 'SAM_Rhino_UI\build')     (Join-Path $stage 'SAM_Rhino_UI')
+          Copy-IfExists (Join-Path $root 'Documents\SAM')          (Join-Path $stage 'user\Documents\SAM')
 
+          # include helper scripts if present
+          Copy-Item (Join-Path $issDir 'register.bat')   (Join-Path $stage 'register.bat')   -Force -ErrorAction SilentlyContinue
+          Copy-Item (Join-Path $issDir 'deregister.bat') (Join-Path $stage 'deregister.bat') -Force -ErrorAction SilentlyContinue
+
+          # add Revit addin manifest into build\SAM
           $addin = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
           if (Test-Path $addin) {
             New-Item -ItemType Directory -Force -Path (Join-Path $stage 'SAM') | Out-Null
             Copy-Item $addin (Join-Path $stage 'SAM') -Force
-          } else { Write-Host "WARN: Revit add-in manifest not found at $addin" }
-
-          Copy-IfExists (Join-Path $root 'Documents\SAM') (Join-Path $stage 'user\Documents\SAM')
+          }
 
       - name: Install Inno Setup
         shell: pwsh
         run: choco install innosetup -y
 
-      # ---------- Sanitize .iss and compile ----------
-      - name: Package installer
+      - name: Compile installer (ISCC)
         shell: pwsh
         run: |
-          $issDir  = Resolve-Path 'SAM_Installer' -ErrorAction Stop
-          $issSrc  = Join-Path $issDir 'Build_Installer.iss'
-          $issCI   = Join-Path $issDir 'Build_Installer.CI.iss'
-          $icon    = Join-Path $issDir 'SAM20new.ico'
-
-          if (-not (Test-Path $issSrc)) { throw "Missing $issSrc" }
-          if (-not (Test-Path $icon))   { throw "Icon not found: $icon" }
-
-          # Strip any OutputBaseFilename/OutputBaseFileName lines and write a CI copy
-          $raw   = Get-Content -Raw -LiteralPath $issSrc
-          $fixed = [regex]::Replace($raw,'(?im)^\s*OutputBaseFile(Name)?\s*=.*$','; removed by CI')
-          Set-Content -LiteralPath $issCI -Value $fixed -Encoding UTF8
-
-          if (Select-String -Path $issCI -Pattern '(?i)^\s*OutputBaseFile(Name)?\s*=' ) {
-            throw "OutputBaseFilename still present in $issCI"
-          }
-
+          $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
-          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install." }
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found." }
 
           $outDir = Join-Path $pwd 'dist'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
-          $rawTag = '${{ steps.ver.outputs.version }}'
-          $log    = Join-Path $outDir 'iscc.log'
+          $raw   = '${{ steps.ver.outputs.version }}'
+          $safe  = ($raw -replace '[^0-9A-Za-z_.-]','_')
+          $fname = "SAM_Install_$safe"
 
           Push-Location $issDir
           try {
-            & "$iscc" `
-              "/O`"$outDir`"" `
-              "/Fsetup" `
-              "/DVersion=$rawTag" `
-              "/DAppVersion=$rawTag" `
-              "/DSourceRoot=`"$(Split-Path $issDir -Parent)`"" `
-              "$issCI" 2>&1 | Tee-Object -FilePath $log
-
-            if ($LASTEXITCODE -ne 0) {
-              Write-Host "===== iscc.log ====="
-              Get-Content $log | Write-Host
-              throw "ISCC failed with exit code $LASTEXITCODE"
-            }
-          } finally {
-            Pop-Location
-          }
-
-      - name: Verify installer
-        shell: pwsh
-        run: |
-          $exes = Get-ChildItem dist -Filter '*.exe'
-          if (-not $exes) { throw "Installer did not produce any .exe in dist." }
-          $exes | Format-Table Name,Length,LastWriteTime -AutoSize
+            & "$iscc" "/O`"$outDir`"" "/F`"$fname`"" "Build_Installer.iss"
+            if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)" }
+          } finally { Pop-Location }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -175,23 +126,3 @@ jobs:
           name: SAM_Install
           path: dist/*.exe
           if-no-files-found: error
-
-  release:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
-    runs-on: windows-2022
-    permissions:
-      contents: write
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: SAM_Install
-          path: ./dist
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.build.outputs.version }}
-          name:     ${{ needs.build.outputs.version }}
-          files:    ./dist/*.exe
