@@ -2,11 +2,11 @@ name: Build & Release SAM-BIM Installer
 
 on:
   push:
-    tags: ['v*']     # e.g. v20251215.1
+    tags: ['v*']   # e.g. v20251126.1
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (e.g. v20251215.1). If tagging, ignored.'
+        description: 'Version (e.g. v20251126.1). If tagging, this is ignored.'
         required: false
         default: ''
 
@@ -56,20 +56,30 @@ jobs:
         env:
           MSBUILDDISABLENODEREUSE: '1'
         run: |
-          msbuild .\BuildAll_Release_net.csproj /t:Restore /m:1 /nr:false /v:m `
-            /p:Configuration=Release /p:UseSharedCompilation=false `
-            /p:RunPostBuildEvent=OnOutputUpdated /p:PostBuildEvent=
+          $msbuildArgs = @(
+            '/t:Restore','/m:1','/nr:false','/v:m',
+            '/p:Configuration=Release',
+            '/p:UseSharedCompilation=false',
+            '/p:RunPostBuildEvent=OnOutputUpdated',
+            '/p:PostBuildEvent='
+          )
+          msbuild .\BuildAll_Release_net.csproj @msbuildArgs
 
       - name: Rebuild (single node)
         shell: pwsh
         env:
           MSBUILDDISABLENODEREUSE: '1'
         run: |
-          msbuild .\BuildAll_Release_net.csproj /t:Rebuild /m:1 /nr:false /v:m `
-            /p:Configuration=Release /p:UseSharedCompilation=false `
-            /p:RunPostBuildEvent=OnOutputUpdated /p:PostBuildEvent=
+          $msbuildArgs = @(
+            '/t:Rebuild','/m:1','/nr:false','/v:m',
+            '/p:Configuration=Release',
+            '/p:UseSharedCompilation=false',
+            '/p:RunPostBuildEvent=OnOutputUpdated',
+            '/p:PostBuildEvent='
+          )
+          msbuild .\BuildAll_Release_net.csproj @msbuildArgs
 
-      - name: Prepare installer staging
+      - name: Prepare installer staging (CI)
         shell: pwsh
         run: |
           $root  = (Get-Location).Path
@@ -84,6 +94,7 @@ jobs:
             } else { Write-Host "WARN: $src not found (skipped)" }
           }
 
+          # Rooted build outputs
           Copy-IfExists (Join-Path $root 'SAM_UI\build')           (Join-Path $stage 'SAM')
           Copy-IfExists (Join-Path $root 'SAM_Windows\build')      (Join-Path $stage 'SAMdependencies')
           Copy-IfExists (Join-Path $root 'SAM_Revit\references')   (Join-Path $stage 'Rhino.Inside')
@@ -93,7 +104,7 @@ jobs:
           if (Test-Path $addin) {
             New-Item -ItemType Directory -Force -Path (Join-Path $stage 'SAM') | Out-Null
             Copy-Item $addin (Join-Path $stage 'SAM') -Force
-          }
+          } else { Write-Host "WARN: Revit add-in manifest not found at $addin" }
 
           Copy-IfExists (Join-Path $root 'Documents\SAM') (Join-Path $stage 'user\Documents\SAM')
 
@@ -101,75 +112,62 @@ jobs:
         shell: pwsh
         run: choco install innosetup -y
 
-      - name: Generate CI .iss and compile
+      # ---------- Sanitize .iss and compile ----------
+      - name: Package installer
         shell: pwsh
         run: |
-          $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
-          $issCI  = Join-Path $issDir 'Build_Installer.CI.iss'
-          if (-not (Test-Path (Join-Path $issDir 'SAM20new.ico'))) { throw "Icon not found: SAM20new.ico" }
+          $issDir  = Resolve-Path 'SAM_Installer' -ErrorAction Stop
+          $issSrc  = Join-Path $issDir 'Build_Installer.iss'
+          $issCI   = Join-Path $issDir 'Build_Installer.CI.iss'
+          $icon    = Join-Path $issDir 'SAM20new.ico'
 
-          $iss = @"
-#ifndef Version
-  #define Version "${{ steps.ver.outputs.version }}"
-#endif
-#ifndef AppVersion
-  #define AppVersion Version
-#endif
+          if (-not (Test-Path $issSrc)) { throw "Missing $issSrc" }
+          if (-not (Test-Path $icon))   { throw "Icon not found: $icon" }
 
-[Setup]
-AppId={{6770DD83-5694-4607-8703-B3D3AC3CFD3C}}
-AppName=SAM
-AppPublisher=SAM-BIM
-AppVersion={#AppVersion}
-DefaultDirName={userappdata}\SAM
-DisableDirPage=yes
-DefaultGroupName=SAM
-DisableProgramGroupPage=yes
-Compression=lzma
-SolidCompression=yes
-PrivilegesRequired=lowest
-SetupIconFile={#SourcePath}SAM20new.ico
+          # Strip any OutputBaseFilename/OutputBaseFileName lines and write a CI copy
+          $raw   = Get-Content -Raw -LiteralPath $issSrc
+          $fixed = [regex]::Replace($raw,'(?im)^\s*OutputBaseFile(Name)?\s*=.*$','; removed by CI')
+          Set-Content -LiteralPath $issCI -Value $fixed -Encoding UTF8
 
-[Dirs]
-Name: "{userappdata}\SAM"
-
-[Files]
-Source: "build\SAM\*";                 DestDir: "{userappdata}\SAM";                                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAMdependencies\*";     DestDir: "{userappdata}\SAM\SAMdependencies";                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\Rhino.Inside\*";        DestDir: "{userappdata}\SAM\Rhino.Inside";                   Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAM_Rhino_UI\*";        DestDir: "{userappdata}\McNeel\Rhinoceros\packages\7.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAM_Rhino_UI\*";        DestDir: "{userappdata}\McNeel\Rhinoceros\packages\8.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\register.bat";          DestDir: "{userappdata}\SAM";                                Flags: ignoreversion skipifsourcedoesntexist
-Source: "build\deregister.bat";        DestDir: "{userappdata}\SAM";                                Flags: ignoreversion skipifsourcedoesntexist
-Source: "build\user\Documents\SAM\*";  DestDir: "{userdocs}\SAM";                                   Flags: onlyifdoesntexist recursesubdirs createallsubdirs skipifsourcedoesntexist
-
-[Run]
-Filename: "{userappdata}\SAM\register.bat";                WorkingDir: "{userappdata}\SAM";                 Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\register.bat'))
-Filename: "{userappdata}\SAM\SAMdependencies\install.bat"; WorkingDir: "{userappdata}\SAM\SAMdependencies"; Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\SAMdependencies\install.bat'))
-
-[UninstallRun]
-Filename: "{userappdata}\SAM\deregister.bat";              WorkingDir: "{userappdata}\SAM";                 Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\deregister.bat'))
-
-[UninstallDelete]
-Type: filesandordirs; Name: "{userappdata}\SAM"
-"@
-          Set-Content -LiteralPath $issCI -Value $iss -Encoding UTF8
+          if (Select-String -Path $issCI -Pattern '(?i)^\s*OutputBaseFile(Name)?\s*=' ) {
+            throw "OutputBaseFilename still present in $issCI"
+          }
 
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
-          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found." }
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install." }
 
           $outDir = Join-Path $pwd 'dist'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+
           $rawTag = '${{ steps.ver.outputs.version }}'
-          $safeTag = ($rawTag -replace '[^0-9A-Za-z_-]','_')
-          $outBase = "SAM_Install_$safeTag"
+          $log    = Join-Path $outDir 'iscc.log'
 
           Push-Location $issDir
           try {
-            & "$iscc" "/O`"$outDir`"" "/F`"$outBase`"" "Build_Installer.CI.iss"
-            if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)" }
-          } finally { Pop-Location }
+            & "$iscc" `
+              "/O`"$outDir`"" `
+              "/Fsetup" `
+              "/DVersion=$rawTag" `
+              "/DAppVersion=$rawTag" `
+              "/DSourceRoot=`"$(Split-Path $issDir -Parent)`"" `
+              "$issCI" 2>&1 | Tee-Object -FilePath $log
+
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "===== iscc.log ====="
+              Get-Content $log | Write-Host
+              throw "ISCC failed with exit code $LASTEXITCODE"
+            }
+          } finally {
+            Pop-Location
+          }
+
+      - name: Verify installer
+        shell: pwsh
+        run: |
+          $exes = Get-ChildItem dist -Filter '*.exe'
+          if (-not $exes) { throw "Installer did not produce any .exe in dist." }
+          $exes | Format-Table Name,Length,LastWriteTime -AutoSize
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -190,6 +188,7 @@ Type: filesandordirs; Name: "{userappdata}\SAM"
         with:
           name: SAM_Install
           path: ./dist
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
