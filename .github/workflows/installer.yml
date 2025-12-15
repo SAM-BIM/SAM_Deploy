@@ -99,13 +99,26 @@ jobs:
         shell: pwsh
         run: choco install innosetup -y
 
+      - name: Sanitize Inno script (CI copy)
+        shell: pwsh
+        run: |
+          $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
+          $src   = Join-Path $issDir 'Build_Installer.iss'
+          $ci    = Join-Path $issDir 'Build_Installer.CI.iss'
+          if (-not (Test-Path $src)) { throw "Missing $src" }
+
+          # strip any OutputBaseFileName/OutputDir lines
+          (Get-Content $src -Raw) `
+            -replace '^[ \t]*OutputBaseFileName\s*=.*\r?\n', '' `
+            -replace '^[ \t]*OutputDir\s*=.*\r?\n', '' |
+            Set-Content -Path $ci -Encoding UTF8
+
       - name: Compile installer (ISCC)
         shell: pwsh
         run: |
           $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
-          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found." }
 
           $outDir = Join-Path $pwd 'dist'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
@@ -116,7 +129,7 @@ jobs:
 
           Push-Location $issDir
           try {
-            & "$iscc" "/O`"$outDir`"" "/F`"$fname`"" "Build_Installer.iss"
+            & "$iscc" "/O`"$outDir`"" "/F`"$fname`"" "Build_Installer.CI.iss"
             if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)" }
           } finally { Pop-Location }
 
@@ -126,3 +139,4 @@ jobs:
           name: SAM_Install
           path: dist/*.exe
           if-no-files-found: error
+
