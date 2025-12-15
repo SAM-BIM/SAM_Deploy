@@ -1,15 +1,14 @@
-name: SAM Installer
+name: Build & Release SAM-BIM Installer
 
 on:
+  push:
+    tags: ['v*']     # e.g. v20251215.1
   workflow_dispatch:
     inputs:
       version:
         description: 'Version (e.g. v20251215.1). If tagging, ignored.'
         required: false
         default: ''
-  push:
-    tags:
-      - 'v*'   # still allow tag builds
 
 jobs:
   build:
@@ -26,6 +25,13 @@ jobs:
           fetch-depth: 0
           submodules: recursive
           token: ${{ secrets.SUBMODULES_PAT }}
+
+      - name: Sync & clean submodules
+        shell: pwsh
+        run: |
+          git submodule sync --recursive
+          git submodule foreach --recursive 'git reset --hard'
+          git submodule foreach --recursive 'git clean -xfd'
 
       - name: Compute version
         id: ver
@@ -63,7 +69,7 @@ jobs:
             /p:Configuration=Release /p:UseSharedCompilation=false `
             /p:RunPostBuildEvent=OnOutputUpdated /p:PostBuildEvent=
 
-      - name: Stage payload for installer
+      - name: Prepare installer staging
         shell: pwsh
         run: |
           $root  = (Get-Location).Path
