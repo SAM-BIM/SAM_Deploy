@@ -83,11 +83,9 @@ jobs:
           Copy-IfExists (Join-Path $root 'SAM_Rhino_UI\build')     (Join-Path $stage 'SAM_Rhino_UI')
           Copy-IfExists (Join-Path $root 'Documents\SAM')          (Join-Path $stage 'user\Documents\SAM')
 
-          # include helper scripts if present
           Copy-Item (Join-Path $issDir 'register.bat')   (Join-Path $stage 'register.bat')   -Force -ErrorAction SilentlyContinue
           Copy-Item (Join-Path $issDir 'deregister.bat') (Join-Path $stage 'deregister.bat') -Force -ErrorAction SilentlyContinue
 
-          # add Revit addin manifest into build\SAM
           $addin = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
           if (Test-Path $addin) {
             New-Item -ItemType Directory -Force -Path (Join-Path $stage 'SAM') | Out-Null
@@ -107,20 +105,28 @@ jobs:
           if (-not (Test-Path $src)) { throw "Missing $src" }
 
           $content = Get-Content $src -Raw
-          # remove any OutputBaseFile*/OutputDir lines (case-insensitive, multiline)
-          $content = [regex]::Replace($content, '(?im)^[\t ]*OutputBaseFile(Name|name)\s*=.*$', '')
-          $content = [regex]::Replace($content, '(?im)^[\t ]*OutputBaseFilename\s*=.*$', '')
-          $content = [regex]::Replace($content, '(?im)^[\t ]*OutputBaseFileName\s*=.*$', '')
-          $content = [regex]::Replace($content, '(?im)^[\t ]*OutputDir\s*=.*$', '')
+
+          # remove any *directive* lines (ignore comments)
+          $patterns = @(
+            '(?im)^(?!\s*;)\s*OutputBaseFile(Name|name)\s*=.*$',
+            '(?im)^(?!\s*;)\s*OutputDir\s*=.*$'
+          )
+          foreach ($p in $patterns) { $content = [regex]::Replace($content, $p, '') }
+
           # compact blank lines
           $content = [regex]::Replace($content, '(\r?\n){3,}', "`r`n`r`n")
           Set-Content -Path $ci -Value $content -Encoding UTF8
 
-          # Assert it's clean
-          if (Select-String -Quiet -Path $ci -Pattern 'OutputBaseFile|OutputDir') {
-            Get-Content $ci | Select-Object -First 120 | ForEach-Object { Write-Host $_ }
-            throw "Sanitizer failed: OutputBaseFile*/OutputDir still present in CI .iss"
+          # assert: no active directives remain (comments allowed)
+          $leftovers = Select-String -Path $ci -Pattern '(?im)^(?!\s*;)\s*Output(BaseFile(Name|name)|Dir)\s*='
+          if ($leftovers) {
+            Write-Host '===== Offending lines in CI .iss ====='
+            $leftovers | ForEach-Object { Write-Host ("Line {0}: {1}" -f $_.LineNumber, $_.Line.Trim()) }
+            throw "Sanitizer failed: OutputBaseFile*/OutputDir directive still present in CI .iss"
           }
+
+          Write-Host '===== CI .iss header preview ====='
+          Get-Content $ci | Select-Object -First 80 | ForEach-Object { Write-Host $_ }
 
       - name: Compile installer (ISCC)
         shell: pwsh
@@ -162,7 +168,6 @@ jobs:
         with:
           name: SAM_Install
           path: ./dist
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
