@@ -97,61 +97,7 @@ jobs:
         shell: pwsh
         run: choco install innosetup -y
 
-      - name: Generate CI .iss (no OutputBaseFileName)
-        shell: pwsh
-        run: |
-          $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
-          $ci  = Join-Path $issDir 'Build_Installer.CI.iss'
-          $ver = '${{ steps.ver.outputs.version }}'
-          $iss = @"
-#ifndef Version
-  #define Version "$ver"
-#endif
-#ifndef AppVersion
-  #define AppVersion Version
-#endif
-
-[Setup]
-AppId={{6770DD83-5694-4607-8703-B3D3AC3CFD3C}}
-AppName=SAM
-AppPublisher=SAM-BIM
-AppVersion={#AppVersion}
-DefaultDirName={userappdata}\SAM
-DisableDirPage=yes
-DefaultGroupName=SAM
-DisableProgramGroupPage=yes
-Compression=lzma
-SolidCompression=yes
-PrivilegesRequired=lowest
-SetupIconFile={#SourcePath}SAM20new.ico
-
-[Dirs]
-Name: "{userappdata}\SAM"
-
-[Files]
-Source: "build\SAM\*";                 DestDir: "{userappdata}\SAM";                                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAMdependencies\*";     DestDir: "{userappdata}\SAM\SAMdependencies";                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\Rhino.Inside\*";        DestDir: "{userappdata}\SAM\Rhino.Inside";                   Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAM_Rhino_UI\*";        DestDir: "{userappdata}\McNeel\Rhinoceros\packages\7.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAM_Rhino_UI\*";        DestDir: "{userappdata}\McNeel\Rhinoceros\packages\8.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\register.bat";          DestDir: "{userappdata}\SAM";                                Flags: ignoreversion skipifsourcedoesntexist
-Source: "build\deregister.bat";        DestDir: "{userappdata}\SAM";                                Flags: ignoreversion skipifsourcedoesntexist
-Source: "build\user\Documents\SAM\*";  DestDir: "{userdocs}\SAM";                                   Flags: onlyifdoesntexist recursesubdirs createallsubdirs skipifsourcedoesntexist
-
-[Run]
-Filename: "{userappdata}\SAM\SAMdependencies\install.bat"; WorkingDir: "{userappdata}\SAM\SAMdependencies"; Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\SAMdependencies\install.bat'))
-Filename: "{userappdata}\SAM\register.bat";                WorkingDir: "{userappdata}\SAM";                 Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\register.bat'))
-
-[UninstallRun]
-Filename: "{userappdata}\SAM\deregister.bat";              WorkingDir: "{userappdata}\SAM";                 Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\deregister.bat'))
-
-[UninstallDelete]
-Type: filesandordirs; Name: "{userappdata}\SAM"
-"@
-          Set-Content -LiteralPath $ci -Value $iss -Encoding UTF8
-          Write-Host "Wrote CI script:"; Get-Content $ci -TotalCount 40 | Write-Host
-
-      - name: Compile installer (ISCC)
+      - name: Compile installer (ISCC) using CI script
         shell: pwsh
         run: |
           $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
@@ -168,7 +114,7 @@ Type: filesandordirs; Name: "{userappdata}\SAM"
 
           Push-Location $issDir
           try {
-            & "$iscc" "/O`"$outDir`"" "/F`"$fname`"" "Build_Installer.CI.iss"
+            & "$iscc" "/O`"$outDir`"" "/F`"$fname`"" "/DVersion=$raw" "/DAppVersion=$raw" "Build_Installer.CI.iss"
             if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)" }
           } finally { Pop-Location }
 
