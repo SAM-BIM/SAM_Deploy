@@ -92,6 +92,21 @@ jobs:
             New-Item -ItemType Directory -Force -Path (Join-Path $stage 'SAM') | Out-Null
             Copy-Item $addin (Join-Path $stage 'SAM') -Force
           }
+          
+      - name: Ensure CI .iss exists
+        shell: pwsh
+        run: |
+          $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
+          $src = Join-Path $issDir 'Build_Installer.iss'
+          $ci  = Join-Path $issDir 'Build_Installer.CI.iss'
+          if (-not (Test-Path $ci)) {
+            if (-not (Test-Path $src)) { throw "Missing $src" }
+            (Get-Content $src -Raw) `
+              -replace '(?im)^[ \t]*OutputBaseFile(Name)?\s*=.*$', '' `
+              -replace '(?im)^[ \t]*OutputDir\s*=.*$', '' |
+              Set-Content -Path $ci -Encoding UTF8
+          }
+          Get-Item $ci | Format-List FullName,Length,LastWriteTime
 
       - name: Install Inno Setup
         shell: pwsh
@@ -101,6 +116,9 @@ jobs:
         shell: pwsh
         run: |
           $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
+          $ci   = Join-Path $issDir 'Build_Installer.CI.iss'
+          if (-not (Test-Path $ci)) { throw "Missing $ci" }
+
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
           if (-not (Test-Path $iscc)) { throw "ISCC.exe not found." }
@@ -112,11 +130,8 @@ jobs:
           $safe  = ($raw -replace '[^0-9A-Za-z_.-]','_')
           $fname = "SAM_Install_$safe"
 
-          Push-Location $issDir
-          try {
-            & "$iscc" "/O`"$outDir`"" "/F`"$fname`"" "/DVersion=$raw" "/DAppVersion=$raw" "Build_Installer.CI.iss"
-            if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)" }
-          } finally { Pop-Location }
+          & "$iscc" "/O`"$outDir`"" "/F`"$fname`"" "/DVersion=$raw" "/DAppVersion=$raw" "`"$ci`""
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)" }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
