@@ -96,13 +96,12 @@ jobs:
         shell: pwsh
         run: choco install innosetup -y
 
-      # --- Generate a clean CI .iss (no OutputBaseFileName/OutputDir) ---
       - name: Generate CI .iss (clean template)
         shell: pwsh
         run: |
           $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
           $ci  = Join-Path $issDir 'Build_Installer.CI.iss'
-          @"
+          @'
 #define AppVersion "${{ steps.ver.outputs.version }}"
 
 [Setup]
@@ -141,7 +140,7 @@ Filename: "{userappdata}\SAM\deregister.bat";              WorkingDir: "{userapp
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{userappdata}\SAM"
-"@ | Set-Content -Path $ci -Encoding UTF8
+'@ | Set-Content -Path $ci -Encoding UTF8
 
       - name: Compile installer (ISCC)
         shell: pwsh
