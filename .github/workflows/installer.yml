@@ -84,11 +84,9 @@ jobs:
           Copy-IfExists (Join-Path $root 'SAM_Rhino_UI\build')     (Join-Path $stage 'SAM_Rhino_UI')
           Copy-IfExists (Join-Path $root 'Documents\SAM')          (Join-Path $stage 'user\Documents\SAM')
 
-          # include helper scripts if present
           Copy-Item (Join-Path $issDir 'register.bat')   (Join-Path $stage 'register.bat')   -Force -ErrorAction SilentlyContinue
           Copy-Item (Join-Path $issDir 'deregister.bat') (Join-Path $stage 'deregister.bat') -Force -ErrorAction SilentlyContinue
 
-          # add Revit addin manifest into build\SAM
           $addin = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
           if (Test-Path $addin) {
             New-Item -ItemType Directory -Force -Path (Join-Path $stage 'SAM') | Out-Null
@@ -99,23 +97,59 @@ jobs:
         shell: pwsh
         run: choco install innosetup -y
 
-      - name: Sanitize Inno script (CI copy)
+      - name: Generate CI .iss (no OutputBaseFileName)
         shell: pwsh
         run: |
           $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
-          $src   = Join-Path $issDir 'Build_Installer.iss'
-          $ci    = Join-Path $issDir 'Build_Installer.CI.iss'
-          if (-not (Test-Path $src)) { throw "Missing $src" }
+          $ci  = Join-Path $issDir 'Build_Installer.CI.iss'
+          $ver = '${{ steps.ver.outputs.version }}'
+          $iss = @"
+#ifndef Version
+  #define Version "$ver"
+#endif
+#ifndef AppVersion
+  #define AppVersion Version
+#endif
 
-          # Strip any OutputBaseFileName/OutputDir lines (any case)
-          $text = Get-Content $src -Raw
-          $text = $text -replace '(?im)^[ \t]*OutputBaseFileName\s*=.*$', ''
-          $text = $text -replace '(?im)^[ \t]*OutputBaseFilename\s*=.*$', ''
-          $text = $text -replace '(?im)^[ \t]*OutputDir\s*=.*$', ''
-          Set-Content -Path $ci -Value $text -Encoding UTF8
+[Setup]
+AppId={{6770DD83-5694-4607-8703-B3D3AC3CFD3C}}
+AppName=SAM
+AppPublisher=SAM-BIM
+AppVersion={#AppVersion}
+DefaultDirName={userappdata}\SAM
+DisableDirPage=yes
+DefaultGroupName=SAM
+DisableProgramGroupPage=yes
+Compression=lzma
+SolidCompression=yes
+PrivilegesRequired=lowest
+SetupIconFile={#SourcePath}SAM20new.ico
 
-          Write-Host "---- Sanitized .iss (first lines) ----"
-          Get-Content $ci -TotalCount 60 | Write-Host
+[Dirs]
+Name: "{userappdata}\SAM"
+
+[Files]
+Source: "build\SAM\*";                 DestDir: "{userappdata}\SAM";                                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\SAMdependencies\*";     DestDir: "{userappdata}\SAM\SAMdependencies";                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\Rhino.Inside\*";        DestDir: "{userappdata}\SAM\Rhino.Inside";                   Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\SAM_Rhino_UI\*";        DestDir: "{userappdata}\McNeel\Rhinoceros\packages\7.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\SAM_Rhino_UI\*";        DestDir: "{userappdata}\McNeel\Rhinoceros\packages\8.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\register.bat";          DestDir: "{userappdata}\SAM";                                Flags: ignoreversion skipifsourcedoesntexist
+Source: "build\deregister.bat";        DestDir: "{userappdata}\SAM";                                Flags: ignoreversion skipifsourcedoesntexist
+Source: "build\user\Documents\SAM\*";  DestDir: "{userdocs}\SAM";                                   Flags: onlyifdoesntexist recursesubdirs createallsubdirs skipifsourcedoesntexist
+
+[Run]
+Filename: "{userappdata}\SAM\SAMdependencies\install.bat"; WorkingDir: "{userappdata}\SAM\SAMdependencies"; Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\SAMdependencies\install.bat'))
+Filename: "{userappdata}\SAM\register.bat";                WorkingDir: "{userappdata}\SAM";                 Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\register.bat'))
+
+[UninstallRun]
+Filename: "{userappdata}\SAM\deregister.bat";              WorkingDir: "{userappdata}\SAM";                 Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\deregister.bat'))
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{userappdata}\SAM"
+"@
+          Set-Content -LiteralPath $ci -Value $iss -Encoding UTF8
+          Write-Host "Wrote CI script:"; Get-Content $ci -TotalCount 40 | Write-Host
 
       - name: Compile installer (ISCC)
         shell: pwsh
