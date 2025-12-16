@@ -116,7 +116,7 @@ jobs:
         shell: pwsh
         run: |
           $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
-          $ci   = Join-Path $issDir 'Build_Installer.CI.iss'
+          $ci     = Join-Path $issDir 'Build_Installer.CI.iss'
           if (-not (Test-Path $ci)) { throw "Missing $ci" }
 
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
@@ -130,7 +130,10 @@ jobs:
           $safe  = ($raw -replace '[^0-9A-Za-z_.-]','_')
           $fname = "SAM_Install_$safe"
 
-          & "$iscc" "/O`"$outDir`"" "/F`"$fname`"" "/DVersion=$raw" "/DAppVersion=$raw" "`"$ci`""
+          # PASS ARGS AS ARRAY (no quotes inside strings)
+          $args = @("/O$outDir", "/F$fname", "/DVersion=$raw", "/DAppVersion=$raw", $ci)
+
+          & $iscc @args
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)" }
 
       - name: Upload artifact
