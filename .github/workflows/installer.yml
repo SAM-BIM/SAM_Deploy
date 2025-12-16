@@ -34,7 +34,6 @@ jobs:
           if (-not $tag -or -not $tag.StartsWith('v')) { $tag = "${{ github.event.inputs.version }}" }
           if (-not $tag) { $tag = "v$(Get-Date -Format yyyyMMdd).${{ github.run_number }}" }
           "version=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          Write-Host "Version: $tag"
 
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
@@ -103,15 +102,25 @@ jobs:
         shell: pwsh
         run: |
           $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
-          $src   = Join-Path $issDir 'Build_Installer.iss'
-          $ci    = Join-Path $issDir 'Build_Installer.CI.iss'
+          $src = Join-Path $issDir 'Build_Installer.iss'
+          $ci  = Join-Path $issDir 'Build_Installer.CI.iss'
           if (-not (Test-Path $src)) { throw "Missing $src" }
 
-          # strip any OutputBaseFileName/OutputDir lines
-          (Get-Content $src -Raw) `
-            -replace '^[ \t]*OutputBaseFileName\s*=.*\r?\n', '' `
-            -replace '^[ \t]*OutputDir\s*=.*\r?\n', '' |
-            Set-Content -Path $ci -Encoding UTF8
+          $content = Get-Content $src -Raw
+          # remove any OutputBaseFile*/OutputDir lines (case-insensitive, multiline)
+          $content = [regex]::Replace($content, '(?im)^[\t ]*OutputBaseFile(Name|name)\s*=.*$', '')
+          $content = [regex]::Replace($content, '(?im)^[\t ]*OutputBaseFilename\s*=.*$', '')
+          $content = [regex]::Replace($content, '(?im)^[\t ]*OutputBaseFileName\s*=.*$', '')
+          $content = [regex]::Replace($content, '(?im)^[\t ]*OutputDir\s*=.*$', '')
+          # compact blank lines
+          $content = [regex]::Replace($content, '(\r?\n){3,}', "`r`n`r`n")
+          Set-Content -Path $ci -Value $content -Encoding UTF8
+
+          # Assert it's clean
+          if (Select-String -Quiet -Path $ci -Pattern 'OutputBaseFile|OutputDir') {
+            Get-Content $ci | Select-Object -First 120 | ForEach-Object { Write-Host $_ }
+            throw "Sanitizer failed: OutputBaseFile*/OutputDir still present in CI .iss"
+          }
 
       - name: Compile installer (ISCC)
         shell: pwsh
@@ -119,6 +128,7 @@ jobs:
           $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found." }
 
           $outDir = Join-Path $pwd 'dist'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
@@ -140,3 +150,22 @@ jobs:
           path: dist/*.exe
           if-no-files-found: error
 
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    runs-on: windows-2022
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: SAM_Install
+          path: ./dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build.outputs.version }}
+          name:     ${{ needs.build.outputs.version }}
+          files:    ./dist/*.exe
