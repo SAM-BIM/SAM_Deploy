@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (e.g. v20251215.1). If empty a timestamp is used.'
+        description: 'Version (e.g. v20251215.1). If empty, a timestamp is used.'
         required: false
         default: ''
   push:
@@ -96,53 +96,19 @@ jobs:
         shell: pwsh
         run: choco install innosetup -y
 
-      # Generate a clean CI script (fixed OutputBaseFilename, no OutputDir)
-      - name: Generate CI .iss (clean template)
+      - name: Sanitize Inno script (CI copy)
         shell: pwsh
         run: |
-          $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
-          $ci  = Join-Path $issDir 'Build_Installer.CI.iss'
-          @"
-#define AppVersion "${{ steps.ver.outputs.version }}"
-
-[Setup]
-AppId={{6770DD83-5694-4607-8703-B3D3AC3CFD3C}}
-AppName=SAM
-AppPublisher=SAM-BIM
-AppVersion={#AppVersion}
-OutputBaseFilename=SAM_Install
-DefaultDirName={userappdata}\SAM
-DisableDirPage=yes
-DefaultGroupName=SAM
-DisableProgramGroupPage=yes
-Compression=lzma
-SolidCompression=yes
-PrivilegesRequired=lowest
-SetupIconFile={#SourcePath}SAM20new.ico
-
-[Dirs]
-Name: "{userappdata}\SAM"
-
-[Files]
-Source: "build\SAM\*";                 DestDir: "{userappdata}\SAM";                                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAMdependencies\*";     DestDir: "{userappdata}\SAM\SAMdependencies";                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\Rhino.Inside\*";        DestDir: "{userappdata}\SAM\Rhino.Inside";                   Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAM_Rhino_UI\*";        DestDir: "{userappdata}\McNeel\Rhinoceros\packages\7.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAM_Rhino_UI\*";        DestDir: "{userappdata}\McNeel\Rhinoceros\packages\8.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\register.bat";          DestDir: "{userappdata}\SAM";                                Flags: ignoreversion skipifsourcedoesntexist
-Source: "build\deregister.bat";        DestDir: "{userappdata}\SAM";                                Flags: ignoreversion skipifsourcedoesntexist
-Source: "build\user\Documents\SAM\*";  DestDir: "{userdocs}\SAM";                                   Flags: onlyifdoesntexist recursesubdirs createallsubdirs skipifsourcedoesntexist
-
-[Run]
-Filename: "{userappdata}\SAM\SAMdependencies\install.bat"; WorkingDir: "{userappdata}\SAM\SAMdependencies"; Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\SAMdependencies\install.bat'))
-Filename: "{userappdata}\SAM\register.bat";                WorkingDir: "{userappdata}\SAM";                 Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\register.bat'))
-
-[UninstallRun]
-Filename: "{userappdata}\SAM\deregister.bat";              WorkingDir: "{userappdata}\SAM";                 Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\deregister.bat'))
-
-[UninstallDelete]
-Type: filesandordirs; Name: "{userappdata}\SAM"
-"@ | Set-Content -Path $ci -Encoding UTF8
+          $src = 'SAM_Installer\Build_Installer.iss'
+          $dst = 'SAM_Installer\Build_Installer.CI.iss'
+          $c = Get-Content $src -Raw
+          # drop any OutputBaseFileName / OutputDir lines (case-insensitive)
+          $c = $c -replace '(?im)^[ \t]*OutputBaseFileName[ \t]*=.*\r?\n',''
+          $c = $c -replace '(?im)^[ \t]*OutputDir[ \t]*=.*\r?\n',''
+          Set-Content -Path $dst -Value $c -Encoding ascii
+          if (Select-String -Path $dst -Pattern 'OutputBaseFileName|OutputDir' -SimpleMatch) {
+            throw 'Sanitizer failed: OutputBaseFileName/OutputDir still present in CI .iss'
+          }
 
       - name: Compile installer (ISCC)
         shell: pwsh
@@ -155,22 +121,14 @@ Type: filesandordirs; Name: "{userappdata}\SAM"
           $outDir = Join-Path $pwd 'dist'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
+          $safe  = ('${{ steps.ver.outputs.version }}' -replace '[^0-9A-Za-z_.-]','_')
+          $fname = "SAM_Install_$safe"
+
           Push-Location $issDir
           try {
-            & "$iscc" "/O`"$outDir`"" "Build_Installer.CI.iss"
+            & "$iscc" "/O`"$outDir`"" "/F`"$fname`"" "Build_Installer.CI.iss"
             if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)" }
           } finally { Pop-Location }
-
-      - name: Rename with version and upload
-        shell: pwsh
-        run: |
-          $outDir = Join-Path $pwd 'dist'
-          $safe  = ('${{ steps.ver.outputs.version }}' -replace '[^0-9A-Za-z_.-]','_')
-          $src   = Get-ChildItem $outDir -Filter 'SAM_Install*.exe' | Sort-Object LastWriteTime -Desc | Select-Object -First 1
-          if (-not $src) { throw "Installer EXE not found in dist." }
-          $dst   = Join-Path $outDir ("SAM_Install_{0}.exe" -f $safe)
-          Move-Item $src.FullName $dst -Force
-          Write-Host "OUT: $dst"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
