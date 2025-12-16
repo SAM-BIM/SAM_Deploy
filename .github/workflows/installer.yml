@@ -96,7 +96,7 @@ jobs:
         shell: pwsh
         run: choco install innosetup -y
 
-      # Write a FRESH CI .iss with NO OutputBaseFileName/OutputDir
+      # Generate a fresh CI .iss with NO OutputBaseFileName/OutputDir lines
       - name: Generate CI .iss
         shell: pwsh
         run: |
@@ -142,6 +142,10 @@ Filename: "{userappdata}\SAM\deregister.bat";              WorkingDir: "{userapp
 [UninstallDelete]
 Type: filesandordirs; Name: "{userappdata}\SAM"
 "@ | Set-Content -Path $ci -Encoding UTF8
+          # sanity check: ensure no OutputBaseFileName/OutputDir left
+          if (Select-String -Path $ci -Pattern 'OutputBaseFileName|OutputDir' -SimpleMatch) {
+            throw 'CI .iss still has OutputBaseFileName/OutputDir'
+          }
 
       - name: Compile installer (ISCC)
         shell: pwsh
