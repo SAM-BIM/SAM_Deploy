@@ -78,38 +78,44 @@ jobs:
             } else { Write-Host "WARN: $src not found (skipped)" }
           }
 
-          Copy-IfExists (Join-Path $root 'SAM_UI\build')           (Join-Path $stage 'SAM')
-          Copy-IfExists (Join-Path $root 'SAM_Windows\build')      (Join-Path $stage 'SAMdependencies')
-          Copy-IfExists (Join-Path $root 'SAM_Revit\references')   (Join-Path $stage 'Rhino.Inside')
-          Copy-IfExists (Join-Path $root 'SAM_Rhino_UI\build')     (Join-Path $stage 'SAM_Rhino_UI')
-          Copy-IfExists (Join-Path $root 'Documents\SAM')          (Join-Path $stage 'user\Documents\SAM')
+          # 1) Known locations
+          Copy-IfExists (Join-Path $root 'SAM_UI\build')       (Join-Path $stage 'SAM')
+          Copy-IfExists (Join-Path $root 'SAM_Windows\build')  (Join-Path $stage 'SAMdependencies')
+          Copy-IfExists (Join-Path $root 'SAM_Revit\references') (Join-Path $stage 'Rhino.Inside')
+          Copy-IfExists (Join-Path $root 'SAM_Rhino_UI\build') (Join-Path $stage 'SAM_Rhino_UI')
+          Copy-IfExists (Join-Path $root 'Documents\SAM')      (Join-Path $stage 'user\Documents\SAM')
 
-          # include helper scripts if present
-          Copy-Item (Join-Path $issDir 'register.bat')   (Join-Path $stage 'register.bat')   -Force -ErrorAction SilentlyContinue
-          Copy-Item (Join-Path $issDir 'deregister.bat') (Join-Path $stage 'deregister.bat') -Force -ErrorAction SilentlyContinue
+          # 2) Bring in ALL other SAM* repo builds (SAM, SAM_Tas, etc.)
+          $exclude = @('SAM_UI','SAM_Windows','SAM_Rhino_UI','SAM_Revit','SAM_Revit_UI','SAM_Installer')
+          Get-ChildItem -Path $root -Directory | Where-Object {
+            $_.Name -like 'SAM*' -and ($exclude -notcontains $_.Name)
+          } | ForEach-Object {
+            $build = Join-Path $_.FullName 'build'
+            if (Test-Path $build) {
+              Copy-IfExists $build (Join-Path $stage 'SAM')
+            }
+          }
 
-          # add Revit add-in manifest into build\SAM
+          # Add Revit add-in manifest into build\SAM
           $addin = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
           if (Test-Path $addin) {
             New-Item -ItemType Directory -Force -Path (Join-Path $stage 'SAM') | Out-Null
             Copy-Item $addin (Join-Path $stage 'SAM') -Force
           }
 
-      - name: Create Grasshopper .gha in staging (SAM + SAM_Tas)
+      - name: Create Grasshopper .gha in staging (all SAM repos)
         shell: pwsh
         run: |
           $stage = Resolve-Path 'SAM_Installer\build' -ErrorAction Stop
           $dlls = Get-ChildItem -Path $stage -Recurse -Filter *.dll |
-                  Where-Object { $_.Name -match '^SAM\..*\.Grasshopper(\..*)?\.dll$' }
-          if ($dlls) {
-            foreach ($dll in $dlls) {
-              $gha = [IO.Path]::ChangeExtension($dll.FullName, '.gha')
-              Copy-Item $dll.FullName $gha -Force
-              Write-Host "Created $(Split-Path -Leaf $gha)"
-            }
-          } else {
-            Write-Host "No SAM *Grasshopper*.dll found in $stage"
+                  Where-Object { $_.Name -match '^SAM\..*Grasshopper.*\.dll$' }
+          $count = 0
+          foreach ($dll in $dlls) {
+            $gha = [IO.Path]::ChangeExtension($dll.FullName, '.gha')
+            Copy-Item $dll.FullName $gha -Force
+            $count++
           }
+          Write-Host "GHA created: $count"
 
       - name: Install Inno Setup
         shell: pwsh
