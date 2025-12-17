@@ -165,42 +165,30 @@ procedure EnsureRevitYearPayload(const Year: string);
 var
   Base, Target: string;
 begin
-  // If staging put files in SAM\Revit YYYY, this becomes a no-op; still safe.
-  Base   := ExpandConstant('{userappdata}\SAM\Revit ') + Year + '\';
-  Target := Base;  // keep same target
+  Base   := ExpandConstant('{userappdata}\SAM\');
+  Target := ExpandConstant('{userappdata}\SAM\Revit ') + Year + '\';
   if not DirExists(Target) then
     ForceDirectories(Target);
 
-  // Ensure GH .gha beside their .dll
-  TryCopyToGha(Target, 'SAM.Core.Grasshopper.Revit');
-  TryCopyToGha(Target, 'SAM.Architectural.Grasshopper.Revit');
-  TryCopyToGha(Target, 'SAM.Analytical.Grasshopper.Revit');
-end;
-
-procedure WriteRevitAddin(const Year: string);
-var
-  TemplatePath, DstDir, DstFile, Content, Search, ReplaceWith: string;
-begin
-  TemplatePath := ExpandConstant('{userappdata}\SAM\SAM.addin');
-  DstDir  := ExpandConstant('{userappdata}\Autodesk\Revit\Addins\') + Year + '\';
-  DstFile := DstDir + 'SAM.addin';
-  if not DirExists(DstDir) then
-    ForceDirectories(DstDir);
-
-  if LoadStringFromFile(TemplatePath, Content) then
-  begin
-    Search := '<Assembly></Assembly>';
-    ReplaceWith := '<Assembly>' + ExpandConstant('{userappdata}\SAM\Revit ') + Year + '\SAM.Core.Revit.UI.dll</Assembly>';
-    StringChangeEx(Content, Search, ReplaceWith, True);
-    SaveStringToFile(DstFile, Content, False);
-  end;
+  // copy GH-Revit dlls from SAM root into the per-year folder
+  CopyIfExists(Base + 'SAM.Core.Grasshopper.Revit.dll',
+               Target + 'SAM.Core.Grasshopper.Revit.dll');
+  CopyIfExists(Base + 'SAM.Architectural.Grasshopper.Revit.dll',
+               Target + 'SAM.Architectural.Grasshopper.Revit.dll');
+  CopyIfExists(Base + 'SAM.Analytical.Grasshopper.Revit.dll',
+               Target + 'SAM.Analytical.Grasshopper.Revit.dll');
 end;
 
 procedure SetupRevitYear(const Year: string);
+var
+  Target: string;
 begin
+  Target := ExpandConstant('{userappdata}\SAM\Revit ') + Year + '\';
   EnsureRevitYearPayload(Year);
+  TryCopyToGha(Target, 'SAM.Core.Grasshopper.Revit');
+  TryCopyToGha(Target, 'SAM.Architectural.Grasshopper.Revit');
+  TryCopyToGha(Target, 'SAM.Analytical.Grasshopper.Revit');
   CreateRevitGhLink(Year);
-  WriteRevitAddin(Year);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -208,6 +196,7 @@ begin
   if CurStep = ssPostInstall then
   begin
     CreateSamGhLink();
+
     SetupRevitYear('2020');
     SetupRevitYear('2021');
     SetupRevitYear('2022');
