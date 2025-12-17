@@ -106,7 +106,8 @@ jobs:
             if (Test-Path $dir) {
               $proj = Get-ChildItem -Path $dir -Recurse -Filter '*.csproj' -ErrorAction SilentlyContinue | Select-Object -First 1
               if ($proj) { 
-                Write-Host "Using project in $subdir: $($proj.FullName)"
+                # NOTE: use ${subdir} so the ':' isn't treated as part of the var name
+                Write-Host "Using project in ${subdir}: $($proj.FullName)"
                 return $proj.FullName
               }
             }
