@@ -189,18 +189,16 @@ jobs:
           if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
           if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install." }
 
+          # OutputDir and base filename are configured inside Build_Installer.iss
           $outDir  = Join-Path $pwd 'dist'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
-          $ver     = '${{ steps.ver.outputs.version }}'
-          $safeTag = $ver -replace '[^0-9A-Za-z_.-]', '_'   # filename-safe
-          $outBase = "SAM_Install_${safeTag}_Build_Installer"
-          $log     = Join-Path $outDir 'iscc.log'
+          $ver = '${{ steps.ver.outputs.version }}'
+          $log = Join-Path $outDir 'iscc.log'
 
           Push-Location $issDir
           try {
             & "$iscc" `
-              "/O`"$outDir`"" `
               "/DVersion=$ver" `
               "/DAppVersion=$ver" `
               "Build_Installer.iss" 2>&1 | Tee-Object -FilePath $log

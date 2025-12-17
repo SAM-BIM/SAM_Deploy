@@ -10,7 +10,9 @@ AppId={{6770DD83-5694-4607-8703-B3D3AC3CFD3C}}
 AppName=SAM
 AppPublisher=SAM-BIM
 AppVersion={#AppVersion}
+; Final EXE name and output directory (relative to this .iss file)
 OutputBaseFilename=SAM_Install
+OutputDir=..\dist
 DefaultDirName={userappdata}\SAM
 DisableDirPage=yes
 DefaultGroupName=SAM
@@ -175,7 +177,6 @@ begin
   TemplatePath := ExpandConstant('{userappdata}\SAM\SAM.addin');
   if not FileExists(TemplatePath) then
   begin
-    // Nothing to do if template is missing
     Exit;
   end;
 
@@ -197,7 +198,7 @@ begin
 
   for I := 0 to GetArrayLength(Lines) - 1 do
   begin
-    // NOTE: StringChange modifies Lines[I] in-place; return value is ignored.
+    // StringChange modifies Lines[I] in-place; we ignore return value
     StringChange(
       Lines[I],
       '<Assembly></Assembly>',
@@ -205,7 +206,6 @@ begin
     );
   end;
 
-  // Overwrite if already exists
   SaveStringsToFile(TargetPath, Lines, False);
 end;
 
