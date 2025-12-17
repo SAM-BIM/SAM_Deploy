@@ -197,7 +197,9 @@ begin
 
   for I := 0 to GetArrayLength(Lines) - 1 do
   begin
-    Lines[I] := StringChange(
+    // NOTE: StringChange modifies Lines[I] in-place; it returns an Integer.
+    // We ignore the return value, to avoid type mismatch.
+    StringChange(
       Lines[I],
       '<Assembly></Assembly>',
       '<Assembly>' + AssemblyPath + '</Assembly>'
