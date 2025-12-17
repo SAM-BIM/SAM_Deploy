@@ -216,7 +216,6 @@ jobs:
             }
           }
 
-
       - name: Install Inno Setup
         shell: pwsh
         run: choco install innosetup -y
