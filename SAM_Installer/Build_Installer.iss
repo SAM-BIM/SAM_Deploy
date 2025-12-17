@@ -1,4 +1,4 @@
-#ifndef Version
+#ifndef Version 
   #define Version "v_local"
 #endif
 #ifndef AppVersion
@@ -10,6 +10,7 @@ AppId={{6770DD83-5694-4607-8703-B3D3AC3CFD3C}}
 AppName=SAM
 AppPublisher=SAM-BIM
 AppVersion={#AppVersion}
+OutputBaseFilename=SAM_Install
 DefaultDirName={userappdata}\SAM
 DisableDirPage=yes
 DefaultGroupName=SAM
@@ -18,7 +19,6 @@ Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=lowest
 SetupIconFile={#SourcePath}SAM20new.ico
-; NOTE: OutputBaseFileName is passed from CI via /F
 
 [Dirs]
 ; Core app
@@ -133,7 +133,7 @@ procedure CreateRevitGhLink(const Year: string);
 var
   GhYearDir, SamDir, Content: string;
 begin
-  SamDir   := ExpandConstant('{userappdata}\SAM\');
+  SamDir    := ExpandConstant('{userappdata}\SAM\');
   GhYearDir := ExpandConstant('{userappdata}\Grasshopper\Libraries-Inside-Revit-') + Year + '\';
   if not DirExists(GhYearDir) then
     ForceDirectories(GhYearDir);
@@ -197,8 +197,7 @@ begin
 
   for I := 0 to GetArrayLength(Lines) - 1 do
   begin
-    // NOTE: StringChange modifies Lines[I] in-place; it returns an Integer.
-    // We ignore the return value, to avoid type mismatch.
+    // NOTE: StringChange modifies Lines[I] in-place; return value is ignored.
     StringChange(
       Lines[I],
       '<Assembly></Assembly>',
@@ -219,7 +218,7 @@ begin
   if not DirExists(Target) then
     ForceDirectories(Target);
 
-  // copy GH-Revit dlls from SAM root into the per-year folder
+  // copy GH-Revit dlls from SAM root into the per-year folder (if present)
   CopyIfExists(Base + 'SAM.Core.Grasshopper.Revit.dll',
                Target + 'SAM.Core.Grasshopper.Revit.dll');
   CopyIfExists(Base + 'SAM.Architectural.Grasshopper.Revit.dll',

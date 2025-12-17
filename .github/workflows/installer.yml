@@ -201,7 +201,6 @@ jobs:
           try {
             & "$iscc" `
               "/O`"$outDir`"" `
-              "/F`"$outBase`"" `
               "/DVersion=$ver" `
               "/DAppVersion=$ver" `
               "Build_Installer.iss" 2>&1 | Tee-Object -FilePath $log
