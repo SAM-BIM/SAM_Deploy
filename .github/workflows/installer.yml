@@ -2,11 +2,11 @@ name: Build & Release SAM-BIM Installer
 
 on:
   push:
-    tags: ['v*']   # e.g. v20251217.1
+    tags: ['v*']   # e.g. v20251126.1
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (e.g. v20251217.1). If tagging, this is ignored.'
+        description: 'Version (e.g. v20251126.1). If tagging, this is ignored.'
         required: false
         default: ''
 
@@ -91,36 +91,22 @@ jobs:
             if (Test-Path $src) {
               New-Item -ItemType Directory -Force -Path $dest | Out-Null
               Copy-Item "$src\*" $dest -Recurse -Force
-            } else {
-              Write-Host "WARN: $src not found (skipped)"
-            }
+            } else { Write-Host "WARN: $src not found (skipped)" }
           }
 
-          # Core payload
-          Copy-IfExists (Join-Path $root 'SAM_UI\build')                 (Join-Path $stage 'SAM')
-          Copy-IfExists (Join-Path $root 'SAM_Windows\build')            (Join-Path $stage 'SAMdependencies')
-          Copy-IfExists (Join-Path $root 'SAM_Rhino_UI\build')           (Join-Path $stage 'SAM_Rhino_UI')
+          # Rooted build outputs
+          Copy-IfExists (Join-Path $root 'SAM_UI\build')           (Join-Path $stage 'SAM')
+          Copy-IfExists (Join-Path $root 'SAM_Windows\build')      (Join-Path $stage 'SAMdependencies')
+          Copy-IfExists (Join-Path $root 'SAM_Revit\references')   (Join-Path $stage 'Rhino.Inside')
+          Copy-IfExists (Join-Path $root 'SAM_Rhino_UI\build')     (Join-Path $stage 'SAM_Rhino_UI')
 
-          # Rhino.Inside (used for .dll -> .gha rename in .iss)
-          Copy-IfExists (Join-Path $root 'SAM_Revit\references')         (Join-Path $stage 'Rhino.Inside')
-
-          # Revit UI per-year payload so SAM.addin can point to them
-          $years = 2020..2026 | ForEach-Object { $_.ToString() }
-          foreach ($y in $years) {
-            Copy-IfExists (Join-Path $root "SAM_Revit_UI\build\Revit $y") (Join-Path $stage "SAM\Revit $y")
-          }
-
-          # SAM.addin template (used by installer code to write per-year addins)
           $addin = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
           if (Test-Path $addin) {
             New-Item -ItemType Directory -Force -Path (Join-Path $stage 'SAM') | Out-Null
             Copy-Item $addin (Join-Path $stage 'SAM') -Force
-          } else {
-            Write-Host "WARN: SAM.addin template not found at $addin"
-          }
+          } else { Write-Host "WARN: Revit add-in template not found at $addin" }
 
-          # Optional: ship user docs/resources
-          Copy-IfExists (Join-Path $root 'Documents\SAM')                (Join-Path $stage 'user\Documents\SAM')
+          Copy-IfExists (Join-Path $root 'Documents\SAM') (Join-Path $stage 'user\Documents\SAM')
 
       - name: Install Inno Setup
         shell: pwsh
@@ -130,20 +116,17 @@ jobs:
         shell: pwsh
         run: |
           $issDir = Resolve-Path 'SAM_Installer' -ErrorAction Stop
-          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          $iscc   = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
-          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found" }
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install." }
 
-          $outDir = Join-Path $pwd 'dist'
+          $outDir  = Join-Path $pwd 'dist'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
-          if (-not (Test-Path (Join-Path $issDir 'SAM20new.ico'))) {
-            throw "Icon not found: SAM_Installer\SAM20new.ico"
-          }
-
-          $ver = '${{ steps.ver.outputs.version }}'
-          $outBase = "SAM_Install_${ver}_Build_Installer"
-          $log = Join-Path $outDir 'iscc.log'
+          $ver     = '${{ steps.ver.outputs.version }}'
+          $safeTag = $ver -replace '[^0-9A-Za-z_.-]', '_'   # filename-safe
+          $outBase = "SAM_Install_${safeTag}_Build_Installer"
+          $log     = Join-Path $outDir 'iscc.log'
 
           Push-Location $issDir
           try {
@@ -153,14 +136,13 @@ jobs:
               "/DVersion=$ver" `
               "/DAppVersion=$ver" `
               "Build_Installer.iss" 2>&1 | Tee-Object -FilePath $log
+
             if ($LASTEXITCODE -ne 0) {
-              Write-Host "===== iscc.log ====="
-              Get-Content $log | Write-Host
+              Write-Host "===== iscc.log ====="; Get-Content $log | Write-Host
               throw "ISCC failed ($LASTEXITCODE)"
             }
-          } finally {
-            Pop-Location
           }
+          finally { Pop-Location }
 
       - name: Verify installer
         shell: pwsh
