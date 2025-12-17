@@ -191,8 +191,7 @@ begin
   begin
     Search := '<Assembly></Assembly>';
     ReplaceWith := '<Assembly>' + ExpandConstant('{userappdata}\SAM\Revit ') + Year + '\SAM.Core.Revit.UI.dll</Assembly>';
-    StringChangeEx(Content, Search, ReplaceWith, [rfReplaceAll, rfIgnoreCase]);
-    // or: StringChange(Content, Search, ReplaceWith);
+    StringChangeEx(Content, Search, ReplaceWith, True);
     SaveStringToFile(DstFile, Content, False);
   end;
 end;
