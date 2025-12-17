@@ -155,14 +155,40 @@ begin
     FileCopy(src, dst, False);
 end;
 
-procedure MakeRevitGhasForYear(const Year: string);
-var
-  Base: string;
+procedure CopyIfExists(const SrcFile, DstFile: string);
 begin
-  Base := ExpandConstant('{userappdata}\SAM\Revit ') + Year + '\';
-  TryCopyToGha(Base, 'SAM.Core.Grasshopper.Revit');
-  TryCopyToGha(Base, 'SAM.Architectural.Grasshopper.Revit');
-  TryCopyToGha(Base, 'SAM.Analytical.Grasshopper.Revit');
+  if FileExists(SrcFile) then
+    FileCopy(SrcFile, DstFile, False);
+end;
+
+procedure EnsureRevitYearPayload(const Year: string);
+var
+  Base, Target: string;
+begin
+  Base   := ExpandConstant('{userappdata}\SAM\');
+  Target := ExpandConstant('{userappdata}\SAM\Revit ') + Year + '\';
+  if not DirExists(Target) then
+    ForceDirectories(Target);
+
+  // copy GH-Revit dlls from SAM root into the per-year folder
+  CopyIfExists(Base + 'SAM.Core.Grasshopper.Revit.dll',
+               Target + 'SAM.Core.Grasshopper.Revit.dll');
+  CopyIfExists(Base + 'SAM.Architectural.Grasshopper.Revit.dll',
+               Target + 'SAM.Architectural.Grasshopper.Revit.dll');
+  CopyIfExists(Base + 'SAM.Analytical.Grasshopper.Revit.dll',
+               Target + 'SAM.Analytical.Grasshopper.Revit.dll');
+end;
+
+procedure SetupRevitYear(const Year: string);
+var
+  Target: string;
+begin
+  Target := ExpandConstant('{userappdata}\SAM\Revit ') + Year + '\';
+  EnsureRevitYearPayload(Year);
+  TryCopyToGha(Target, 'SAM.Core.Grasshopper.Revit');
+  TryCopyToGha(Target, 'SAM.Architectural.Grasshopper.Revit');
+  TryCopyToGha(Target, 'SAM.Analytical.Grasshopper.Revit');
+  CreateRevitGhLink(Year);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -170,12 +196,13 @@ begin
   if CurStep = ssPostInstall then
   begin
     CreateSamGhLink();
-    CreateRevitGhLink('2020'); MakeRevitGhasForYear('2020');
-    CreateRevitGhLink('2021'); MakeRevitGhasForYear('2021');
-    CreateRevitGhLink('2022'); MakeRevitGhasForYear('2022');
-    CreateRevitGhLink('2023'); MakeRevitGhasForYear('2023');
-    CreateRevitGhLink('2024'); MakeRevitGhasForYear('2024');
-    CreateRevitGhLink('2025'); MakeRevitGhasForYear('2025');
-    CreateRevitGhLink('2026'); MakeRevitGhasForYear('2026');
+
+    SetupRevitYear('2020');
+    SetupRevitYear('2021');
+    SetupRevitYear('2022');
+    SetupRevitYear('2023');
+    SetupRevitYear('2024');
+    SetupRevitYear('2025');
+    SetupRevitYear('2026');
   end;
 end;
