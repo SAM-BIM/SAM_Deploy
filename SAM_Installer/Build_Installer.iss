@@ -18,14 +18,14 @@ Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=lowest
 SetupIconFile={#SourcePath}SAM20new.ico
-; Output name is passed from CI with /F
+; NOTE: OutputBaseFileName is passed from CI via /F
 
 [Dirs]
 ; Core app
 Name: "{userappdata}\SAM"
 Name: "{userappdata}\SAM\resources"
 
-; Per-Revit-year targets (payload + ghlink)
+; Per-Revit-year targets used by ghlink and payload
 Name: "{userappdata}\SAM\Revit 2020"
 Name: "{userappdata}\SAM\Revit 2021"
 Name: "{userappdata}\SAM\Revit 2022"
@@ -34,7 +34,7 @@ Name: "{userappdata}\SAM\Revit 2024"
 Name: "{userappdata}\SAM\Revit 2025"
 Name: "{userappdata}\SAM\Revit 2026"
 
-; Grasshopper folders
+; Grasshopper locations
 Name: "{userappdata}\Grasshopper\Libraries"
 Name: "{userappdata}\Grasshopper\UserObjects\SAM"
 Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2020"
@@ -43,13 +43,13 @@ Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2022"
 Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2023"
 Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2024"
 Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2025"
-Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2026}"
+Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2026"
 
 ; Rhino package caches
 Name: "{userappdata}\McNeel\Rhinoceros\packages\7.0\SAM"
 Name: "{userappdata}\McNeel\Rhinoceros\packages\8.0\SAM"
 
-; Rhino.Inside locations under Revit Addins
+; Rhino.Inside to Revit Addins
 Name: "{userappdata}\Autodesk\Revit\Addins\2020\RhinoInside.Revit"
 Name: "{userappdata}\Autodesk\Revit\Addins\2021\RhinoInside.Revit"
 Name: "{userappdata}\Autodesk\Revit\Addins\2022\RhinoInside.Revit"
@@ -59,20 +59,20 @@ Name: "{userappdata}\Autodesk\Revit\Addins\2025\RhinoInside.Revit"
 Name: "{userappdata}\Autodesk\Revit\Addins\2026\RhinoInside.Revit"
 
 [Files]
-; ----- Core staged payload -----
-Source: "build\SAM\*";                     DestDir: "{userappdata}\SAM";                                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAMdependencies\*";         DestDir: "{userappdata}\SAM\SAMdependencies";                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAM_Rhino_UI\*";            DestDir: "{userappdata}\McNeel\Rhinoceros\packages\7.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAM_Rhino_UI\*";            DestDir: "{userappdata}\McNeel\Rhinoceros\packages\8.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\register.bat";              DestDir: "{userappdata}\SAM";                                Flags: ignoreversion skipifsourcedoesntexist
-Source: "build\deregister.bat";            DestDir: "{userappdata}\SAM";                                Flags: ignoreversion skipifsourcedoesntexist
+; ---------- Core staged payload ----------
+Source: "build\SAM\*";                 DestDir: "{userappdata}\SAM";                                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\SAMdependencies\*";     DestDir: "{userappdata}\SAM\SAMdependencies";                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\SAM_Rhino_UI\*";        DestDir: "{userappdata}\McNeel\Rhinoceros\packages\7.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\SAM_Rhino_UI\*";        DestDir: "{userappdata}\McNeel\Rhinoceros\packages\8.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\register.bat";          DestDir: "{userappdata}\SAM";                                Flags: ignoreversion skipifsourcedoesntexist
+Source: "build\deregister.bat";        DestDir: "{userappdata}\SAM";                                Flags: ignoreversion skipifsourcedoesntexist
 
-; User documents and mirrored resources
+; User documents (and mirror of resources in AppData)
 Source: "build\user\Documents\SAM\*";               DestDir: "{userdocs}\SAM";               Flags: onlyifdestfileexists recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\user\Documents\SAM\resources\*";     DestDir: "{userappdata}\SAM\resources";  Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\user\Documents\SAM\Grasshopper\UserObjects\*"; DestDir: "{userappdata}\Grasshopper\UserObjects\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 
-; ----- Per-Revit-year payload into %APPDATA%\SAM\Revit YYYY -----
+; ---------- Per-Revit-year: SAM payload copied into %APPDATA%\SAM\Revit YYYY ----------
 Source: "build\SAM\Revit 2020\*"; DestDir: "{userappdata}\SAM\Revit 2020"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\SAM\Revit 2021\*"; DestDir: "{userappdata}\SAM\Revit 2021"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\SAM\Revit 2022\*"; DestDir: "{userappdata}\SAM\Revit 2022"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
@@ -81,27 +81,27 @@ Source: "build\SAM\Revit 2024\*"; DestDir: "{userappdata}\SAM\Revit 2024"; Flags
 Source: "build\SAM\Revit 2025\*"; DestDir: "{userappdata}\SAM\Revit 2025"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\SAM\Revit 2026\*"; DestDir: "{userappdata}\SAM\Revit 2026"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 
-; ----- Rhino.Inside → Revit Addins (rename GH dll to gha) -----
+; ---------- Rhino.Inside to Revit Addins with .dll->.gha rename ----------
 ; 2020
-Source: "build\Rhino.Inside\Revit 2020\*";                     Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2020\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\Rhino.Inside\Revit 2020\*";               Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2020\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\Rhino.Inside\Revit 2020\RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2020\RhinoInside.Revit"; DestName: "RhinoInside.Revit.GH.gha"; Flags: ignoreversion skipifsourcedoesntexist
 ; 2021
-Source: "build\Rhino.Inside\Revit 2021\*";                     Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2021\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\Rhino.Inside\Revit 2021\*";               Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2021\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\Rhino.Inside\Revit 2021\RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2021\RhinoInside.Revit"; DestName: "RhinoInside.Revit.GH.gha"; Flags: ignoreversion skipifsourcedoesntexist
 ; 2022
-Source: "build\Rhino.Inside\Revit 2022\*";                     Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2022\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\Rhino.Inside\Revit 2022\*";               Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2022\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\Rhino.Inside\Revit 2022\RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2022\RhinoInside.Revit"; DestName: "RhinoInside.Revit.GH.gha"; Flags: ignoreversion skipifsourcedoesntexist
 ; 2023
-Source: "build\Rhino.Inside\Revit 2023\*";                     Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2023\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\Rhino.Inside\Revit 2023\*";               Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2023\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\Rhino.Inside\Revit 2023\RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2023\RhinoInside.Revit"; DestName: "RhinoInside.Revit.GH.gha"; Flags: ignoreversion skipifsourcedoesntexist
 ; 2024
-Source: "build\Rhino.Inside\Revit 2024\*";                     Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\Rhino.Inside\Revit 2024\*";               Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\Rhino.Inside\Revit 2024\RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2024\RhinoInside.Revit"; DestName: "RhinoInside.Revit.GH.gha"; Flags: ignoreversion skipifsourcedoesntexist
 ; 2025
-Source: "build\Rhino.Inside\Revit 2025\*";                     Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2025\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\Rhino.Inside\Revit 2025\*";               Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2025\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\Rhino.Inside\Revit 2025\RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2025\RhinoInside.Revit"; DestName: "RhinoInside.Revit.GH.gha"; Flags: ignoreversion skipifsourcedoesntexist
 ; 2026
-Source: "build\Rhino.Inside\Revit 2026\*";                     Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2026\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "build\Rhino.Inside\Revit 2026\*";               Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2026\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\Rhino.Inside\Revit 2026\RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2026\RhinoInside.Revit"; DestName: "RhinoInside.Revit.GH.gha"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Run]
@@ -155,13 +155,23 @@ begin
     FileCopy(src, dst, False);
 end;
 
+procedure CopyIfExists(const SrcFile, DstFile: string);
+begin
+  if FileExists(SrcFile) then
+    FileCopy(SrcFile, DstFile, False);
+end;
+
 procedure EnsureRevitYearPayload(const Year: string);
 var
-  Target: string;
+  Base, Target: string;
 begin
-  Target := ExpandConstant('{userappdata}\SAM\Revit ') + Year + '\';
+  // If staging put files in SAM\Revit YYYY, this becomes a no-op; still safe.
+  Base   := ExpandConstant('{userappdata}\SAM\Revit ') + Year + '\';
+  Target := Base;  // keep same target
   if not DirExists(Target) then
     ForceDirectories(Target);
+
+  // Ensure GH .gha beside their .dll
   TryCopyToGha(Target, 'SAM.Core.Grasshopper.Revit');
   TryCopyToGha(Target, 'SAM.Architectural.Grasshopper.Revit');
   TryCopyToGha(Target, 'SAM.Analytical.Grasshopper.Revit');
@@ -182,6 +192,7 @@ begin
     Search := '<Assembly></Assembly>';
     ReplaceWith := '<Assembly>' + ExpandConstant('{userappdata}\SAM\Revit ') + Year + '\SAM.Core.Revit.UI.dll</Assembly>';
     StringChangeEx(Content, Search, ReplaceWith, [rfReplaceAll, rfIgnoreCase]);
+    // or: StringChange(Content, Search, ReplaceWith);
     SaveStringToFile(DstFile, Content, False);
   end;
 end;
