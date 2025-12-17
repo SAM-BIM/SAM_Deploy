@@ -106,7 +106,7 @@ jobs:
             if (Test-Path $dir) {
               $proj = Get-ChildItem -Path $dir -Recurse -Filter '*.csproj' -ErrorAction SilentlyContinue | Select-Object -First 1
               if ($proj) { 
-                # NOTE: use ${subdir} so the ':' isn't treated as part of the var name
+                # Use ${subdir} so ':' isn't treated as part of the variable name
                 Write-Host "Using project in ${subdir}: $($proj.FullName)"
                 return $proj.FullName
               }
@@ -160,6 +160,16 @@ jobs:
           $samRevitProjPath   = Find-CsprojInSubdir $root 'SAM_Revit'
           $samRevitUiProjPath = Find-CsprojInSubdir $root 'SAM_Revit_UI'
 
+          # IMPORTANT: run restore once so project.assets.json has net48-windows
+          if ($samRevitProjPath) {
+            Write-Host "dotnet restore (SAM_Revit) $samRevitProjPath"
+            dotnet restore $samRevitProjPath
+          }
+          if ($samRevitUiProjPath) {
+            Write-Host "dotnet restore (SAM_Revit_UI) $samRevitUiProjPath"
+            dotnet restore $samRevitUiProjPath
+          }
+
           if (-not $samRevitProjPath -and -not $samRevitUiProjPath) {
             Write-Host 'WARN: SAM_Revit and SAM_Revit_UI projects not found. Skipping per-year Revit payload build.'
           } else {
@@ -205,6 +215,7 @@ jobs:
               Write-Host "  (missing)"
             }
           }
+
 
       - name: Install Inno Setup
         shell: pwsh
