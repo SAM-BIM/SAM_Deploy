@@ -81,6 +81,8 @@ jobs:
           
       - name: Stage payload for installer
         shell: pwsh
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
         run: |
           $root  = (Get-Location).Path
           $issDir = Join-Path $root 'SAM_Installer'
@@ -92,41 +94,32 @@ jobs:
             if (Test-Path $src) {
               New-Item -ItemType Directory -Force -Path $dest | Out-Null
               Copy-Item "$src\*" $dest -Recurse -Force
-            } else { Write-Host "WARN: $src not found (skipped)" }
+            } else {
+              Write-Host "WARN: $src not found (skipped)"
+            }
           }
 
-          # 1) Known locations (core SAM payload)
-          Copy-IfExists (Join-Path $root 'SAM_UI\build')          (Join-Path $stage 'SAM')
-          Copy-IfExists (Join-Path $root 'SAM_Windows\build')     (Join-Path $stage 'SAMdependencies')
-          Copy-IfExists (Join-Path $root 'SAM_Revit\references')  (Join-Path $stage 'Rhino.Inside')
-          Copy-IfExists (Join-Path $root 'Documents\SAM')         (Join-Path $stage 'user\Documents\SAM')
+          # 1) Core payload
+          Copy-IfExists (Join-Path $root 'SAM_UI\build')              (Join-Path $stage 'SAM')
+          Copy-IfExists (Join-Path $root 'SAM_Windows\build')         (Join-Path $stage 'SAMdependencies')
+          Copy-IfExists (Join-Path $root 'SAM_Revit\references')      (Join-Path $stage 'Rhino.Inside')
+          Copy-IfExists (Join-Path $root 'Documents\SAM')             (Join-Path $stage 'user\Documents\SAM')
 
-          # 1b) Rhino UI payload (prefer existing build folder, fallback to building)
+          # 2) Rhino UI – always build directly into staging
           $rhinoStage = Join-Path $stage 'SAM_Rhino_UI'
-          Copy-IfExists (Join-Path $root 'SAM_Rhino_UI\build') $rhinoStage
-
-          $hasRhinoFiles = $false
-          if (Test-Path $rhinoStage) {
-            $first = Get-ChildItem -Path $rhinoStage -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($first) { $hasRhinoFiles = $true }
+          New-Item -ItemType Directory -Force -Path $rhinoStage | Out-Null
+          $samRhinoUiProj = Get-ChildItem -Path $root -Recurse -Filter 'SAM_Rhino_UI.csproj' -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($samRhinoUiProj) {
+            Write-Host "Building SAM_Rhino_UI (Release) -> $rhinoStage"
+            msbuild $samRhinoUiProj.FullName /t:Rebuild /m:1 /nr:false /v:m `
+              /p:Configuration=Release /p:UseSharedCompilation=false `
+              /p:RunPostBuildEvent=Never `
+              /p:OutDir=$rhinoStage
+          } else {
+            Write-Host "WARN: SAM_Rhino_UI.csproj not found – Rhino packages will be empty."
           }
 
-          if (-not $hasRhinoFiles) {
-            $samRhinoUiProj = Get-ChildItem -Path $root -Recurse -Filter 'SAM_Rhino_UI.csproj' -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($samRhinoUiProj) {
-              New-Item -ItemType Directory -Force -Path $rhinoStage | Out-Null
-              Write-Host 'Building SAM_Rhino_UI -> SAM_Installer\build\SAM_Rhino_UI (fallback)'
-              msbuild $samRhinoUiProj.FullName /t:Rebuild /m:1 /nr:false /v:m `
-                /p:Configuration=Release /p:UseSharedCompilation=false `
-                /p:RunPostBuildEvent=Never `
-                /p:OutDir=$rhinoStage
-            }
-            else {
-              Write-Host 'WARN: SAM_Rhino_UI build folder and project not found.'
-            }
-          }
-
-          # 2) Bring in ALL other SAM* repo builds (SAM, SAM_Tas, etc.)
+          # 3) Other SAM* repos (SAM_Tas, etc.) into build\SAM
           $exclude = @('SAM_UI','SAM_Windows','SAM_Rhino_UI','SAM_Revit','SAM_Revit_UI','SAM_Installer')
           Get-ChildItem -Path $root -Directory | Where-Object {
             $_.Name -like 'SAM*' -and ($exclude -notcontains $_.Name)
@@ -137,45 +130,73 @@ jobs:
             }
           }
 
-          # 3) Add Revit add-in manifest into build\SAM
+          # 4) Add Revit add-in template into build\SAM
           $addin = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
           if (Test-Path $addin) {
             New-Item -ItemType Directory -Force -Path (Join-Path $stage 'SAM') | Out-Null
             Copy-Item $addin (Join-Path $stage 'SAM') -Force
+          } else {
+            Write-Host "WARN: SAM.addin template not found at $addin"
           }
 
-          # 4) Build per-year Revit payloads (SAM_Revit & SAM_Revit_UI)
-          $samRevitProj = Get-ChildItem -Path $root -Recurse -Filter 'SAM_Revit.csproj' -ErrorAction SilentlyContinue | Select-Object -First 1
+          # 5) Build per-year Revit payloads (SAM_Revit & SAM_Revit_UI) into build\SAM\Revit YYYY
+          $samRevitProj   = Get-ChildItem -Path $root -Recurse -Filter 'SAM_Revit.csproj' -ErrorAction SilentlyContinue | Select-Object -First 1
           $samRevitUiProj = Get-ChildItem -Path $root -Recurse -Filter 'SAM_Revit_UI.csproj' -ErrorAction SilentlyContinue | Select-Object -First 1
 
           if (-not $samRevitProj -and -not $samRevitUiProj) {
             Write-Host 'WARN: SAM_Revit and SAM_Revit_UI projects not found. Skipping per-year Revit payload build.'
-          }
-          else {
+          } else {
+            $samRevitDir   = if ($samRevitProj)   { Split-Path -Parent $samRevitProj.FullName }   else { $null }
+            $samRevitUiDir = if ($samRevitUiProj) { Split-Path -Parent $samRevitUiProj.FullName } else { $null }
+
             $years = 2020..2026
             foreach ($year in $years) {
-              $config = 'Release' + $year
-              $outDir = Join-Path $stage ('SAM\Revit ' + $year)
-
+              $config = "Release$year"
+              $outDir = Join-Path $stage ("SAM\Revit $year")
               New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
               if ($samRevitProj) {
-                Write-Host "Building SAM_Revit $config -> $outDir"
+                Write-Host "Building SAM_Revit $config"
                 msbuild $samRevitProj.FullName /t:Rebuild /m:1 /nr:false /v:m `
                   /p:Configuration=$config /p:UseSharedCompilation=false `
-                  /p:RunPostBuildEvent=Never `
-                  /p:OutDir=$outDir
+                  /p:RunPostBuildEvent=Never
               }
 
               if ($samRevitUiProj) {
-                Write-Host "Building SAM_Revit_UI $config -> $outDir"
+                Write-Host "Building SAM_Revit_UI $config"
                 msbuild $samRevitUiProj.FullName /t:Rebuild /m:1 /nr:false /v:m `
                   /p:Configuration=$config /p:UseSharedCompilation=false `
-                  /p:RunPostBuildEvent=Never `
-                  /p:OutDir=$outDir
+                  /p:RunPostBuildEvent=Never
+              }
+
+              # copy from their bin\<config> folders into staging
+              if ($samRevitDir) {
+                $src = Join-Path $samRevitDir ("bin\" + $config)
+                Copy-IfExists $src $outDir
+              }
+              if ($samRevitUiDir) {
+                $src = Join-Path $samRevitUiDir ("bin\" + $config)
+                Copy-IfExists $src $outDir
               }
             }
           }
+
+          # 6) Debug listing of staged Rhino & Revit 2026 contents
+          Write-Host "=== Staged SAM_Rhino_UI ==="
+          if (Test-Path $rhinoStage) {
+            Get-ChildItem -Path $rhinoStage -Recurse | Select-Object FullName
+          } else {
+            Write-Host "SAM_Rhino_UI stage folder missing."
+          }
+
+          $revit2026 = Join-Path $stage 'SAM\Revit 2026'
+          Write-Host "=== Staged SAM\Revit 2026 ==="
+          if (Test-Path $revit2026) {
+            Get-ChildItem -Path $revit2026 -Recurse | Select-Object FullName
+          } else {
+            Write-Host "Revit 2026 stage folder missing."
+          }
+
 
       - name: Install Inno Setup
         shell: pwsh
