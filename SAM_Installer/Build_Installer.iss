@@ -137,6 +137,7 @@ begin
   GhYearDir := ExpandConstant('{userappdata}\Grasshopper\Libraries-Inside-Revit-') + Year + '\';
   if not DirExists(GhYearDir) then
     ForceDirectories(GhYearDir);
+
   Content :=
     '#Order of files is important' + #13#10 +
     SamDir + 'Revit ' + Year + '\SAM.Core.Grasshopper.Revit.gha' + #13#10 +
@@ -159,6 +160,52 @@ procedure CopyIfExists(const SrcFile, DstFile: string);
 begin
   if FileExists(SrcFile) then
     FileCopy(SrcFile, DstFile, False);
+end;
+
+procedure CreateRevitAddin(const Year: string);
+var
+  TemplatePath: string;
+  TargetDir:    string;
+  TargetPath:   string;
+  AssemblyPath: string;
+  Lines:        TArrayOfString;
+  I:            Integer;
+begin
+  // Template shipped via installer into %APPDATA%\SAM
+  TemplatePath := ExpandConstant('{userappdata}\SAM\SAM.addin');
+  if not FileExists(TemplatePath) then
+  begin
+    // Nothing to do if template is missing
+    Exit;
+  end;
+
+  // Per-Revit-year add-in destination
+  TargetDir := ExpandConstant('{userappdata}\Autodesk\Revit\Addins\') + Year + '\';
+  if not DirExists(TargetDir) then
+    ForceDirectories(TargetDir);
+  TargetPath := TargetDir + 'SAM.addin';
+
+  // Assembly path for this Revit year
+  AssemblyPath :=
+    ExpandConstant('{userappdata}\SAM\Revit ') +
+    Year +
+    '\SAM.Core.Revit.UI.dll';
+
+  // Load template, replace placeholder, save to year-specific location
+  if not LoadStringsFromFile(TemplatePath, Lines) then
+    Exit;
+
+  for I := 0 to GetArrayLength(Lines) - 1 do
+  begin
+    Lines[I] := StringChange(
+      Lines[I],
+      '<Assembly></Assembly>',
+      '<Assembly>' + AssemblyPath + '</Assembly>'
+    );
+  end;
+
+  // Overwrite if already exists
+  SaveStringsToFile(TargetPath, Lines, False);
 end;
 
 procedure EnsureRevitYearPayload(const Year: string);
@@ -189,6 +236,7 @@ begin
   TryCopyToGha(Target, 'SAM.Architectural.Grasshopper.Revit');
   TryCopyToGha(Target, 'SAM.Analytical.Grasshopper.Revit');
   CreateRevitGhLink(Year);
+  CreateRevitAddin(Year);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
