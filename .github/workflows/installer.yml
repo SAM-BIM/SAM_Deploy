@@ -73,6 +73,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+
           $root  = (Get-Location).Path
           $issDir = Join-Path $root 'SAM_Installer'
           $stage = Join-Path $issDir 'build'
@@ -88,19 +89,36 @@ jobs:
             }
           }
 
-          # 1) Core staged payload
+          # 1) Core staged payload (same idea as before)
           Copy-IfExists (Join-Path $root 'SAM_UI\build')          (Join-Path $stage 'SAM')
           Copy-IfExists (Join-Path $root 'SAM_Windows\build')     (Join-Path $stage 'SAMdependencies')
           Copy-IfExists (Join-Path $root 'SAM_Revit\references')  (Join-Path $stage 'Rhino.Inside')
           Copy-IfExists (Join-Path $root 'Documents\SAM')         (Join-Path $stage 'user\Documents\SAM')
 
-          # 2) Rhino UI payload – use the SAME build folder you use locally
-          #    This should contain both .rhp files and all the highlighted DLLs.
-          $rhinoSource = Join-Path $root 'SAM_Rhino_UI\build'
-          $rhinoStage  = Join-Path $stage 'SAM_Rhino_UI'
-          Copy-IfExists $rhinoSource $rhinoStage
+          # 2) Rhino UI payload -> Yak-style package: SAM_Rhino_UI\1.0.0 + manifest.txt
+          $rhinoRoot    = Join-Path $stage 'SAM_Rhino_UI'
+          $rhinoVersion = '1.0.0'
+          $rhinoOutDir  = Join-Path $rhinoRoot $rhinoVersion
 
-          # 3) Bring in other SAM* repo builds (if they have a \build folder)
+          New-Item -ItemType Directory -Force -Path $rhinoOutDir | Out-Null
+
+          $rhinoSln = Join-Path $root 'SAM_Rhino_UI\SAM_Rhino_UI.sln'
+          if (Test-Path $rhinoSln) {
+            Write-Host "Building SAM_Rhino_UI solution -> $rhinoOutDir"
+            & msbuild $rhinoSln /t:Rebuild /m:1 /nr:false /v:m `
+              /p:Configuration=Release `
+              /p:UseSharedCompilation=false `
+              /p:RunPostBuildEvent=Never `
+              /p:OutDir="$rhinoOutDir\"
+          } else {
+            Write-Host "WARN: SAM_Rhino_UI solution not found at $rhinoSln; Rhino package payload will be missing."
+          }
+
+          # Yak manifest for Rhino package
+          $manifestPath = Join-Path $rhinoRoot 'manifest.txt'
+          Set-Content -Path $manifestPath -Value $rhinoVersion -Encoding ascii
+
+          # 3) Bring in ALL other SAM* repo builds (SAM, SAM_Tas, etc.) into build\SAM
           $exclude = @('SAM_UI','SAM_Windows','SAM_Rhino_UI','SAM_Revit','SAM_Revit_UI','SAM_Installer')
           Get-ChildItem -Path $root -Directory | Where-Object {
             $_.Name -like 'SAM*' -and ($exclude -notcontains $_.Name)
@@ -111,7 +129,7 @@ jobs:
             }
           }
 
-          # 4) Revit add-in template (SAM.addin) copied next to SAM payload
+          # 4) Add Revit add-in manifest into build\SAM
           $addin = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
           if (Test-Path $addin) {
             $samOut = Join-Path $stage 'SAM'
@@ -121,7 +139,7 @@ jobs:
             Write-Host "WARN: Revit add-in template not found at $addin"
           }
 
-          # 5) Stage Revit plugin payloads into build\SAM\Revit YYYY
+          # 5) Build per-year Revit payloads into build\SAM\Revit YYYY
           $revitAssemblies = @(
             'SAM.Core.Revit.UI.dll',
             'SAM.Core.Grasshopper.Revit.dll',
@@ -137,16 +155,12 @@ jobs:
           foreach ($dll in $allDlls) {
             if ($revitAssemblies -notcontains $dll.Name) { continue }
 
-            $dir = $dll.DirectoryName
+            $dir  = $dll.DirectoryName
             $year = $null
 
-            if ($dir -match 'Release(20[0-9]{2})') {
-              $year = $Matches[1]
-            } elseif ($dir -match 'Debug(20[0-9]{2})') {
-              $year = $Matches[1]
-            } elseif ($dir -match 'Revit[\s_]*(20[0-9]{2})') {
-              $year = $Matches[1]
-            }
+            if     ($dir -match 'Release(20[0-9]{2})')        { $year = $Matches[1] }
+            elseif ($dir -match 'Debug(20[0-9]{2})')          { $year = $Matches[1] }
+            elseif ($dir -match 'Revit[\s_]*(20[0-9]{2})')    { $year = $Matches[1] }
 
             if (-not $year) {
               Write-Host "WARN: Could not infer Revit year from path: $($dll.FullName)"
@@ -193,6 +207,7 @@ jobs:
             $count++
           }
           Write-Host "GHA created: $count"
+
 
       - name: Normalize Rhino package structure (SAM_Rhino_UI)
         shell: pwsh
