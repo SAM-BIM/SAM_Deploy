@@ -11,8 +11,8 @@ AppName=SAM
 AppPublisher=SAM-BIM
 AppVersion={#AppVersion}
 ; Final EXE name and output directory (relative to this .iss file)
-OutputBaseFilename=SAM_Install
-OutputDir=..\dist
+; OutputBaseFilename=SAM_Install
+; OutputDir=..\dist
 DefaultDirName={userappdata}\SAM
 DisableDirPage=yes
 DefaultGroupName=SAM
