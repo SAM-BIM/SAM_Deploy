@@ -211,6 +211,43 @@ jobs:
           }
           Write-Host "GHA created: $count"
 
+      - name: Normalize Rhino package structure (SAM_Rhino_UI)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          # Root of the Inno staging folder
+          $stageRoot = Resolve-Path 'SAM_Installer\build' -ErrorAction Stop
+          $samPkgRoot = Join-Path $stageRoot 'SAM_Rhino_UI'
+
+          if (-not (Test-Path $samPkgRoot)) {
+            Write-Host "SAM_Rhino_UI stage folder not found, skipping Rhino package normalization."
+            return
+          }
+
+          # Rhino PackageManager layout:
+          #   %APPDATA%\McNeel\Rhinoceros\packages\<7.0|8.0>\SAM\manifest.txt
+          #   %APPDATA%\McNeel\Rhinoceros\packages\<7.0|8.0>\SAM\<version>\*files*
+          $version = '1.0.0'
+
+          $versionDir = Join-Path $samPkgRoot $version
+          if (Test-Path $versionDir) {
+            Remove-Item $versionDir -Recurse -Force
+          }
+          New-Item -ItemType Directory -Force -Path $versionDir | Out-Null
+
+          # Move all built files into the version folder
+          Get-ChildItem -Path $samPkgRoot -Force |
+            Where-Object { $_.Name -ne $version -and $_.Name -ne 'manifest.txt' } |
+            ForEach-Object {
+              $dest = Join-Path $versionDir $_.Name
+              Move-Item $_.FullName $dest -Force
+            }
+
+          # Write manifest.txt with the active version
+          $manifestPath = Join-Path $samPkgRoot 'manifest.txt'
+          Set-Content -Path $manifestPath -Value $version -Encoding utf8
+
       - name: Install Inno Setup
         shell: pwsh
         run: choco install innosetup -y
