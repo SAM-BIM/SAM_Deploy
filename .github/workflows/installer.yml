@@ -89,9 +89,10 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
 
-          $root  = (Get-Location).Path
+          $root   = (Get-Location).Path
           $issDir = Join-Path $root 'SAM_Installer'
-          $stage = Join-Path $issDir 'build'
+          $stage  = Join-Path $issDir 'build'
+
           if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
 
@@ -104,33 +105,44 @@ jobs:
             }
           }
 
-          # 1) Core SAM payload
-          Copy-IfExists (Join-Path $root 'SAM_UI\build')          (Join-Path $stage 'SAM')
-          Copy-IfExists (Join-Path $root 'SAM_Windows\build')     (Join-Path $stage 'SAMdependencies')
-          Copy-IfExists (Join-Path $root 'SAM_Revit\references')  (Join-Path $stage 'Rhino.Inside')
-          Copy-IfExists (Join-Path $root 'Documents\SAM')         (Join-Path $stage 'user\Documents\SAM')
+          # 1) Core SAM payload (same as before)
+          Copy-IfExists (Join-Path $root 'SAM_UI\build')         (Join-Path $stage 'SAM')
+          Copy-IfExists (Join-Path $root 'SAM_Windows\build')    (Join-Path $stage 'SAMdependencies')
+          Copy-IfExists (Join-Path $root 'SAM_Revit\references') (Join-Path $stage 'Rhino.Inside')
+          Copy-IfExists (Join-Path $root 'Documents\SAM')        (Join-Path $stage 'user\Documents\SAM')
 
-          # 2) Build Rhino UI directly into Yak-style folder: SAM_Rhino_UI\1.0.0
-          $yakRoot       = Join-Path $stage 'SAM_Rhino_UI'
-          $yakVersion    = '1.0.0'
+          # 2) Rhino Yak package: harvest binaries from SAM_Rhino_UI build outputs
+          $rhinoRoot    = Join-Path $root  'SAM_Rhino_UI'
+          $yakRoot      = Join-Path $stage 'SAM_Rhino_UI'
+          $yakVersion   = '1.0.0'
           $yakVersionDir = Join-Path $yakRoot $yakVersion
 
+          if (Test-Path $yakRoot) { Remove-Item $yakRoot -Recurse -Force }
           New-Item -ItemType Directory -Force -Path $yakVersionDir | Out-Null
 
-          $samRhinoUiProj = Get-ChildItem -Path (Join-Path $root 'SAM_Rhino_UI') -Recurse -Filter 'SAM_Rhino_UI.csproj' -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($samRhinoUiProj) {
-            Write-Host "Building SAM_Rhino_UI from $($samRhinoUiProj.FullName) -> $yakVersionDir"
-            & msbuild $samRhinoUiProj.FullName /t:Rebuild /m:1 /nr:false /v:m `
-              /p:Configuration=Release /p:UseSharedCompilation=false `
-              /p:RunPostBuildEvent=Never /p:OutDir="$yakVersionDir\"
+          if (Test-Path $rhinoRoot) {
+            # All SAM* dll/rhp/gha in SAM_Rhino_UI tree (bin/Release, bin/Debug, etc.)
+            $rhinoFiles = Get-ChildItem -Path $rhinoRoot -Recurse -File -ErrorAction SilentlyContinue |
+                          Where-Object { $_.Name -like 'SAM.*' -and $_.Extension -in '.dll','.rhp','.gha' }
+
+            if ($rhinoFiles.Count -eq 0) {
+              Write-Host "WARN: No Rhino binaries found under $rhinoRoot; Yak package will be empty."
+            } else {
+              Write-Host "Staging $($rhinoFiles.Count) Rhino files into Yak package..."
+              foreach ($f in $rhinoFiles) {
+                $dest = Join-Path $yakVersionDir $f.Name
+                Copy-Item $f.FullName $dest -Force
+              }
+            }
           } else {
-            Write-Host 'WARN: SAM_Rhino_UI.csproj not found; Rhino package will be empty.'
+            Write-Host "WARN: SAM_Rhino_UI directory not found at $rhinoRoot; Rhino package will be empty."
           }
 
+          # manifest.txt with the version
           $manifestPath = Join-Path $yakRoot 'manifest.txt'
           Set-Content -Path $manifestPath -Value $yakVersion -Encoding utf8
 
-          # 3) Bring in ALL other SAM* repo builds (SAM, SAM_Tas, etc.)
+          # 3) Other SAM* repo builds into build\SAM (unchanged)
           $exclude = @('SAM_UI','SAM_Windows','SAM_Rhino_UI','SAM_Revit','SAM_Revit_UI','SAM_Installer')
           Get-ChildItem -Path $root -Directory | Where-Object {
             $_.Name -like 'SAM*' -and ($exclude -notcontains $_.Name)
@@ -141,7 +153,7 @@ jobs:
             }
           }
 
-          # 4) Revit add-in template copied next to SAM payload
+          # 4) Revit add-in template (SAM.addin) next to SAM payload
           $addin = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
           if (Test-Path $addin) {
             $samOut = Join-Path $stage 'SAM'
@@ -162,31 +174,26 @@ jobs:
           $revitByYear = @{}
 
           Write-Host 'Scanning built outputs for Revit assemblies...'
-          $allDlls = Get-ChildItem -Path $root -Recurse -Filter *.dll -ErrorAction SilentlyContinue
+          $allDlls = Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue |
+                     Where-Object { $_.Name -in $revitAssemblies }
 
           foreach ($dll in $allDlls) {
-            if ($revitAssemblies -notcontains $dll.Name) { continue }
-
-            $dir  = $dll.DirectoryName
             $year = $null
-
             foreach ($y in $years) {
-              if ($dir -like "*$y*") {
+              if ($dll.FullName -match $y) {
                 $year = $y
                 break
               }
             }
-
             if (-not $year) {
               Write-Host "WARN: Could not infer Revit year for $($dll.FullName)"
               continue
             }
 
             if (-not $revitByYear.ContainsKey($year)) {
-              $revitByYear[$year] = @{}
+              $revitByYear[$year] = @()
             }
-
-            $revitByYear[$year][$dll.Name] = $dll.FullName
+            $revitByYear[$year] += $dll
           }
 
           if ($revitByYear.Count -eq 0) {
@@ -198,18 +205,25 @@ jobs:
               $targetDir = Join-Path $stage ("SAM\Revit $year")
               New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
 
-              Write-Host "Staging Revit payload for $year into $targetDir"
-              foreach ($asmName in $revitAssemblies) {
-                if ($revitByYear[$year].ContainsKey($asmName)) {
-                  $src = $revitByYear[$year][$asmName]
-                  $dst = Join-Path $targetDir $asmName
-                  Copy-Item $src $dst -Force
-                } else {
-                  Write-Host "WARN: $asmName not found for Revit $year"
-                }
+              Write-Host "Staging $($revitByYear[$year].Count) Revit assemblies into $targetDir"
+              foreach ($dll in $revitByYear[$year]) {
+                $dst = Join-Path $targetDir $dll.Name
+                Copy-Item $dll.FullName $dst -Force
               }
             }
           }
+
+          # 6) Convert SAM.*Grasshopper.*.dll in staging to .gha
+          $dlls = Get-ChildItem -Path $stage -Recurse -Filter '*.dll' -ErrorAction SilentlyContinue |
+                  Where-Object { $_.Name -like 'SAM.*Grasshopper*.dll' }
+          $ghaCount = 0
+          foreach ($dll in $dlls) {
+            $gha = [System.IO.Path]::ChangeExtension($dll.FullName, '.gha')
+            Copy-Item $dll.FullName $gha -Force
+            $ghaCount++
+          }
+          Write-Host "GHA created: $ghaCount"
+
 
 
 
