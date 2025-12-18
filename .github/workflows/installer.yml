@@ -107,13 +107,54 @@ jobs:
             }
           }
 
-          # 1) Core SAM payload
-          Copy-IfExists (Join-Path $root 'SAM_UI\build')         (Join-Path $stage 'SAM')
-          Copy-IfExists (Join-Path $root 'SAM_Windows\build')    (Join-Path $stage 'SAMdependencies')
-          Copy-IfExists (Join-Path $root 'SAM_Revit\references') (Join-Path $stage 'Rhino.Inside')
-          Copy-IfExists (Join-Path $root 'Documents\SAM')        (Join-Path $stage 'user\Documents\SAM')
+          # 1) Core staged payload
+          Copy-IfExists (Join-Path $root 'SAM_UI\build')          (Join-Path $stage 'SAM')
+          Copy-IfExists (Join-Path $root 'SAM_Windows\build')     (Join-Path $stage 'SAMdependencies')
+          Copy-IfExists (Join-Path $root 'SAM_Revit\references')  (Join-Path $stage 'Rhino.Inside')
+          Copy-IfExists (Join-Path $root 'Documents\SAM')         (Join-Path $stage 'user\Documents\SAM')
 
-          # 2) Other SAM* repos into build\SAM (SAM_Tas, SAM_Excel, etc.)
+          # 1b) Build SAM_Rhino_UI.sln so SAM_Rhino_UI\build looks like your local build
+          $rhinoRoot = Join-Path $root 'SAM_Rhino_UI'
+          $rhinoSln  = Join-Path $rhinoRoot 'SAM_Rhino_UI.sln'
+          if (Test-Path $rhinoSln) {
+            Write-Host "Rebuilding SAM_Rhino_UI.sln (Release) to populate SAM_Rhino_UI\\build..."
+            & msbuild $rhinoSln /t:Rebuild /m:1 /nr:false /v:m `
+              /p:Configuration=Release /p:UseSharedCompilation=false `
+              /p:RunPostBuildEvent=OnOutputUpdated
+          } else {
+            Write-Host "WARN: SAM_Rhino_UI.sln not found at $rhinoSln"
+          }
+
+          # 1c) Package Rhino build outputs into Yak structure SAM_Rhino_UI\1.0.0 (no .gha)
+          $rhinoBuild     = Join-Path $rhinoRoot 'build'
+          $yakRoot        = Join-Path $stage 'SAM_Rhino_UI'
+          $yakVersion     = '1.0.0'
+          $yakVersionDir  = Join-Path $yakRoot $yakVersion
+
+          if (Test-Path $yakRoot) { Remove-Item $yakRoot -Recurse -Force }
+          New-Item -ItemType Directory -Force -Path $yakVersionDir | Out-Null
+
+          if (Test-Path $rhinoBuild) {
+            Write-Host "Copying SAM_Rhino_UI\\build -> $yakVersionDir"
+            Copy-Item "$rhinoBuild\*" $yakVersionDir -Recurse -Force
+
+            # Remove any .gha – GH plugins live under %APPDATA%\SAM, not inside Yak
+            Get-ChildItem -Path $yakVersionDir -Recurse -Filter '*.gha' -ErrorAction SilentlyContinue |
+              Remove-Item -Force
+
+            Set-Content -Path (Join-Path $yakRoot 'manifest.txt') -Value $yakVersion -Encoding ascii
+
+            $cnt = (Get-ChildItem -Path $yakVersionDir -Recurse -File | Measure-Object).Count
+            Write-Host "Rhino Yak payload: $cnt files in $yakVersionDir"
+          } else {
+            Write-Host "WARN: SAM_Rhino_UI\\build not found; Rhino Yak payload will be empty."
+            if (-not (Test-Path $yakRoot)) {
+              New-Item -ItemType Directory -Force -Path $yakRoot | Out-Null
+            }
+            Set-Content -Path (Join-Path $yakRoot 'manifest.txt') -Value $yakVersion -Encoding ascii
+          }
+
+          # 2) Bring in ALL other SAM* repo builds (SAM, SAM_Tas, etc.) into build\SAM
           $exclude = @('SAM_UI','SAM_Windows','SAM_Rhino_UI','SAM_Revit','SAM_Revit_UI','SAM_Installer')
           Get-ChildItem -Path $root -Directory | Where-Object {
             $_.Name -like 'SAM*' -and ($exclude -notcontains $_.Name)
@@ -124,97 +165,11 @@ jobs:
             }
           }
 
-          # 3) Revit add-in template (SAM.addin) next to SAM payload
+          # 3) Add Revit add-in manifest into build\SAM
           $addin = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
           if (Test-Path $addin) {
-            $samOut = Join-Path $stage 'SAM'
-            New-Item -ItemType Directory -Force -Path $samOut | Out-Null
-            Copy-Item $addin $samOut -Force
-          } else {
-            Write-Host "WARN: Revit add-in template not found at $addin"
-          }
-
-          # 4) Stage Revit assemblies per year into build\SAM\Revit YYYY
-          $revitAssemblies = @(
-            'SAM.Core.Revit.UI.dll',
-            'SAM.Core.Grasshopper.Revit.dll',
-            'SAM.Architectural.Grasshopper.Revit.dll',
-            'SAM.Analytical.Grasshopper.Revit.dll'
-          )
-          $years = @('2020','2021','2022','2023','2024','2025','2026')
-          $revitByYear = @{}
-
-          Write-Host 'Scanning built outputs for Revit assemblies...'
-          $allDlls = Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue |
-                     Where-Object { $_.Name -in $revitAssemblies }
-
-          foreach ($dll in $allDlls) {
-            $year = $null
-            foreach ($y in $years) {
-              if ($dll.FullName -match $y) {
-                $year = $y
-                break
-              }
-            }
-            if (-not $year) {
-              Write-Host "WARN: Could not infer Revit year for $($dll.FullName)"
-              continue
-            }
-
-            if (-not $revitByYear.ContainsKey($year)) {
-              $revitByYear[$year] = @()
-            }
-            $revitByYear[$year] += $dll
-          }
-
-          foreach ($year in $years) {
-            if (-not $revitByYear.ContainsKey($year)) { continue }
-
-            $targetDir = Join-Path $stage ("SAM\Revit $year")
-            New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-
-            Write-Host "Staging $($revitByYear[$year].Count) Revit assemblies into $targetDir"
-            foreach ($dll in $revitByYear[$year]) {
-              $dst = Join-Path $targetDir $dll.Name
-              Copy-Item $dll.FullName $dst -Force
-            }
-          }
-
-          # 5) Build SAM_Rhino_UI with its own post-build, then create Yak package
-          $samRhinoSln = Join-Path $root 'SAM_Rhino_UI\SAM_Rhino_UI.sln'
-          $yakRoot      = Join-Path $stage 'SAM_Rhino_UI'
-          $yakVersion   = '1.0.0'
-          $yakVersionDir = Join-Path $yakRoot $yakVersion
-
-          if (Test-Path $samRhinoSln) {
-            Write-Host "Rebuilding SAM_Rhino_UI.sln -> SAM_Rhino_UI\\build (with post-build events)"
-            & msbuild $samRhinoSln /t:Rebuild /m:1 /nr:false /v:m `
-              /p:Configuration=Release /p:UseSharedCompilation=false
-          } else {
-            Write-Host "WARN: SAM_Rhino_UI.sln not found at $samRhinoSln"
-          }
-
-          $rhinoBuild = Join-Path $root 'SAM_Rhino_UI\build'
-          if (Test-Path $rhinoBuild) {
-            if (Test-Path $yakRoot) { Remove-Item $yakRoot -Recurse -Force }
-            New-Item -ItemType Directory -Force -Path $yakVersionDir | Out-Null
-
-            # Copy everything from SAM_Rhino_UI\build, then strip any .gha
-            Copy-Item "$rhinoBuild\*" $yakVersionDir -Recurse -Force
-
-            Get-ChildItem -Path $yakVersionDir -Recurse -Filter '*.gha' -ErrorAction SilentlyContinue |
-              Remove-Item -Force
-
-            Set-Content -Path (Join-Path $yakRoot 'manifest.txt') -Value $yakVersion -Encoding utf8
-
-            $fileCount = (Get-ChildItem -Path $yakVersionDir -Recurse -File | Measure-Object).Count
-            Write-Host "Rhino Yak payload: $fileCount files staged from SAM_Rhino_UI\\build into $yakVersionDir"
-          } else {
-            Write-Host "WARN: SAM_Rhino_UI\\build not found; Rhino package will only contain manifest."
-            if (-not (Test-Path $yakRoot)) {
-              New-Item -ItemType Directory -Force -Path $yakRoot | Out-Null
-            }
-            Set-Content -Path (Join-Path $yakRoot 'manifest.txt') -Value $yakVersion -Encoding utf8
+            New-Item -ItemType Directory -Force -Path (Join-Path $stage 'SAM') | Out-Null
+            Copy-Item $addin (Join-Path $stage 'SAM') -Force
           }
 
       - name: Install Inno Setup
