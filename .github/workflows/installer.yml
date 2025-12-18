@@ -88,34 +88,17 @@ jobs:
             }
           }
 
-          function Find-CsprojInSubdir([string]$rootPath,[string]$folderName) {
-            $dir = Join-Path $rootPath $folderName
-            if (-not (Test-Path $dir)) { return $null }
-            $proj = Get-ChildItem -Path $dir -Recurse -Filter '*.csproj' -ErrorAction SilentlyContinue |
-                    Select-Object -First 1
-            if ($proj) { return $proj.FullName }
-            return $null
-          }
-
           # 1) Core staged payload
           Copy-IfExists (Join-Path $root 'SAM_UI\build')          (Join-Path $stage 'SAM')
           Copy-IfExists (Join-Path $root 'SAM_Windows\build')     (Join-Path $stage 'SAMdependencies')
           Copy-IfExists (Join-Path $root 'SAM_Revit\references')  (Join-Path $stage 'Rhino.Inside')
           Copy-IfExists (Join-Path $root 'Documents\SAM')         (Join-Path $stage 'user\Documents\SAM')
 
-          # 2) Rhino UI payload -> SAM_Installer\build\SAM_Rhino_UI
-          $rhinoStage = Join-Path $stage 'SAM_Rhino_UI'
-          New-Item -ItemType Directory -Force -Path $rhinoStage | Out-Null
-
-          $samRhinoUiProj = Find-CsprojInSubdir $root 'SAM_Rhino_UI'
-          if ($samRhinoUiProj) {
-            Write-Host "Building SAM_Rhino_UI from $samRhinoUiProj -> $rhinoStage"
-            & msbuild $samRhinoUiProj /t:Rebuild /m:1 /nr:false /v:m `
-              /p:Configuration=Release /p:UseSharedCompilation=false `
-              /p:RunPostBuildEvent=Never /p:OutDir="$rhinoStage\"
-          } else {
-            Write-Host 'WARN: SAM_Rhino_UI project not found; Rhino package payload may be missing.'
-          }
+          # 2) Rhino UI payload – use the SAME build folder you use locally
+          #    This should contain both .rhp files and all the highlighted DLLs.
+          $rhinoSource = Join-Path $root 'SAM_Rhino_UI\build'
+          $rhinoStage  = Join-Path $stage 'SAM_Rhino_UI'
+          Copy-IfExists $rhinoSource $rhinoStage
 
           # 3) Bring in other SAM* repo builds (if they have a \build folder)
           $exclude = @('SAM_UI','SAM_Windows','SAM_Rhino_UI','SAM_Revit','SAM_Revit_UI','SAM_Installer')
