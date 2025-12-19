@@ -84,6 +84,30 @@ jobs:
           )
           msbuild .\BuildAll_Release_net.csproj @msbuildArgs
 
+      - name: Rebuild SAM_Rhino_UI (with post-build)
+        shell: pwsh
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sln = 'SAM_Rhino_UI\SAM_Rhino_UI.sln'
+
+          if (-not (Test-Path $sln)) {
+            Write-Host "WARN: $sln not found; skipping SAM_Rhino_UI rebuild."
+            return
+          }
+
+          $msbuildArgs = @(
+            $sln,
+            '/t:Rebuild',
+            '/m:1','/nr:false','/v:m',
+            '/p:Configuration=Release',
+            '/p:UseSharedCompilation=false',
+            '/p:RunPostBuildEvent=OnOutputUpdated'
+          )
+
+          msbuild @msbuildArgs
+
       # -----------------------------------------------------------------------
       # STAGING: put everything the Inno script expects under SAM_Installer\build
       # -----------------------------------------------------------------------
