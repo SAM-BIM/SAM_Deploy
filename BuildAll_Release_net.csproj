@@ -92,7 +92,6 @@
     <CommonCIProps>
       UseSharedCompilation=false;
       RunPostBuildEvent=OnOutputUpdated;
-      PostBuildEvent=;
       ReferencePath=$(WindowsRefPath)
     </CommonCIProps>
   </PropertyGroup>
