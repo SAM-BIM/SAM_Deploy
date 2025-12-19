@@ -65,7 +65,7 @@ jobs:
             '/t:Restore','/m:1','/nr:false','/v:m',
             '/p:Configuration=Release',
             '/p:UseSharedCompilation=false',
-            '/p:RunPostBuildEvent=OnOutputUpdated',
+            '/p:RunPostBuildEvent=OnOutputUpdated'
           )
           msbuild .\BuildAll_Release_net.csproj @msbuildArgs
 
@@ -78,7 +78,7 @@ jobs:
             '/t:Rebuild','/m:1','/nr:false','/v:m',
             '/p:Configuration=Release',
             '/p:UseSharedCompilation=false',
-            '/p:RunPostBuildEvent=OnOutputUpdated',
+            '/p:RunPostBuildEvent=OnOutputUpdated'
           )
           msbuild .\BuildAll_Release_net.csproj @msbuildArgs
 
