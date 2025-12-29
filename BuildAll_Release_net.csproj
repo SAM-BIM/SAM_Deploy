@@ -104,7 +104,8 @@
     <CommonCIProps>
       UseSharedCompilation=false;
       RunPostBuildEvent=OnOutputUpdated;
-      ReferencePath=$(WindowsRefPath)
+      ReferencePath=$(WindowsRefPath);
+      WarningsNotAsErrors=NU1701
     </CommonCIProps>
   </PropertyGroup>
 
