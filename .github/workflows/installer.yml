@@ -79,8 +79,7 @@ jobs:
           MSBUILDDISABLENODEREUSE: '1'
         run: |
           $solutions = @(
-            '.\BuildAll_Release_net.csproj',
-            '.\SAM_Rhino_UI\SAM_Analytical.Rhino.UI.csproj'
+            '.\BuildAll_Release_net.csproj'
           )
 
           foreach ($sln in $solutions) {
