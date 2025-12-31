@@ -67,11 +67,8 @@ jobs:
             '/m:1','/nr:false','/v:m',
             '/p:Configuration=Release',
             '/p:UseSharedCompilation=false'
-            # REMOVE this:
-            # '/p:RunPostBuildEvent=OnOutputUpdated'
           )
           msbuild @msbuildArgs
-
 
       - name: Rebuild (single node)
         shell: pwsh
@@ -89,13 +86,10 @@ jobs:
               '/m:1','/nr:false','/v:m',
               '/p:Configuration=Release',
               '/p:UseSharedCompilation=false'
-              # REMOVE this:
-              # '/p:RunPostBuildEvent=OnOutputUpdated'
             )
 
             msbuild @msbuildArgs
           }
-
 
       - name: Rebuild SAM_Rhino_UI (with post-build)
         shell: pwsh
@@ -148,6 +142,19 @@ jobs:
 
           # ---- Core SAM payload (what ends up in %APPDATA%\SAM) --------------
           Copy-IfExists (Join-Path $root 'SAM_UI\build')          (Join-Path $stage 'SAM')
+
+          # NEW: ensure SAM_Tas ends up in %APPDATA%\SAM (no Revit duplication here)
+          Copy-IfExists (Join-Path $root 'SAM_Tas\build')         (Join-Path $stage 'SAM')
+
+          # NEW: ensure SAM.addin template is available under %APPDATA%\SAM
+          $addinTemplate = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
+          if (Test-Path $addinTemplate) {
+            New-Item -ItemType Directory -Force -Path (Join-Path $stage 'SAM') | Out-Null
+            Copy-Item $addinTemplate (Join-Path $stage 'SAM') -Force
+          } else {
+            Write-Host "WARN: Revit add-in template not found at $addinTemplate"
+          }
+
           Copy-IfExists (Join-Path $root 'SAM_Windows\build')     (Join-Path $stage 'SAMdependencies')
           Copy-IfExists (Join-Path $root 'SAM_Revit\references')  (Join-Path $stage 'Rhino.Inside')
           Copy-IfExists (Join-Path $root 'Documents\SAM')         (Join-Path $stage 'user\Documents\SAM')
@@ -201,7 +208,23 @@ jobs:
               }
             }
 
-            # Convert Revit Grasshopper DLLs in this folder into .gha
+            # NEW: copy runtime files into Revit year folder (like Rhino package),
+            # but DO NOT copy any Grasshopper binaries (prevents duplicate core .gha in Revit folders).
+            $coreSamDir = Join-Path $stage 'SAM'
+            if (Test-Path $coreSamDir) {
+              $runtimeFiles = Get-ChildItem -Path $coreSamDir -File -ErrorAction SilentlyContinue |
+                Where-Object {
+                  $_.Extension -in @('.dll','.xml','.config','.json','.pdb') -and
+                  $_.Name -notmatch 'Grasshopper' -and
+                  $_.Name -ne 'SAM.addin'
+                }
+
+              foreach ($f in $runtimeFiles) {
+                Copy-Item $f.FullName (Join-Path $targetDir $f.Name) -Force
+              }
+            }
+
+            # Convert Revit Grasshopper DLLs in this folder into .gha (Revit-only GHAs live here)
             $ghDlls = Get-ChildItem -Path $targetDir -Filter 'SAM.*Grasshopper*.dll' -ErrorAction SilentlyContinue
             foreach ($dll in $ghDlls) {
               $gha = [IO.Path]::ChangeExtension($dll.FullName, '.gha')
@@ -250,22 +273,9 @@ jobs:
           $manifestPath = Join-Path $yakRoot 'manifest.txt'
           Set-Content -Path $manifestPath -Value $yakVersion -Encoding ascii
 
-          # Remove any .gha from the Rhino package (GHAs stay under %APPDATA%\SAM)
+          # Remove any .gha from the Rhino package (core GHAs stay under %APPDATA%\SAM)
           Get-ChildItem -Path $yakVersionDir -Recurse -Filter *.gha -ErrorAction SilentlyContinue |
             Remove-Item -Force
-
-          # ---- Convert SAM.*Grasshopper.*.dll under build root into .gha -------
-          $stageRoot = Resolve-Path 'SAM_Installer\build' -ErrorAction Stop
-          $dlls = Get-ChildItem -Path $stageRoot -Recurse -Filter *.dll |
-                  Where-Object { $_.Name -match '^SAM\..*Grasshopper.*\.dll$' }
-          $count = 0
-          foreach ($dll in $dlls) {
-            $gha = [IO.Path]::ChangeExtension($dll.FullName, '.gha')
-            Copy-Item $dll.FullName $gha -Force
-            $count++
-          }
-          Write-Host "GHA created: $count"
-
 
       # Only create GHAs for *core* SAM dlls in build\SAM\ (non-Revit).
       # Revit-specific GHAs are already created in the step above.
