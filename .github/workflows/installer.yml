@@ -87,7 +87,6 @@ jobs:
               '/p:Configuration=Release',
               '/p:UseSharedCompilation=false'
             )
-
             msbuild @msbuildArgs
           }
 
@@ -142,11 +141,12 @@ jobs:
 
           # ---- Core SAM payload (what ends up in %APPDATA%\SAM) --------------
           Copy-IfExists (Join-Path $root 'SAM_UI\build')          (Join-Path $stage 'SAM')
-
-          # NEW: ensure SAM_Tas ends up in %APPDATA%\SAM (no Revit duplication here)
           Copy-IfExists (Join-Path $root 'SAM_Tas\build')         (Join-Path $stage 'SAM')
 
-          # NEW: ensure SAM.addin template is available under %APPDATA%\SAM
+          # ✅ NEW: Multitasker into %APPDATA%\SAM
+          Copy-IfExists (Join-Path $root 'SAM_Multitasker\build') (Join-Path $stage 'SAM')
+
+          # ensure SAM.addin template is available under %APPDATA%\SAM
           $addinTemplate = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
           if (Test-Path $addinTemplate) {
             New-Item -ItemType Directory -Force -Path (Join-Path $stage 'SAM') | Out-Null
@@ -161,19 +161,15 @@ jobs:
 
           # ---- Revit payload (per year) -> build\SAM\Revit 20xx\ -------------
           $revitYears = @('2025','2026')
-          $revitAssemblies = @(
-            'SAM.Core.Revit.UI.dll',
-            'SAM.Core.Grasshopper.Revit.dll',
-            'SAM.Architectural.Grasshopper.Revit.dll',
-            'SAM.Analytical.Grasshopper.Revit.dll'
-          )
+          $revitDllRegex = '^SAM\..*Revit.*\.dll$'
 
-          Write-Host 'Scanning repository for Revit assemblies.'
+          Write-Host "Scanning repository for Revit assemblies matching: $revitDllRegex"
           $allDlls = Get-ChildItem -Path $root -Recurse -File -Filter *.dll -ErrorAction SilentlyContinue
+
           $revitByYear = @{}
 
           foreach ($dll in $allDlls) {
-            if ($revitAssemblies -notcontains $dll.Name) { continue }
+            if ($dll.Name -notmatch $revitDllRegex) { continue }
 
             $year = $null
             if ($dll.DirectoryName -match '20[0-9]{2}') {
@@ -186,30 +182,36 @@ jobs:
             if (-not $revitByYear.ContainsKey($year)) {
               $revitByYear[$year] = @{}
             }
+
+            # keep last-seen path per filename
             $revitByYear[$year][$dll.Name] = $dll.FullName
           }
 
           foreach ($year in $revitYears) {
-            if (-not $revitByYear.ContainsKey($year)) {
-              Write-Host "WARN: no Revit assemblies found for $year; SAM\Revit $year will be empty."
-              continue
-            }
-
             $targetDir = Join-Path $stage ("SAM\Revit $year")
             New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
 
-            Write-Host "Staging Revit payload for $year into $targetDir"
-            foreach ($asmName in $revitAssemblies) {
-              if ($revitByYear[$year].ContainsKey($asmName)) {
-                Copy-Item $revitByYear[$year][$asmName] (Join-Path $targetDir $asmName) -Force
-              }
-              else {
-                Write-Host "WARN: $asmName not found for Revit $year"
+            if (-not $revitByYear.ContainsKey($year) -or $revitByYear[$year].Count -eq 0) {
+              Write-Host "WARN: no Revit assemblies found for $year; SAM\Revit $year may be incomplete."
+            } else {
+              Write-Host "Staging Revit payload for $year into $targetDir"
+              foreach ($kvp in $revitByYear[$year].GetEnumerator()) {
+                $src = $kvp.Value
+                $dst = Join-Path $targetDir $kvp.Key
+                Copy-Item $src $dst -Force
+
+                # sidecars (best effort)
+                $xml = [IO.Path]::ChangeExtension($src, '.xml')
+                $pdb = [IO.Path]::ChangeExtension($src, '.pdb')
+                $cfg = "$src.config"  # typical .dll.config
+
+                if (Test-Path $xml) { Copy-Item $xml (Join-Path $targetDir ([IO.Path]::GetFileName($xml))) -Force }
+                if (Test-Path $pdb) { Copy-Item $pdb (Join-Path $targetDir ([IO.Path]::GetFileName($pdb))) -Force }
+                if (Test-Path $cfg) { Copy-Item $cfg (Join-Path $targetDir ([IO.Path]::GetFileName($cfg))) -Force }
               }
             }
 
-            # NEW: copy runtime files into Revit year folder (like Rhino package),
-            # but DO NOT copy any Grasshopper binaries (prevents duplicate core .gha in Revit folders).
+            # copy runtime files into Revit year folder, but DO NOT copy Grasshopper binaries
             $coreSamDir = Join-Path $stage 'SAM'
             if (Test-Path $coreSamDir) {
               $runtimeFiles = Get-ChildItem -Path $coreSamDir -File -ErrorAction SilentlyContinue |
@@ -224,12 +226,15 @@ jobs:
               }
             }
 
-            # Convert Revit Grasshopper DLLs in this folder into .gha (Revit-only GHAs live here)
+            # Convert Revit Grasshopper DLLs in this folder into .gha
             $ghDlls = Get-ChildItem -Path $targetDir -Filter 'SAM.*Grasshopper*.dll' -ErrorAction SilentlyContinue
             foreach ($dll in $ghDlls) {
               $gha = [IO.Path]::ChangeExtension($dll.FullName, '.gha')
               Copy-Item $dll.FullName $gha -Force
             }
+
+            $dllCount = (Get-ChildItem -Path $targetDir -Filter *.dll -ErrorAction SilentlyContinue | Measure-Object).Count
+            Write-Host "Revit $year staged DLLs: $dllCount"
           }
 
           # ---- Rhino UI Yak-style package -> build\SAM_Rhino_UI\1.0.0\* ------
@@ -245,9 +250,7 @@ jobs:
 
           if (Test-Path $buildDir) {
             $first = Get-ChildItem -Path $buildDir -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($first) {
-              $srcDir = $buildDir
-            }
+            if ($first) { $srcDir = $buildDir }
           }
 
           if ($srcDir) {
@@ -293,7 +296,10 @@ jobs:
 
           $dlls = Get-ChildItem -Path $samRoot -Recurse -Filter *.dll -ErrorAction SilentlyContinue |
                   Where-Object {
-                    $_.Name -match '^SAM\..*Grasshopper.*\.dll$' -and
+                    (
+                      $_.Name -match '^SAM\..*Grasshopper.*\.dll$' -or
+                      $_.Name -match '^SAM\..*Multitasker.*\.dll$'
+                    ) -and
                     $_.FullName -notmatch '\\Revit\s20[0-9]{2}\\'
                   }
 
