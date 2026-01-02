@@ -143,8 +143,33 @@ jobs:
           Copy-IfExists (Join-Path $root 'SAM_UI\build')          (Join-Path $stage 'SAM')
           Copy-IfExists (Join-Path $root 'SAM_Tas\build')         (Join-Path $stage 'SAM')
 
-          # ✅ NEW: Multitasker into %APPDATA%\SAM
+          # ✅ Multitasker into %APPDATA%\SAM
           Copy-IfExists (Join-Path $root 'SAM_Multitasker\build') (Join-Path $stage 'SAM')
+
+          # ✅ NEW: Pull *all* SAM module build outputs (GEM, gbXML, etc) into build\SAM
+          # This is what enables missing GHAs like:
+          #   SAM.Analytical.Grasshopper.GEM.gha
+          #   SAM.Analytical.Grasshopper.gbXML.gha
+          $destSam = Join-Path $stage 'SAM'
+          New-Item -ItemType Directory -Force -Path $destSam | Out-Null
+
+          $wantedExt = @('.dll','.xml','.config','.json','.pdb')
+
+          $candidates = Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object {
+              $_.FullName -match '\\build\\' -and
+              $_.Name -match '^SAM\.' -and
+              $wantedExt -contains $_.Extension -and
+              $_.Name -notmatch '\.Revit\.' -and
+              $_.FullName -notmatch '\\SAM_Installer\\'
+            }
+
+          $copied = 0
+          foreach ($f in $candidates) {
+            Copy-Item $f.FullName (Join-Path $destSam $f.Name) -Force
+            $copied++
+          }
+          Write-Host "Staged extra SAM build files into build\SAM: $copied"
 
           # ensure SAM.addin template is available under %APPDATA%\SAM
           $addinTemplate = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
