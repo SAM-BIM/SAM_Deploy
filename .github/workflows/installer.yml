@@ -67,6 +67,7 @@ jobs:
             '/t:Restore' `
             '/m:1' '/nr:false' '/v:m' `
             '/p:Configuration=Release' `
+            '/p:Platform=Any CPU' `
             '/p:UseSharedCompilation=false'
 
       - name: Rebuild (single node)
@@ -80,6 +81,7 @@ jobs:
             '/t:Rebuild' `
             '/m:1' '/nr:false' '/v:m' `
             '/p:Configuration=Release' `
+            '/p:Platform=Any CPU' `
             '/p:UseSharedCompilation=false'
 
       - name: Rebuild SAM_Rhino_UI (with post-build)
@@ -99,6 +101,7 @@ jobs:
             '/t:Rebuild' `
             '/m:1' '/nr:false' '/v:m' `
             '/p:Configuration=Release' `
+            '/p:Platform=Any CPU' `
             '/p:UseSharedCompilation=false' `
             '/p:RunPostBuildEvent=OnOutputUpdated'
 
@@ -186,6 +189,8 @@ jobs:
           }
 
           # Overlay Revit-specific outputs (SAM_Revit + SAM_Revit_UI)
+          $revitYears = @('2025','2026')
+
           $revitRoots = @(
             (Join-Path $root 'SAM_Revit'),
             (Join-Path $root 'SAM_Revit_UI')
@@ -262,14 +267,50 @@ jobs:
           $buildDir = Join-Path $rhinoProjRoot 'build'
           if (Test-Path $buildDir) {
             Write-Host "Staging Rhino payload from $buildDir -> $yakVersionDir"
+
+            # --- DIAGNOSTIC (source build output) ---
+            $srcFiles = @(Get-ChildItem -Path $buildDir -Recurse -File -ErrorAction SilentlyContinue)
+            Write-Host "SAM_Rhino_UI build output: $($srcFiles.Count) files"
+            $rhp = @($srcFiles | Where-Object { $_.Extension -ieq '.rhp' })
+            $rui = @($srcFiles | Where-Object { $_.Extension -ieq '.rui' })
+            $dll = @($srcFiles | Where-Object { $_.Extension -ieq '.dll' })
+            Write-Host "SAM_Rhino_UI build output breakdown: RHP=$($rhp.Count), RUI=$($rui.Count), DLL=$($dll.Count)"
+
             Copy-Item "$buildDir\*" $yakVersionDir -Recurse -Force
+
+            # --- DIAGNOSTIC (staged output) ---
+            $stagedFiles = @(Get-ChildItem -Path $yakVersionDir -Recurse -File -ErrorAction SilentlyContinue)
+            Write-Host "Staged Rhino package ($yakVersionDir): $($stagedFiles.Count) files"
+            if ($stagedFiles.Count -eq 0) {
+              Write-Warning "Staged Rhino package version folder is EMPTY: $yakVersionDir"
+            }
+
+            # Optional strictness: fail on tags if no .rhp in source
+            if ($rhp.Count -eq 0 -and $env:GITHUB_REF -like 'refs/tags/*') {
+              throw "SAM_Rhino_UI build produced NO .rhp files. Rhino package would be empty."
+            }
           } else {
             Write-Host "WARN: SAM_Rhino_UI\build not found; Rhino package may be incomplete."
           }
 
-          # Yak manifest
-          $manifestPath = Join-Path $yakRoot 'manifest.txt'
-          Set-Content -Path $manifestPath -Value $yakVersion -Encoding ascii
+          # Write manifest.yml (Rhino/Yak expects manifest.yml in package root)
+          # Keeping your structure, we write it in BOTH:
+          #  - build\SAM_Rhino_UI\manifest.yml
+          #  - build\SAM_Rhino_UI\1.0.0\manifest.yml
+          $manifestYmlRoot = Join-Path $yakRoot 'manifest.yml'
+          $manifestYmlVer  = Join-Path $yakVersionDir 'manifest.yml'
+          @"
+name: SAM
+version: $yakVersion
+authors:
+  - SAM-BIM
+description: SAM Rhino UI package (installed by SAM installer)
+"@ | Set-Content -Path $manifestYmlRoot -Encoding utf8
+          Copy-Item $manifestYmlRoot $manifestYmlVer -Force
+
+          # Keep your old marker file (harmless)
+          $manifestTxt = Join-Path $yakRoot 'manifest.txt'
+          Set-Content -Path $manifestTxt -Value $yakVersion -Encoding ascii
 
           # Remove any .gha from the Rhino package (GHAs stay under %APPDATA%\SAM)
           Get-ChildItem -Path $yakVersionDir -Recurse -Filter *.gha -ErrorAction SilentlyContinue |
