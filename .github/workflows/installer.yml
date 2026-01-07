@@ -130,6 +130,17 @@ jobs:
           # ---- Core SAM payload (what ends up in %APPDATA%\SAM) --------------
           $samStage = Join-Path $stage 'SAM'
           New-Item -ItemType Directory -Force -Path $samStage | Out-Null
+          
+          $uiBuild = Join-Path $root 'SAM_UI\build'
+          if (Test-Path $uiBuild) {
+            Write-Host "SAM_UI\\build listing (top 200):"
+            Get-ChildItem -Path $uiBuild -File -ErrorAction SilentlyContinue |
+              Sort-Object Name |
+              Select-Object -First 200 Name,Length |
+              Format-Table -AutoSize
+          } else {
+            Write-Warning "SAM_UI\\build does not exist at staging time: $uiBuild"
+          }
 
           Copy-IfExists (Join-Path $root 'SAM_UI\build')          $samStage
           Copy-IfExists (Join-Path $root 'SAM_Windows\build')     (Join-Path $stage 'SAMdependencies')
