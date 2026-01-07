@@ -142,13 +142,13 @@ jobs:
             Write-Warning "SAM_UI\\build does not exist at staging time: $uiBuild"
           }
 
-          Copy-IfExists (Join-Path $root 'SAM_UI\build')          $samStage
+          # Keep special payloads separate
           Copy-IfExists (Join-Path $root 'SAM_Windows\build')     (Join-Path $stage 'SAMdependencies')
           Copy-IfExists (Join-Path $root 'SAM_Revit\references')  (Join-Path $stage 'Rhino.Inside')
           Copy-IfExists (Join-Path $root 'Documents\SAM')         (Join-Path $stage 'user\Documents\SAM')
 
           # Copy outputs from ALL other SAM_* modules into %APPDATA%\SAM.
-          # (We skip SAM_Revit* because those go into year folders.)
+          # (We skip SAM_Revit* because those go into year folders, and SAM_UI is copied LAST.)
           $exclude = @('SAM_Installer','SAM_UI','SAM_Windows','SAM_Revit','SAM_Revit_UI','SAM_Rhino_UI','Documents')
           Get-ChildItem -Path $root -Directory -Filter 'SAM_*' | ForEach-Object {
             if ($exclude -contains $_.Name) { return }
@@ -158,6 +158,10 @@ jobs:
               Copy-Item "$b\*" $samStage -Recurse -Force
             }
           }
+
+          # Copy SAM_UI LAST so UI files "win" if any module shipped a same-named file
+          Copy-IfExists (Join-Path $root 'SAM_UI\build')          $samStage
+
 
           # Ensure SAM.addin template is available (Inno decides final install location)
           $addinTemplate = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
