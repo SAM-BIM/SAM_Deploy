@@ -259,35 +259,55 @@ jobs:
           $yakVersionDir = Join-Path $yakRoot $yakVersion
           New-Item -ItemType Directory -Force -Path $yakVersionDir | Out-Null
 
-          $buildDir = Join-Path $rhinoProjRoot 'build'
-          if (Test-Path $buildDir) {
+          # Prefer your repo convention: SAM_Rhino_UI\build
+          # But on CI the post-build writes to: <repo>\build\Rhino Plugins
+          $candidateDirs = @(
+            (Join-Path $rhinoProjRoot 'build'),
+            (Join-Path $root 'build\Rhino Plugins'),
+            (Join-Path $root 'build\RhinoPlugins')
+          )
+
+          $buildDir = $null
+          foreach ($d in $candidateDirs) {
+            if (Test-Path $d) { $buildDir = $d; break }
+          }
+
+          if ($buildDir) {
             Write-Host "Staging Rhino payload from $buildDir -> $yakVersionDir"
             Copy-Item "$buildDir\*" $yakVersionDir -Recurse -Force
 
             # --- DIAGNOSTIC: verify Rhino payload has expected files -----------
             $srcFiles = @(Get-ChildItem -Path $buildDir -Recurse -File -ErrorAction SilentlyContinue)
-            Write-Host "SAM_Rhino_UI build output: $($srcFiles.Count) files"
+            Write-Host "Rhino source output ($buildDir): $($srcFiles.Count) files"
 
-            $rhp = @($srcFiles | Where-Object { $_.Extension -ieq '.rhp' })
-            $rui = @($srcFiles | Where-Object { $_.Extension -ieq '.rui' })
-            $dll = @($srcFiles | Where-Object { $_.Extension -ieq '.dll' })
-            Write-Host "SAM_Rhino_UI build breakdown: RHP=$($rhp.Count), RUI=$($rui.Count), DLL=$($dll.Count)"
+            $srcRhp = @($srcFiles | Where-Object { $_.Extension -ieq '.rhp' })
+            $srcRui = @($srcFiles | Where-Object { $_.Extension -ieq '.rui' })
+            $srcDll = @($srcFiles | Where-Object { $_.Extension -ieq '.dll' })
+            $srcXml = @($srcFiles | Where-Object { $_.Extension -ieq '.xml' })
+            Write-Host "Rhino source breakdown: RHP=$($srcRhp.Count), RUI=$($srcRui.Count), DLL=$($srcDll.Count), XML=$($srcXml.Count)"
 
             $stagedFiles = @(Get-ChildItem -Path $yakVersionDir -Recurse -File -ErrorAction SilentlyContinue)
-            Write-Host "Staged Rhino package ($yakVersionDir): $($stagedFiles.Count) files"
+            $stgRhp = @($stagedFiles | Where-Object { $_.Extension -ieq '.rhp' })
+            $stgRui = @($stagedFiles | Where-Object { $_.Extension -ieq '.rui' })
+            $stgDll = @($stagedFiles | Where-Object { $_.Extension -ieq '.dll' })
+            $stgXml = @($stagedFiles | Where-Object { $_.Extension -ieq '.xml' })
+            Write-Host "Staged Rhino package ($yakVersionDir): total=$($stagedFiles.Count) RHP=$($stgRhp.Count) RUI=$($stgRui.Count) DLL=$($stgDll.Count) XML=$($stgXml.Count)"
+
             if ($stagedFiles.Count -eq 0) {
               Write-Warning "Staged Rhino package version folder is EMPTY: $yakVersionDir"
             }
 
-            # Optional strictness: fail only for tag builds if we have no .rhp
-            if ($rhp.Count -eq 0 -and $env:GITHUB_REF -like 'refs/tags/*') {
-              throw "SAM_Rhino_UI build produced NO .rhp files. Rhino package would be empty."
+            # Fail only for tag builds if we have no .rhp (prevents broken releases)
+            if ($stgRhp.Count -eq 0 -and $env:GITHUB_REF -like 'refs/tags/*') {
+              throw "No .rhp files staged for Rhino package. Checked: $($candidateDirs -join ', ')"
             }
-          } else {
-            Write-Host "WARN: SAM_Rhino_UI\build not found; Rhino package may be incomplete."
+          }
+          else {
+            Write-Host "WARN: No Rhino output directory found. Checked:"
+            foreach ($d in $candidateDirs) { Write-Host "  - $d" }
           }
 
-          # Yak manifest (keep as-is)
+          # Yak manifest
           $manifestPath = Join-Path $yakRoot 'manifest.txt'
           Set-Content -Path $manifestPath -Value $yakVersion -Encoding ascii
 
@@ -299,6 +319,7 @@ jobs:
           } else {
             Write-Host "INFO: No .rhp in Rhino package; leaving any .gha untouched."
           }
+
 
       - name: Install Inno Setup
         shell: pwsh
