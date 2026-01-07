@@ -1,6 +1,7 @@
 # SAM_Deploy
 
-This is the managed release repository for SAM.
+This is the managed release repository for **SAM** (submodule-based “all-in-one” build + installer packaging).
+
 
 To find out more about SAM visit:
 - https://github.com/SAM-BIM/SAM
@@ -10,33 +11,45 @@ To find out more about SAM visit:
 [![Build & Release SAM-BIM Installer](https://github.com/SAM-BIM/SAM_Deploy/actions/workflows/installer.yml/badge.svg?branch=master)](https://github.com/SAM-BIM/SAM_Deploy/actions/workflows/installer.yml)
 [![Latest Release](https://img.shields.io/github/v/release/SAM-BIM/SAM_Deploy?label=latest%20release)](https://github.com/SAM-BIM/SAM_Deploy/releases/latest)
 
-
 ## Installing
 
 Download the latest release from:
 - https://github.com/SAM-BIM/SAM_Deploy/releases/latest
 
-(Assets are named like `SAM_Install_<version>.exe`.)
+Assets are named like:
+- `SAM_Install_<version>.exe`
 
-## Add new repository to deploy
+## What the installer sets up
+
+The installer stages SAM so it can be used from:
+- **Grasshopper in Rhino**
+- **Grasshopper inside Revit via Rhino.Inside.Revit**
+- **Rhino** (Rhino plugin `.rhp`)
+
+Primary install locations:
+- `%APPDATA%\SAM\` (core payload)
+- `%APPDATA%\McNeel\Rhinoceros\packages\8.0\SAM\1.0.0\` 8.0(Rhino package payload for 7.0, 8.0 and 9.0 )
+- `%APPDATA%\Grasshopper\Libraries*` and `*.ghlink` (Grasshopper discovery)
+
+## Add a new repository to deploy
 
 ```bash
 git submodule add https://github.com/SAM-BIM/SAM_OpenStudio.git
 ```
 
-## Debugging or building it yourself
+## Debugging / building locally
 
-Each repository is included as a submodule which means they only point to a set commit with detached head, see:
+This repository uses **git submodules** (detached HEAD). Useful references:
 - https://git-scm.com/book/en/v2/Git-Tools-Submodules
 - https://blog.tech-fellow.net/2019/05/09/effectively-work-with-git-submodules/
 
-To clone with all submodules included do:
+Clone with all submodules:
 
 ```bash
 git clone --recurse-submodules https://github.com/SAM-BIM/SAM_Deploy.git
 ```
 
-or, if you've already cloned it:
+or, if already cloned:
 
 ```bash
 git submodule update --init --recursive
@@ -76,9 +89,11 @@ git commit -m "Update submodules"
 git push
 
 # 2) Create a release tag (annotated tag recommended)
+
 git tag -a v20260107.1 -m "Release v20260107.1"
 
-# 3) Push the tag (this is what triggers the installer build)
+# 3) Push the tag (this triggers the installer build + GitHub Release)
+
 git push origin v20260107.1
 ```
 
@@ -86,4 +101,11 @@ Why `git push origin v20260107.1` (and not just `git push`)?
 
 - `git push` pushes your current branch commits, **but it does not push new tags by default**.
 - To push **all** local tags, use: `git push --tags`
-- If you want to push commits *and* any annotated tags you created in the same go, you can also use: `git push --follow-tags`
+- To push commits *and* annotated tags created locally in the same go, use: `git push --follow-tags`
+
+## Running the workflow manually
+
+You can also run the installer workflow manually:
+1. Go to **Actions → Build & Release SAM-BIM Installer**
+2. Click **Run workflow**
+3. Optionally provide a version (e.g. `v20260107.1`). If you leave it blank, the workflow will generate one.
