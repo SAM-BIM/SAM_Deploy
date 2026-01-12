@@ -62,8 +62,10 @@
     <Solution Include="SAM_OpenStudio\SAM_OpenStudio.sln">
       <Properties>Configuration=Release;Platform=x64</Properties>
     </Solution>
-
     <Solution Include="SAM_Origin\SAM_Origin.sln" Condition="Exists('SAM_Origin\SAM_Origin.sln')">
+      <Properties>Configuration=Release;Platform=Any CPU</Properties>
+    </Solution>
+    <Solution Include="SAM_Multitasker\SAM_Multitasker.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
 
@@ -88,9 +90,6 @@
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
     <Solution Include="SAM_Rhino_UI\SAM_Rhino_UI.sln">
-      <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_Multitasker\SAM_Multitasker.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
   </ItemGroup>
