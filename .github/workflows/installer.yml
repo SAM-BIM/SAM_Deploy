@@ -34,6 +34,29 @@ jobs:
           git submodule foreach --recursive 'git reset --hard'
           git submodule foreach --recursive 'git clean -xfd'
 
+      - name: Clean local caches used for packaging
+        shell: pwsh
+        run: |
+          $paths = @(
+            (Join-Path $env:APPDATA 'SAM'),
+            (Join-Path $env:APPDATA 'McNeel\Rhinoceros\packages\7.0\SAM'),
+            (Join-Path $env:APPDATA 'McNeel\Rhinoceros\packages\8.0\SAM'),
+            (Join-Path $env:APPDATA 'McNeel\Rhinoceros\packages\9.0\SAM')
+          )
+
+          foreach ($p in $paths) {
+            if (Test-Path $p) {
+              Write-Host "Removing stale cache: $p"
+              Remove-Item $p -Recurse -Force
+            }
+          }
+
+      - name: Ensure Grasshopper folders exist
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path (Join-Path $env:APPDATA 'Grasshopper\Libraries') | Out-Null
+          New-Item -ItemType Directory -Force -Path (Join-Path $env:APPDATA 'Grasshopper\UserObjects\SAM') | Out-Null
+
       - name: Compute version
         id: ver
         shell: pwsh
@@ -103,7 +126,7 @@ jobs:
             '/p:RunPostBuildEvent=OnOutputUpdated'
 
       # -----------------------------------------------------------------------
-      # STAGING: put everything the Inno script expects under SAM_Installer\build
+      # STAGING: build a curated payload that matches the older working pipeline
       # -----------------------------------------------------------------------
       - name: Stage payload for installer
         shell: pwsh
@@ -113,9 +136,12 @@ jobs:
           $root   = (Get-Location).Path
           $issDir = Join-Path $root 'SAM_Installer'
           $stage  = Join-Path $issDir 'build'
+          $samStage = Join-Path $stage 'SAM'
+          $samAppData = Join-Path $env:APPDATA 'SAM'
 
           if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          New-Item -ItemType Directory -Force -Path $samStage | Out-Null
 
           function Copy-IfExists([string]$src,[string]$dest) {
             if (Test-Path $src) {
@@ -127,43 +153,23 @@ jobs:
             }
           }
 
-          # ---- Core SAM payload (what ends up in %APPDATA%\SAM) --------------
-          $samStage = Join-Path $stage 'SAM'
-          New-Item -ItemType Directory -Force -Path $samStage | Out-Null
-          
-          $uiBuild = Join-Path $root 'SAM_UI\build'
-          if (Test-Path $uiBuild) {
-            Write-Host "SAM_UI\\build listing (top 200):"
-            Get-ChildItem -Path $uiBuild -File -ErrorAction SilentlyContinue |
-              Sort-Object Name |
-              Select-Object -First 200 Name,Length |
-              Format-Table -AutoSize
-          } else {
-            Write-Warning "SAM_UI\\build does not exist at staging time: $uiBuild"
+          # Keep special payloads separate / restore old pipeline behaviour
+          Copy-IfExists (Join-Path $root 'Install')              $stage
+          Copy-IfExists (Join-Path $root 'SAM_Windows\build')   (Join-Path $stage 'SAMdependencies')
+          Copy-IfExists (Join-Path $root 'SAM_Revit\references') (Join-Path $stage 'Rhino.Inside')
+
+          # Prefer the curated runtime payload produced by the build itself
+          if (-not (Test-Path $samAppData)) {
+            throw "Expected curated runtime payload at $samAppData, but it was not created by the build. Refusing to package a guessed mixed payload."
           }
+          Copy-IfExists $samAppData $samStage
 
-          # Keep special payloads separate
-          Copy-IfExists (Join-Path $root 'SAM_Windows\build')     (Join-Path $stage 'SAMdependencies')
-          Copy-IfExists (Join-Path $root 'SAM_Revit\references')  (Join-Path $stage 'Rhino.Inside')
-          Copy-IfExists (Join-Path $root 'Documents\SAM')         (Join-Path $stage 'user\Documents\SAM')
+          # User files / Grasshopper user objects
+          Copy-IfExists (Join-Path $env:USERPROFILE 'Documents\SAM') (Join-Path $stage 'user\Documents\SAM')
+          Copy-IfExists (Join-Path $env:APPDATA 'Grasshopper\UserObjects\SAM') (Join-Path $stage 'user\Documents\SAM\Grasshopper\UserObjects')
+          Copy-IfExists (Join-Path $env:APPDATA 'Grasshopper\UserObjects\SAM') (Join-Path $stage 'SAMdependencies\GHUserObjects\SAM')
 
-          # Copy outputs from ALL other SAM_* modules into %APPDATA%\SAM.
-          # (We skip SAM_Revit* because those go into year folders, and SAM_UI is copied LAST.)
-          $exclude = @('SAM_Installer','SAM_UI','SAM_Windows','SAM_Revit','SAM_Revit_UI','SAM_Rhino_UI','Documents')
-          Get-ChildItem -Path $root -Directory -Filter 'SAM_*' | ForEach-Object {
-            if ($exclude -contains $_.Name) { return }
-            $b = Join-Path $_.FullName 'build'
-            if (Test-Path $b) {
-              Write-Host "Copy module build -> SAM: $($_.Name)"
-              Copy-Item "$b\*" $samStage -Recurse -Force
-            }
-          }
-
-          # Copy SAM_UI LAST so UI files "win" if any module shipped a same-named file
-          Copy-IfExists (Join-Path $root 'SAM_UI\build')          $samStage
-
-
-          # Ensure SAM.addin template is available (Inno decides final install location)
+          # Revit add-in template must sit in SAM root for installer code
           $addinTemplate = Join-Path $root 'SAM_Revit_UI\files\Addin\SAM.addin'
           if (Test-Path $addinTemplate) {
             Copy-Item $addinTemplate $samStage -Force
@@ -171,41 +177,12 @@ jobs:
             Write-Host "WARN: Revit add-in template not found at $addinTemplate"
           }
 
-          # ---- Create GHAs for core SAM: ONLY Grasshopper DLLs ----------------
-          $coreGhDlls = Get-ChildItem -Path $samStage -Recurse -File -Filter *.dll -ErrorAction SilentlyContinue |
-                        Where-Object { $_.Name -match '^SAM\..*Grasshopper.*\.dll$' }
-
-          foreach ($dll in $coreGhDlls) {
-            $gha = [IO.Path]::ChangeExtension($dll.FullName, '.gha')
-            Copy-Item $dll.FullName $gha -Force
-          }
-
-          # Safety: remove any accidental non-Grasshopper SAM*.gha
-          Get-ChildItem -Path $samStage -Recurse -File -Filter 'SAM*.gha' -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -notmatch 'Grasshopper' } |
-            Remove-Item -Force -ErrorAction SilentlyContinue
-
-          # ---- Revit payload (per year) -> build\SAM\Revit 20xx\ -------------
+          # Overlay Revit-specific outputs only. Do NOT seed year folders with all root DLLs.
           $revitYears = @('2025','2026')
-
-          # Seed each year folder with ALL core SAM files (this is what you’re missing)
-          foreach ($year in $revitYears) {
-            $targetDir = Join-Path $samStage ("Revit $year")
-            New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-
-            Get-ChildItem -Path $samStage -Recurse -File -ErrorAction SilentlyContinue |
-              Where-Object { $_.FullName -notmatch "\\Revit\s20[0-9]{2}\\" } |
-              ForEach-Object {
-                Copy-Item $_.FullName (Join-Path $targetDir $_.Name) -Force
-              }
-          }
-
-          # Overlay Revit-specific outputs (SAM_Revit + SAM_Revit_UI)
           $revitRoots = @(
             (Join-Path $root 'SAM_Revit'),
             (Join-Path $root 'SAM_Revit_UI')
           )
-
           $revitNameRegex = '^SAM\..*Revit.*\.(dll|pdb|xml|config|json)$'
           $best = @{}
           foreach ($year in $revitYears) { $best[$year] = @{} }
@@ -220,12 +197,11 @@ jobs:
                 $_.FullName -notmatch '\\ref\\' -and
                 $_.FullName -notmatch '\\packages\\'
               } | ForEach-Object {
-
                 $f = $_
                 $targets = @()
                 if ($f.FullName -match '2025') { $targets += '2025' }
                 if ($f.FullName -match '2026') { $targets += '2026' }
-                if ($targets.Count -eq 0) { $targets = $revitYears } # shared binaries -> both years
+                if ($targets.Count -eq 0) { $targets = $revitYears }
 
                 $w = 0
                 if ($f.FullName -match '\\build\\') { $w = 2 }
@@ -244,97 +220,82 @@ jobs:
 
           foreach ($year in $revitYears) {
             $targetDir = Join-Path $samStage ("Revit $year")
+            New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
 
             foreach ($kvp in $best[$year].GetEnumerator()) {
               Copy-Item $kvp.Value.File.FullName (Join-Path $targetDir $kvp.Key) -Force
             }
 
-            # Convert ONLY Grasshopper DLLs -> GHA
             Get-ChildItem -Path $targetDir -File -Filter *.dll -ErrorAction SilentlyContinue |
               Where-Object { $_.Name -match 'Grasshopper' } |
               ForEach-Object {
                 $gha = [IO.Path]::ChangeExtension($_.FullName, '.gha')
                 Copy-Item $_.FullName $gha -Force
               }
-
-            # Safety: keep only Grasshopper GHAs
-            Get-ChildItem -Path $targetDir -File -Filter 'SAM*.gha' -ErrorAction SilentlyContinue |
-              Where-Object { $_.Name -notmatch 'Grasshopper' } |
-              Remove-Item -Force -ErrorAction SilentlyContinue
-
-            $dllCount = (Get-ChildItem -Path $targetDir -File -Filter *.dll -ErrorAction SilentlyContinue | Measure-Object).Count
-            $ghaCount = (Get-ChildItem -Path $targetDir -File -Filter *.gha -ErrorAction SilentlyContinue | Measure-Object).Count
-            Write-Host "Revit $year staged: DLL=$dllCount, GHA=$ghaCount"
           }
 
-          # ---- Rhino UI Yak-style package -> build\SAM_Rhino_UI\1.0.0\* ------
-          $rhinoProjRoot = Join-Path $root 'SAM_Rhino_UI'
+          # Root Grasshopper DLLs -> GHA
+          Get-ChildItem -Path $samStage -File -Filter *.dll -ErrorAction SilentlyContinue |
+            Where-Object {
+              $_.Name -match '^SAM\..*Grasshopper.*\.dll$' -and
+              $_.DirectoryName -notmatch '\\Revit\s20[0-9]{2}$'
+            } |
+            ForEach-Object {
+              $gha = [IO.Path]::ChangeExtension($_.FullName, '.gha')
+              Copy-Item $_.FullName $gha -Force
+            }
+
+          # Remove host-provided / conflicting DLLs from staged SAM payload.
+          # This mirrors the older Hoare Lea pipeline and avoids packaging host assemblies.
+          $deleteNames = @(
+            'Eto.dll',
+            'GH_IO.dll',
+            'Grasshopper.dll',
+            'RevitAPIIFC.dll',
+            'Rhino.UI.dll',
+            'RhinoCommon.dll',
+            'RevitNodes.dll',
+            'RevitServices.dll',
+            'RhinoInside.Revit.dll',
+            'RhinoInside.Revit.GH.dll'
+          )
+
+          foreach ($name in $deleteNames) {
+            Get-ChildItem -Path $samStage -Recurse -File -Filter $name -ErrorAction SilentlyContinue |
+              Remove-Item -Force -ErrorAction SilentlyContinue
+          }
+
+          # Safety: keep only Grasshopper GHAs
+          Get-ChildItem -Path $samStage -Recurse -File -Filter 'SAM*.gha' -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -notmatch 'Grasshopper' } |
+            Remove-Item -Force -ErrorAction SilentlyContinue
+
+          # Rhino UI Yak-style package -> build\SAM_Rhino_UI\1.0.0\*
           $yakRoot       = Join-Path $stage 'SAM_Rhino_UI'
           $yakVersion    = '1.0.0'
           $yakVersionDir = Join-Path $yakRoot $yakVersion
           New-Item -ItemType Directory -Force -Path $yakVersionDir | Out-Null
 
-          # Prefer your repo convention: SAM_Rhino_UI\build
-          # But on CI the post-build writes to: <repo>\build\Rhino Plugins
-          $candidateDirs = @(
-            (Join-Path $rhinoProjRoot 'build'),
-            (Join-Path $root 'build\Rhino Plugins'),
-            (Join-Path $root 'build\RhinoPlugins')
-          )
+          $rhinoPackageSource = Join-Path $env:APPDATA 'McNeel\Rhinoceros\packages\7.0\SAM\1.0.0'
+          Copy-IfExists $rhinoPackageSource $yakVersionDir
 
-          $buildDir = $null
-          foreach ($d in $candidateDirs) {
-            if (Test-Path $d) { $buildDir = $d; break }
-          }
-
-          if ($buildDir) {
-            Write-Host "Staging Rhino payload from $buildDir -> $yakVersionDir"
-            Copy-Item "$buildDir\*" $yakVersionDir -Recurse -Force
-
-            # --- DIAGNOSTIC: verify Rhino payload has expected files -----------
-            $srcFiles = @(Get-ChildItem -Path $buildDir -Recurse -File -ErrorAction SilentlyContinue)
-            Write-Host "Rhino source output ($buildDir): $($srcFiles.Count) files"
-
-            $srcRhp = @($srcFiles | Where-Object { $_.Extension -ieq '.rhp' })
-            $srcRui = @($srcFiles | Where-Object { $_.Extension -ieq '.rui' })
-            $srcDll = @($srcFiles | Where-Object { $_.Extension -ieq '.dll' })
-            $srcXml = @($srcFiles | Where-Object { $_.Extension -ieq '.xml' })
-            Write-Host "Rhino source breakdown: RHP=$($srcRhp.Count), RUI=$($srcRui.Count), DLL=$($srcDll.Count), XML=$($srcXml.Count)"
-
-            $stagedFiles = @(Get-ChildItem -Path $yakVersionDir -Recurse -File -ErrorAction SilentlyContinue)
-            $stgRhp = @($stagedFiles | Where-Object { $_.Extension -ieq '.rhp' })
-            $stgRui = @($stagedFiles | Where-Object { $_.Extension -ieq '.rui' })
-            $stgDll = @($stagedFiles | Where-Object { $_.Extension -ieq '.dll' })
-            $stgXml = @($stagedFiles | Where-Object { $_.Extension -ieq '.xml' })
-            Write-Host "Staged Rhino package ($yakVersionDir): total=$($stagedFiles.Count) RHP=$($stgRhp.Count) RUI=$($stgRui.Count) DLL=$($stgDll.Count) XML=$($stgXml.Count)"
-
-            if ($stagedFiles.Count -eq 0) {
-              Write-Warning "Staged Rhino package version folder is EMPTY: $yakVersionDir"
-            }
-
-            # Fail only for tag builds if we have no .rhp (prevents broken releases)
-            if ($stgRhp.Count -eq 0 -and $env:GITHUB_REF -like 'refs/tags/*') {
-              throw "No .rhp files staged for Rhino package. Checked: $($candidateDirs -join ', ')"
-            }
-          }
-          else {
-            Write-Host "WARN: No Rhino output directory found. Checked:"
-            foreach ($d in $candidateDirs) { Write-Host "  - $d" }
-          }
-
-          # Yak manifest
           $manifestPath = Join-Path $yakRoot 'manifest.txt'
           Set-Content -Path $manifestPath -Value $yakVersion -Encoding ascii
 
-          # Remove any .gha from the Rhino package ONLY if we actually have .rhp
-          $rhpInStage = (Get-ChildItem -Path $yakVersionDir -Recurse -Filter *.rhp -ErrorAction SilentlyContinue | Measure-Object).Count
-          if ($rhpInStage -gt 0) {
-            Get-ChildItem -Path $yakVersionDir -Recurse -Filter *.gha -ErrorAction SilentlyContinue |
-              Remove-Item -Force -ErrorAction SilentlyContinue
-          } else {
-            Write-Host "INFO: No .rhp in Rhino package; leaving any .gha untouched."
-          }
+          $samFiles = @(Get-ChildItem -Path $samStage -Recurse -File -ErrorAction SilentlyContinue)
+          Write-Host "Staged SAM payload files: $($samFiles.Count)"
+          Write-Host "Top-level staged SAM DLLs:"
+          Get-ChildItem -Path $samStage -File -Filter *.dll -ErrorAction SilentlyContinue |
+            Sort-Object Name |
+            Select-Object Name,Length |
+            Format-Table -AutoSize
 
+          foreach ($year in $revitYears) {
+            $targetDir = Join-Path $samStage ("Revit $year")
+            $dllCount = (Get-ChildItem -Path $targetDir -File -Filter *.dll -ErrorAction SilentlyContinue | Measure-Object).Count
+            $ghaCount = (Get-ChildItem -Path $targetDir -File -Filter *.gha -ErrorAction SilentlyContinue | Measure-Object).Count
+            Write-Host "Revit $year staged: DLL=$dllCount, GHA=$ghaCount"
+          }
 
       - name: Install Inno Setup
         shell: pwsh
