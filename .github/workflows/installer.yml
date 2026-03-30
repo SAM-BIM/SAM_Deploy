@@ -125,6 +125,27 @@ jobs:
             '/p:UseSharedCompilation=false' `
             '/p:RunPostBuildEvent=OnOutputUpdated'
 
+
+      - name: Rebuild SAM_Revit_UI (with post-build)
+        shell: pwsh
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sln = 'SAM_Revit_UI\SAM_Revit_UI.sln'
+          if (-not (Test-Path $sln)) {
+            Write-Host "WARN: $sln not found; skipping SAM_Revit_UI rebuild."
+            return
+          }
+
+          msbuild `
+            $sln `
+            '/t:Rebuild' `
+            '/m:1' '/nr:false' '/v:m' `
+            '/p:Configuration=Release' `
+            '/p:UseSharedCompilation=false' `
+            '/p:RunPostBuildEvent=OnOutputUpdated'
+
       # -----------------------------------------------------------------------
       # STAGING: build a curated payload that matches the older working pipeline
       # -----------------------------------------------------------------------
@@ -211,7 +232,7 @@ jobs:
           }
 
           # Overlay Revit-specific outputs only. Do NOT seed year folders with all root DLLs.
-          $revitYears = @('2025','2026')
+          $revitYears = @('2025','2026','2027')
           $revitRoots = @(
             (Join-Path $root 'SAM_Revit'),
             (Join-Path $root 'SAM_Revit_UI')
@@ -234,6 +255,7 @@ jobs:
                 $targets = @()
                 if ($f.FullName -match '2025') { $targets += '2025' }
                 if ($f.FullName -match '2026') { $targets += '2026' }
+                if ($f.FullName -match '2027') { $targets += '2027' }
                 if ($targets.Count -eq 0) { $targets = $revitYears }
 
                 $w = 0
@@ -259,12 +281,23 @@ jobs:
               Copy-Item $kvp.Value.File.FullName (Join-Path $targetDir $kvp.Key) -Force
             }
 
+            # Explicitly overlay SAM_Revit_UI shared build output. This is where
+            # SAM.Revit.UI.dll and SAM.Core.Revit.UI.dll are expected to come from.
+            Copy-IfExists (Join-Path $root 'SAM_Revit_UI\build') $targetDir
+
             Get-ChildItem -Path $targetDir -File -Filter *.dll -ErrorAction SilentlyContinue |
               Where-Object { $_.Name -match 'Grasshopper' } |
               ForEach-Object {
                 $gha = [IO.Path]::ChangeExtension($_.FullName, '.gha')
                 Copy-Item $_.FullName $gha -Force
               }
+
+            # Safety: if we staged any Revit payload for this year, ensure the add-in loader exists.
+            $hasRevitDlls = (Get-ChildItem -Path $targetDir -File -Filter 'SAM.*Revit*.dll' -ErrorAction SilentlyContinue | Measure-Object).Count -gt 0
+            $loader = Join-Path $targetDir 'SAM.Revit.UI.dll'
+            if ($hasRevitDlls -and -not (Test-Path $loader)) {
+              throw "Revit $year payload is missing SAM.Revit.UI.dll in $targetDir"
+            }
           }
 
           # Root Grasshopper DLLs -> GHA
@@ -327,7 +360,8 @@ jobs:
             $targetDir = Join-Path $samStage ("Revit $year")
             $dllCount = (Get-ChildItem -Path $targetDir -File -Filter *.dll -ErrorAction SilentlyContinue | Measure-Object).Count
             $ghaCount = (Get-ChildItem -Path $targetDir -File -Filter *.gha -ErrorAction SilentlyContinue | Measure-Object).Count
-            Write-Host "Revit $year staged: DLL=$dllCount, GHA=$ghaCount"
+            $hasRevitLoader = Test-Path (Join-Path $targetDir 'SAM.Revit.UI.dll')
+            Write-Host "Revit $year staged: DLL=$dllCount, GHA=$ghaCount, Loader=$hasRevitLoader"
           }
 
       - name: Install Inno Setup
