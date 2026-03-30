@@ -164,6 +164,39 @@ jobs:
           }
           Copy-IfExists $samAppData $samStage
 
+          # Force correct .NET 8 WindowsDesktop runtime files for standalone SAM_UI apps.
+          # The installed payload may already contain older copies from mixed module outputs;
+          # always overwrite them with the runtime version that matches the built apps.
+          $desktopSharedRoot = Join-Path ${env:ProgramFiles} 'dotnet\shared\Microsoft.WindowsDesktop.App'
+          if (-not (Test-Path $desktopSharedRoot)) {
+            throw "Microsoft.WindowsDesktop.App shared runtime not found at $desktopSharedRoot"
+          }
+
+          $desktopRuntimeDir = Get-ChildItem -Path $desktopSharedRoot -Directory -ErrorAction Stop |
+            Where-Object { $_.Name -match '^8\.0\.' } |
+            Sort-Object { [version]$_.Name } -Descending |
+            Select-Object -First 1
+
+          if (-not $desktopRuntimeDir) {
+            throw "No Microsoft.WindowsDesktop.App 8.0.x runtime found under $desktopSharedRoot"
+          }
+
+          Write-Host "Using WindowsDesktop runtime from: $($desktopRuntimeDir.FullName)"
+
+          $desktopRuntimeFiles = @(
+            'System.Drawing.Common.dll',
+            'Microsoft.Win32.SystemEvents.dll'
+          )
+
+          foreach ($name in $desktopRuntimeFiles) {
+            $srcFile = Join-Path $desktopRuntimeDir.FullName $name
+            if (-not (Test-Path $srcFile)) {
+              throw "Required runtime file not found: $srcFile"
+            }
+            Copy-Item $srcFile (Join-Path $samStage $name) -Force
+            Write-Host "Pinned runtime file: $name"
+          }
+
           # User files / Grasshopper user objects
           Copy-IfExists (Join-Path $env:USERPROFILE 'Documents\SAM') (Join-Path $stage 'user\Documents\SAM')
           Copy-IfExists (Join-Path $env:APPDATA 'Grasshopper\UserObjects\SAM') (Join-Path $stage 'user\Documents\SAM\Grasshopper\UserObjects')
