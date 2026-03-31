@@ -126,7 +126,7 @@ jobs:
             '/p:RunPostBuildEvent=OnOutputUpdated'
 
 
-      - name: Rebuild SAM_Revit_UI (with post-build)
+      - name: Rebuild SAM_Revit_UI 2025 (with post-build)
         shell: pwsh
         env:
           MSBUILDDISABLENODEREUSE: '1'
@@ -142,7 +142,27 @@ jobs:
             $sln `
             '/t:Rebuild' `
             '/m:1' '/nr:false' '/v:m' `
-            '/p:Configuration=Release' `
+            '/p:Configuration=Release2025' `
+            '/p:UseSharedCompilation=false' `
+            '/p:RunPostBuildEvent=OnOutputUpdated'
+
+      - name: Rebuild SAM_Revit_UI 2026 (with post-build)
+        shell: pwsh
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sln = 'SAM_Revit_UI\SAM_Revit_UI.sln'
+          if (-not (Test-Path $sln)) {
+            Write-Host "WARN: $sln not found; skipping SAM_Revit_UI rebuild."
+            return
+          }
+
+          msbuild `
+            $sln `
+            '/t:Rebuild' `
+            '/m:1' '/nr:false' '/v:m' `
+            '/p:Configuration=Release2026' `
             '/p:UseSharedCompilation=false' `
             '/p:RunPostBuildEvent=OnOutputUpdated'
 
