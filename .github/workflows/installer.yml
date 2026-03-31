@@ -362,12 +362,50 @@ jobs:
           $yakVersionDir = Join-Path $yakRoot $yakVersion
           New-Item -ItemType Directory -Force -Path $yakVersionDir | Out-Null
 
+          # Makes tagged releases fail if Rhino payload is missing
           $rhinoPackageSource = Join-Path $env:APPDATA 'McNeel\Rhinoceros\packages\7.0\SAM\1.0.0'
-          Copy-IfExists $rhinoPackageSource $yakVersionDir
+
+          if (-not (Test-Path $rhinoPackageSource)) {
+            $msg = "No Rhino output directory found at $rhinoPackageSource"
+
+            # Fail for tagged releases so we never publish an installer without Rhino payload
+            if ($env:GITHUB_REF -like 'refs/tags/*') {
+              throw $msg
+            }
+
+            Write-Warning $msg
+          }
+          else {
+            Write-Host "Staging Rhino payload from $rhinoPackageSource -> $yakVersionDir"
+            Copy-Item "$rhinoPackageSource\*" $yakVersionDir -Recurse -Force
+          }
 
           $manifestPath = Join-Path $yakRoot 'manifest.txt'
           Set-Content -Path $manifestPath -Value $yakVersion -Encoding ascii
 
+          $stagedRhinoFiles = @(Get-ChildItem -Path $yakVersionDir -Recurse -File -ErrorAction SilentlyContinue)
+          $stagedRhp        = @($stagedRhinoFiles | Where-Object { $_.Extension -ieq '.rhp' })
+
+          if ($stagedRhinoFiles.Count -eq 0) {
+            $msg = "Rhino package staging folder is empty: $yakVersionDir"
+
+            if ($env:GITHUB_REF -like 'refs/tags/*') {
+              throw $msg
+            }
+
+            Write-Warning $msg
+          }
+
+          if ($stagedRhp.Count -eq 0) {
+            $msg = "No .rhp files staged for Rhino package. Source checked: $rhinoPackageSource"
+
+            if ($env:GITHUB_REF -like 'refs/tags/*') {
+              throw $msg
+            }
+
+            Write-Warning $msg
+          }
+          # 
           $samFiles = @(Get-ChildItem -Path $samStage -Recurse -File -ErrorAction SilentlyContinue)
           Write-Host "Staged SAM payload files: $($samFiles.Count)"
           Write-Host "Top-level staged SAM DLLs:"
