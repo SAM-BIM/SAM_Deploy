@@ -78,20 +78,6 @@ Filename: "{userappdata}\SAM\SAMdependencies\install.bat"; WorkingDir: "{userapp
 Type: filesandordirs; Name: "{userappdata}\SAM"
 
 [Code]
-procedure CreateSamGhLink;
-var
-  GhDir, SamDir, Content: string;
-begin
-  GhDir := ExpandConstant('{userappdata}\Grasshopper\Libraries\');
-  SamDir := ExpandConstant('{userappdata}\SAM\');
-  if not DirExists(GhDir) then
-    ForceDirectories(GhDir);
-  Content :=
-    '#Order of files is important or just folder' + #13#10 +
-    SamDir + #13#10;
-  SaveStringToFile(GhDir + 'SAM.ghlink', Content, False);
-end;
-
 procedure CreateRevitGhLink(const Year: string);
 var
   GhYearDir, SamDir, Content: string;
