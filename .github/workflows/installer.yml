@@ -194,9 +194,8 @@ jobs:
             }
           }
 
-          # Keep special payloads separate / restore old pipeline behaviour
-          Copy-IfExists (Join-Path $root 'Install')              $stage
-          Copy-IfExists (Join-Path $root 'SAM_Windows\build')   (Join-Path $stage 'SAMdependencies')
+          # Keep special payloads separate
+          Copy-IfExists (Join-Path $root 'SAM_Windows\build')    (Join-Path $stage 'SAMdependencies')
           Copy-IfExists (Join-Path $root 'SAM_Revit\references') (Join-Path $stage 'Rhino.Inside')
 
           # Prefer the curated runtime payload produced by the build itself
@@ -276,11 +275,17 @@ jobs:
                 if ($f.FullName -match '2025') { $targets += '2025' }
                 if ($f.FullName -match '2026') { $targets += '2026' }
                 if ($f.FullName -match '2027') { $targets += '2027' }
-                if ($targets.Count -eq 0) { $targets = $revitYears }
+
+                $hasYearMarker = $targets.Count -gt 0
+                if (-not $hasYearMarker) { $targets = $revitYears }
 
                 $w = 0
                 if ($f.FullName -match '\\build\\') { $w = 2 }
                 elseif ($f.FullName -match '\\bin\\') { $w = 1 }
+
+                # Prefer year-specific outputs over shared build outputs.
+                # This keeps e.g. 2025 binaries from being replaced by a later 2026 build.
+                if ($hasYearMarker) { $w += 10 }
 
                 foreach ($year in $targets) {
                   $existing = $best[$year][$f.Name]
@@ -301,9 +306,9 @@ jobs:
               Copy-Item $kvp.Value.File.FullName (Join-Path $targetDir $kvp.Key) -Force
             }
 
-            # Explicitly overlay SAM_Revit_UI shared build output. This is where
-            # SAM.Revit.UI.dll and SAM.Core.Revit.UI.dll are expected to come from.
-            Copy-IfExists (Join-Path $root 'SAM_Revit_UI\build') $targetDir
+            # Do NOT overlay shared SAM_Revit_UI\build here.
+            # The selection logic above already chooses the best candidate per year,
+            # and a shared build folder here can overwrite year-specific binaries.
 
             Get-ChildItem -Path $targetDir -File -Filter *.dll -ErrorAction SilentlyContinue |
               Where-Object { $_.Name -match 'Grasshopper' } |
