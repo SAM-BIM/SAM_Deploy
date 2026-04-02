@@ -244,8 +244,9 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    // Intentionally do not create the broad global SAM.ghlink here.
-    // Revit works with the per-year SAM_Revit.ghlink and Rhino.Inside.Revit's own loader.
+    // Create standalone Grasshopper link, but only for explicit standalone GHAs.
+    // Do not point Grasshopper at the whole SAM root.
+    CreateStandaloneGhLink;
 
     if RevitYearPayloadExists('2025') then
       SetupRevitYear('2025');
