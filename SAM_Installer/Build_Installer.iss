@@ -115,6 +115,28 @@ begin
   SaveStringToFile(GhDir + 'SAM.ghlink', Content, False);
 end;
 
+
+procedure CreateStandaloneGhLink;
+var
+  GhDir, SamDir, Content: string;
+begin
+  SamDir := ExpandConstant('{userappdata}\SAM\');
+  GhDir := ExpandConstant('{userappdata}\Grasshopper\Libraries\');
+  if not DirExists(GhDir) then
+    ForceDirectories(GhDir);
+
+  Content := '#Order of files is important' + #13#10;
+  if FileExists(SamDir + 'SAM.Core.Grasshopper.gha') then
+    Content := Content + SamDir + 'SAM.Core.Grasshopper.gha' + #13#10;
+  if FileExists(SamDir + 'SAM.Architectural.Grasshopper.gha') then
+    Content := Content + SamDir + 'SAM.Architectural.Grasshopper.gha' + #13#10;
+  if FileExists(SamDir + 'SAM.Analytical.Grasshopper.gha') then
+    Content := Content + SamDir + 'SAM.Analytical.Grasshopper.gha' + #13#10;
+
+  if Content <> '#Order of files is important' + #13#10 then
+    SaveStringToFile(GhDir + 'SAM.ghlink', Content, False);
+end;
+
 procedure CreateRevitGhLink(const Year: string);
 var
   GhYearDir, SamDir, Content: string;
@@ -222,7 +244,6 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    CreateStandaloneGhLink();
     // Intentionally do not create the broad global SAM.ghlink here.
     // Revit works with the per-year SAM_Revit.ghlink and Rhino.Inside.Revit's own loader.
 
