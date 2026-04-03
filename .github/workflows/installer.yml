@@ -105,45 +105,6 @@ jobs:
             '/p:Configuration=Release' `
             '/p:UseSharedCompilation=false'
 
-      - name: Restore SAM_UI
-        shell: pwsh
-        env:
-          MSBUILDDISABLENODEREUSE: '1'
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $sln = 'SAM_UI\SAM_UI.sln'
-          if (-not (Test-Path $sln)) {
-            Write-Host "WARN: $sln not found; skipping SAM_UI restore."
-            return
-          }
-
-          msbuild `
-            $sln `
-            '/t:Restore' `
-            '/m:1' '/nr:false' '/v:m' `
-            '/p:Configuration=Release' `
-            '/p:UseSharedCompilation=false'
-
-      - name: Rebuild SAM_UI (with post-build)
-        shell: pwsh
-        env:
-          MSBUILDDISABLENODEREUSE: '1'
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $sln = 'SAM_UI\SAM_UI.sln'
-          if (-not (Test-Path $sln)) {
-            Write-Host "WARN: $sln not found; skipping SAM_UI rebuild."
-            return
-          }
-
-          msbuild `
-            $sln `
-            '/t:Rebuild' `
-            '/m:1' '/nr:false' '/v:m' `
-            '/p:Configuration=Release' `
-            '/p:UseSharedCompilation=false' `
-            '/p:RunPostBuildEvent=OnOutputUpdated'
-
       - name: Restore SAM_Rhino_UI
         shell: pwsh
         env:
@@ -220,6 +181,7 @@ jobs:
             '/p:Configuration=Release' `
             '/p:UseSharedCompilation=false' `
             '/p:RunPostBuildEvent=OnOutputUpdated'
+
 
       - name: Rebuild SAM_Revit_UI 2025 (with post-build)
         shell: pwsh
@@ -331,51 +293,6 @@ jobs:
             }
             Copy-Item $srcFile (Join-Path $samStage $name) -Force
             Write-Host "Pinned runtime file: $name"
-          }
-
-          # Force SAM_UI-managed dependency versions that must not drift to older shared copies.
-          # These files are required by standalone UI and UI launched from Grasshopper.
-          $preferredUiRuntimeFiles = @(
-            'System.Memory.dll',
-            'System.Numerics.Vectors.dll'
-          )
-
-          $uiBuildDir = Join-Path $root 'SAM_UI\build'
-          if (-not (Test-Path $uiBuildDir)) {
-            throw "Required SAM_UI build output folder not found: $uiBuildDir"
-          }
-
-          foreach ($name in $preferredUiRuntimeFiles) {
-            $srcFile = Join-Path $uiBuildDir $name
-            if (-not (Test-Path $srcFile)) {
-              throw "Required SAM UI dependency not found in SAM_UI\build: $name"
-            }
-
-            $appDataFile = Join-Path $samAppData $name
-            $samBuildFile = Join-Path $root "SAM\build\$name"
-            $stageFile = Join-Path $samStage $name
-
-            if (Test-Path $appDataFile) {
-              $appDataVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($appDataFile).FileVersion
-              Write-Host ("Existing %APPDATA%\SAM version for {0}: {1}" -f $name, $appDataVer)
-            } else {
-              Write-Host ("Existing %APPDATA%\SAM version for {0}: <missing>" -f $name)
-            }
-
-            if (Test-Path $samBuildFile) {
-              $samBuildVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($samBuildFile).FileVersion
-              Write-Host ("Existing SAM\build version for {0}: {1}" -f $name, $samBuildVer)
-            } else {
-              Write-Host ("Existing SAM\build version for {0}: <missing>" -f $name)
-            }
-
-            $uiBuildVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($srcFile).FileVersion
-            Copy-Item $srcFile $stageFile -Force
-            $stageVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($stageFile).FileVersion
-
-            Write-Host ("Pinned SAM UI dependency: {0} from {1}" -f $name, $srcFile)
-            Write-Host ("SAM_UI\build version for {0}: {1}" -f $name, $uiBuildVer)
-            Write-Host ("Final staged version for {0}: {1}" -f $name, $stageVer)
           }
 
           # User files / Grasshopper user objects
@@ -545,7 +462,7 @@ jobs:
 
             Write-Warning $msg
           }
-
+          # 
           $samFiles = @(Get-ChildItem -Path $samStage -Recurse -File -ErrorAction SilentlyContinue)
           Write-Host "Staged SAM payload files: $($samFiles.Count)"
           Write-Host "Top-level staged SAM DLLs:"
@@ -563,7 +480,7 @@ jobs:
           }
 
           # -------------------------------------------------------------------
-          # STAGE 2.1 DIAGNOSTICS: report duplicate DLL version drift across
+          # STAGE 2.1a DIAGNOSTICS: classify duplicate DLL version drift across
           # source folders without changing payload ownership.
           # -------------------------------------------------------------------
           function Get-FileVersionSafe([string]$path) {
@@ -575,6 +492,25 @@ jobs:
               return $null
             }
           }
+
+          $uiOwnedPinnedFiles = @(
+            'System.Memory.dll',
+            'System.Numerics.Vectors.dll'
+          )
+
+          $uiOwnedCandidateFiles = @(
+            'System.Buffers.dll',
+            'System.Runtime.CompilerServices.Unsafe.dll',
+            'Microsoft.CSharp.dll'
+          )
+
+          $knownAcceptedDriftFiles = @(
+            'System.Drawing.Common.dll',
+            'System.Drawing.Primitives.dll',
+            'System.Data.DataSetExtensions.dll',
+            'System.Reflection.Emit.ILGeneration.dll',
+            'System.Reflection.Emit.Lightweight.dll'
+          )
 
           $diagnosticRoots = @(
             [pscustomobject]@{ Name = 'SAM_build';    Path = (Join-Path $root 'SAM\build') },
@@ -598,7 +534,7 @@ jobs:
             }
           }
 
-          Write-Host '--- Stage 2.1 DLL version diagnostics ---'
+          Write-Host '--- Stage 2.1a DLL version diagnostics ---'
           foreach ($name in ($dllIndex.Keys | Sort-Object)) {
             $items = @($dllIndex[$name])
             if ($items.Count -lt 2) { continue }
@@ -611,15 +547,28 @@ jobs:
 
             if ($versions.Count -le 1) { continue }
 
-            Write-Host ("DLL version drift detected: {0}" -f $name)
+            $classification = 'UNCLASSIFIED_DRIFT'
+            if ($uiOwnedPinnedFiles -contains $name) {
+              $classification = 'PINNED_UI_OWNER'
+            }
+            elseif ($uiOwnedCandidateFiles -contains $name) {
+              $classification = 'UI_OWNER_CANDIDATE'
+            }
+            elseif ($knownAcceptedDriftFiles -contains $name) {
+              $classification = 'KNOWN_ACCEPTED_DRIFT'
+            }
+
+            Write-Host ("DLL version drift detected [{0}]: {1}" -f $classification, $name)
             foreach ($item in ($items | Sort-Object Source)) {
               $ver = if ($item.Version) { $item.Version } else { '<unknown>' }
               Write-Host ("  {0} -> {1}" -f $item.Source, $ver)
             }
 
-            $uiItem = $items | Where-Object { $_.Source -eq 'SAM_UI_build' } | Select-Object -First 1
-            if ($uiItem -and $uiItem.Version) {
-              Write-Host ("  Preferred UI owner candidate: SAM_UI_build ({0})" -f $uiItem.Version)
+            if ($classification -eq 'UI_OWNER_CANDIDATE') {
+              $uiItem = $items | Where-Object { $_.Source -eq 'SAM_UI_build' } | Select-Object -First 1
+              if ($uiItem -and $uiItem.Version) {
+                Write-Host ("  Candidate UI owner version: SAM_UI_build ({0})" -f $uiItem.Version)
+              }
             }
           }
 
