@@ -295,6 +295,27 @@ jobs:
             Write-Host "Pinned runtime file: $name"
           }
 
+          # Force SAM_UI-managed dependency versions that may otherwise be older in %APPDATA%\SAM
+          $preferredUiRuntimeFiles = @(
+            'System.Memory.dll'
+          )
+
+          foreach ($name in $preferredUiRuntimeFiles) {
+            $candidateSources = @(
+              (Join-Path $root "SAM_UI\build\$name"),
+              (Join-Path $samAppData $name),
+              (Join-Path $root "SAM\build\$name")
+            ) | Where-Object { Test-Path $_ }
+
+            if ($candidateSources.Count -eq 0) {
+              throw "Required SAM UI runtime/dependency file not found: $name"
+            }
+
+            $srcFile = $candidateSources[0]
+            Copy-Item $srcFile (Join-Path $samStage $name) -Force
+            Write-Host "Pinned SAM UI dependency: $name from $srcFile"
+          }
+
           # User files / Grasshopper user objects
           Copy-IfExists (Join-Path $env:USERPROFILE 'Documents\SAM') (Join-Path $stage 'user\Documents\SAM')
           Copy-IfExists (Join-Path $env:APPDATA 'Grasshopper\UserObjects\SAM') (Join-Path $stage 'user\Documents\SAM\Grasshopper\UserObjects')
