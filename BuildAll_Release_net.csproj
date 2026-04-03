@@ -69,27 +69,16 @@
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
 
-    <!-- Revit 2025 -->
+    <!-- Revit core only. Host entry UI repos are rebuilt explicitly in installer.yml -->
     <Solution Include="SAM_Revit\SAM_Revit.sln">
       <Properties>Configuration=Release2025;Platform=Any CPU</Properties>
     </Solution>
-    <Solution Include="SAM_Revit_UI\SAM_Revit_UI.sln">
-      <Properties>Configuration=Release2025;Platform=Any CPU</Properties>
-    </Solution>
-
-    <!-- Revit 2026 -->
     <Solution Include="SAM_Revit\SAM_Revit.sln">
       <Properties>Configuration=Release2026;Platform=Any CPU</Properties>
     </Solution>
-    <Solution Include="SAM_Revit_UI\SAM_Revit_UI.sln">
-      <Properties>Configuration=Release2026;Platform=Any CPU</Properties>
-    </Solution>
 
-    <!-- Desktop UI and tools -->
+    <!-- Desktop UI only. SAM_Rhino_UI and SAM_Revit_UI are rebuilt explicitly in installer.yml -->
     <Solution Include="SAM_UI\SAM_UI.sln">
-      <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
-    <Solution Include="SAM_Rhino_UI\SAM_Rhino_UI.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
   </ItemGroup>
