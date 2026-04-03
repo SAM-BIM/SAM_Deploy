@@ -18,6 +18,8 @@ jobs:
       version: ${{ steps.ver.outputs.version }}
     permissions:
       contents: read
+    env:
+      STRICT_UNCLASSIFIED_DRIFT: 'false'
 
     steps:
       - name: Checkout (with private submodules)
@@ -553,8 +555,14 @@ jobs:
           }
 
           # -------------------------------------------------------------------
-          # STAGE 2.1d DIAGNOSTICS: keep current pinned UI ownership and add
-          # guardrails for reviewed matches and any unclassified future drift.
+          # STAGE 2.2 OWNERSHIP POLICY + DIAGNOSTICS
+          #
+          # Policy:
+          # - WindowsDesktop runtime files are pinned from the installed .NET runtime
+          # - UI-critical pinned files are owned by SAM_UI\build
+          # - reviewed UI-match files are expected to stage to the SAM_UI version
+          # - accepted drift is tracked but not treated as a failure
+          # - unclassified drift is warning-only by default, with optional strict mode
           # -------------------------------------------------------------------
           function Get-FileVersionSafe([string]$path) {
             if (-not (Test-Path $path)) { return $null }
@@ -585,6 +593,12 @@ jobs:
             'System.Reflection.Emit.Lightweight.dll'
           )
 
+          Write-Host '--- Stage 2.2 ownership policy summary ---'
+          Write-Host ('Pinned UI owner files: ' + ($uiOwnedPinnedFiles -join ', '))
+          Write-Host ('Reviewed UI match files: ' + ($uiOwnedReviewedMatchFiles -join ', '))
+          Write-Host ('Known accepted drift files: ' + ($knownAcceptedDriftFiles -join ', '))
+          Write-Host ("STRICT_UNCLASSIFIED_DRIFT={0}" -f $env:STRICT_UNCLASSIFIED_DRIFT)
+
           $diagnosticRoots = @(
             [pscustomobject]@{ Name = 'SAM_build';    Path = (Join-Path $root 'SAM\build') },
             [pscustomobject]@{ Name = 'SAM_UI_build'; Path = (Join-Path $root 'SAM_UI\build') },
@@ -607,7 +621,7 @@ jobs:
             }
           }
 
-          Write-Host '--- Stage 2.1d DLL version diagnostics ---'
+          Write-Host '--- Stage 2.2 DLL version diagnostics ---'
           $reviewedResults = @()
           $unclassifiedDriftResults = @()
 
@@ -676,14 +690,14 @@ jobs:
             }
           }
 
-          Write-Host '--- Stage 2.1d reviewed UI match summary ---'
+          Write-Host '--- Stage 2.2 reviewed UI match summary ---'
           foreach ($result in ($reviewedResults | Sort-Object Name)) {
             $uiVer = if ($result.UIVersion) { $result.UIVersion } else { '<missing>' }
             $stagedVer = if ($result.StagedVersion) { $result.StagedVersion } else { '<missing>' }
             Write-Host ("REVIEWED {0} | UI={1} | STAGED={2} | STATUS={3}" -f $result.Name, $uiVer, $stagedVer, $result.Status)
           }
 
-          Write-Host '--- Stage 2.1d unclassified drift summary ---'
+          Write-Host '--- Stage 2.2 unclassified drift summary ---'
           if ($unclassifiedDriftResults.Count -eq 0) {
             Write-Host 'No unclassified DLL drift detected.'
           }
@@ -692,6 +706,10 @@ jobs:
               $uiVer = if ($result.UIVersion) { $result.UIVersion } else { '<missing>' }
               $stagedVer = if ($result.StagedVersion) { $result.StagedVersion } else { '<missing>' }
               Write-Host ("UNCLASSIFIED {0} | UI={1} | STAGED={2}" -f $result.Name, $uiVer, $stagedVer)
+            }
+
+            if ($env:STRICT_UNCLASSIFIED_DRIFT -eq 'true') {
+              throw 'Unclassified DLL drift detected and STRICT_UNCLASSIFIED_DRIFT=true.'
             }
           }
 
