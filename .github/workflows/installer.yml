@@ -105,6 +105,45 @@ jobs:
             '/p:Configuration=Release' `
             '/p:UseSharedCompilation=false'
 
+      - name: Restore SAM_UI
+        shell: pwsh
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sln = 'SAM_UI\SAM_UI.sln'
+          if (-not (Test-Path $sln)) {
+            Write-Host "WARN: $sln not found; skipping SAM_UI restore."
+            return
+          }
+
+          msbuild `
+            $sln `
+            '/t:Restore' `
+            '/m:1' '/nr:false' '/v:m' `
+            '/p:Configuration=Release' `
+            '/p:UseSharedCompilation=false'
+
+      - name: Rebuild SAM_UI (with post-build)
+        shell: pwsh
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sln = 'SAM_UI\SAM_UI.sln'
+          if (-not (Test-Path $sln)) {
+            Write-Host "WARN: $sln not found; skipping SAM_UI rebuild."
+            return
+          }
+
+          msbuild `
+            $sln `
+            '/t:Rebuild' `
+            '/m:1' '/nr:false' '/v:m' `
+            '/p:Configuration=Release' `
+            '/p:UseSharedCompilation=false' `
+            '/p:RunPostBuildEvent=OnOutputUpdated'
+
       - name: Restore SAM_Rhino_UI
         shell: pwsh
         env:
@@ -295,21 +334,49 @@ jobs:
             Write-Host "Pinned runtime file: $name"
           }
 
-          # Force SAM_UI-managed dependency versions that may otherwise be older in %APPDATA%\SAM
+          # Force SAM_UI-managed dependency versions that must not drift to older shared copies.
+          # These files are required by standalone UI and UI launched from Grasshopper.
           $preferredUiRuntimeFiles = @(
             'System.Memory.dll',
             'System.Numerics.Vectors.dll'
           )
 
-          foreach ($name in $preferredUiRuntimeFiles) {
-            $srcFile = Join-Path $root "SAM_UI\build\$name"
+          $uiBuildDir = Join-Path $root 'SAM_UI\build'
+          if (-not (Test-Path $uiBuildDir)) {
+            throw "Required SAM_UI build output folder not found: $uiBuildDir"
+          }
 
+          foreach ($name in $preferredUiRuntimeFiles) {
+            $srcFile = Join-Path $uiBuildDir $name
             if (-not (Test-Path $srcFile)) {
-              throw "Required SAM UI dependency not found in SAM_UI\\build: $name"
+              throw "Required SAM UI dependency not found in SAM_UI\build: $name"
             }
 
-            Copy-Item $srcFile (Join-Path $samStage $name) -Force
+            $appDataFile = Join-Path $samAppData $name
+            $samBuildFile = Join-Path $root "SAM\build\$name"
+            $stageFile = Join-Path $samStage $name
+
+            if (Test-Path $appDataFile) {
+              $appDataVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($appDataFile).FileVersion
+              Write-Host "Existing %APPDATA%\SAM version for $name: $appDataVer"
+            } else {
+              Write-Host "Existing %APPDATA%\SAM version for $name: <missing>"
+            }
+
+            if (Test-Path $samBuildFile) {
+              $samBuildVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($samBuildFile).FileVersion
+              Write-Host "Existing SAM\build version for $name: $samBuildVer"
+            } else {
+              Write-Host "Existing SAM\build version for $name: <missing>"
+            }
+
+            $uiBuildVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($srcFile).FileVersion
+            Copy-Item $srcFile $stageFile -Force
+            $stageVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($stageFile).FileVersion
+
             Write-Host "Pinned SAM UI dependency: $name from $srcFile"
+            Write-Host "SAM_UI\build version for $name: $uiBuildVer"
+            Write-Host "Final staged version for $name: $stageVer"
           }
 
           # User files / Grasshopper user objects
