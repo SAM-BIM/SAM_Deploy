@@ -68,6 +68,12 @@ jobs:
           if (-not $tag) {
             $tag = "v$(Get-Date -Format yyyyMMdd).${{ github.run_number }}"
           }
+
+          # Normalise manual version strings so release/tag names stay valid.
+          $tag = $tag.Trim()
+          $tag = ($tag -replace '\s+','-')
+          $tag = ($tag -replace '[^0-9A-Za-z_.-]','-')
+
           "version=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           Write-Host "Version: $tag"
 
@@ -351,26 +357,10 @@ jobs:
               throw "Required SAM UI dependency not found in SAM_UI\build: $name"
             }
 
-            $appDataFile = Join-Path $samAppData $name
-            $samBuildFile = Join-Path $root "SAM\build\$name"
             $stageFile = Join-Path $samStage $name
-
-            if (Test-Path $appDataFile) {
-              $appDataVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($appDataFile).FileVersion
-              Write-Host ("Existing %APPDATA%\SAM version for {0}: {1}" -f $name, $appDataVer)
-            } else {
-              Write-Host ("Existing %APPDATA%\SAM version for {0}: <missing>" -f $name)
-            }
-
-            if (Test-Path $samBuildFile) {
-              $samBuildVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($samBuildFile).FileVersion
-              Write-Host ("Existing SAM\build version for {0}: {1}" -f $name, $samBuildVer)
-            } else {
-              Write-Host ("Existing SAM\build version for {0}: <missing>" -f $name)
-            }
+            Copy-Item $srcFile $stageFile -Force
 
             $uiBuildVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($srcFile).FileVersion
-            Copy-Item $srcFile $stageFile -Force
             $stageVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($stageFile).FileVersion
 
             Write-Host ("Pinned SAM UI dependency: {0} from {1}" -f $name, $srcFile)
@@ -560,6 +550,149 @@ jobs:
             $ghaCount = (Get-ChildItem -Path $targetDir -File -Filter *.gha -ErrorAction SilentlyContinue | Measure-Object).Count
             $hasRevitLoader = Test-Path (Join-Path $targetDir 'SAM.Revit.UI.dll')
             Write-Host "Revit $year staged: DLL=$dllCount, GHA=$ghaCount, Loader=$hasRevitLoader"
+          }
+
+          # -------------------------------------------------------------------
+          # STAGE 2.1d DIAGNOSTICS: keep current pinned UI ownership and add
+          # guardrails for reviewed matches and any unclassified future drift.
+          # -------------------------------------------------------------------
+          function Get-FileVersionSafe([string]$path) {
+            if (-not (Test-Path $path)) { return $null }
+            try {
+              return [System.Diagnostics.FileVersionInfo]::GetVersionInfo($path).FileVersion
+            }
+            catch {
+              return $null
+            }
+          }
+
+          $uiOwnedPinnedFiles = @(
+            'System.Memory.dll',
+            'System.Numerics.Vectors.dll'
+          )
+
+          $uiOwnedReviewedMatchFiles = @(
+            'Microsoft.CSharp.dll',
+            'System.Buffers.dll',
+            'System.Runtime.CompilerServices.Unsafe.dll'
+          )
+
+          $knownAcceptedDriftFiles = @(
+            'System.Drawing.Common.dll',
+            'System.Drawing.Primitives.dll',
+            'System.Data.DataSetExtensions.dll',
+            'System.Reflection.Emit.ILGeneration.dll',
+            'System.Reflection.Emit.Lightweight.dll'
+          )
+
+          $diagnosticRoots = @(
+            [pscustomobject]@{ Name = 'SAM_build';    Path = (Join-Path $root 'SAM\build') },
+            [pscustomobject]@{ Name = 'SAM_UI_build'; Path = (Join-Path $root 'SAM_UI\build') },
+            [pscustomobject]@{ Name = 'APPDATA_SAM';  Path = $samAppData },
+            [pscustomobject]@{ Name = 'STAGED_SAM';   Path = $samStage }
+          ) | Where-Object { Test-Path $_.Path }
+
+          $dllIndex = @{}
+          foreach ($entry in $diagnosticRoots) {
+            Get-ChildItem -Path $entry.Path -File -Filter *.dll -ErrorAction SilentlyContinue | ForEach-Object {
+              if (-not $dllIndex.ContainsKey($_.Name)) {
+                $dllIndex[$_.Name] = @()
+              }
+
+              $dllIndex[$_.Name] += [pscustomobject]@{
+                Source  = $entry.Name
+                Path    = $_.FullName
+                Version = Get-FileVersionSafe $_.FullName
+              }
+            }
+          }
+
+          Write-Host '--- Stage 2.1d DLL version diagnostics ---'
+          $reviewedResults = @()
+          $unclassifiedDriftResults = @()
+
+          foreach ($name in ($dllIndex.Keys | Sort-Object)) {
+            $items = @($dllIndex[$name])
+            if ($items.Count -lt 2) { continue }
+
+            $versions = @(
+              $items |
+                ForEach-Object { if ($_.Version) { $_.Version } else { '<unknown>' } } |
+                Sort-Object -Unique
+            )
+
+            if ($versions.Count -le 1) { continue }
+
+            $classification = 'UNCLASSIFIED_DRIFT'
+            if ($uiOwnedPinnedFiles -contains $name) {
+              $classification = 'PINNED_UI_OWNER'
+            }
+            elseif ($uiOwnedReviewedMatchFiles -contains $name) {
+              $classification = 'REVIEWED_UI_MATCH'
+            }
+            elseif ($knownAcceptedDriftFiles -contains $name) {
+              $classification = 'KNOWN_ACCEPTED_DRIFT'
+            }
+
+            Write-Host ("DLL version drift detected [{0}]: {1}" -f $classification, $name)
+            foreach ($item in ($items | Sort-Object Source)) {
+              $ver = if ($item.Version) { $item.Version } else { '<unknown>' }
+              Write-Host ("  {0} -> {1}" -f $item.Source, $ver)
+            }
+
+            $uiItem = $items | Where-Object { $_.Source -eq 'SAM_UI_build' } | Select-Object -First 1
+            $stagedItem = $items | Where-Object { $_.Source -eq 'STAGED_SAM' } | Select-Object -First 1
+
+            if ($classification -eq 'REVIEWED_UI_MATCH') {
+              $status = 'INSUFFICIENT_DATA'
+              if ($uiItem -and $stagedItem -and $uiItem.Version -and $stagedItem.Version) {
+                if ($uiItem.Version -eq $stagedItem.Version) {
+                  $status = 'STAGED_MATCHES_UI'
+                }
+                else {
+                  $status = 'STAGED_DIFFERS_FROM_UI'
+                }
+              }
+
+              $reviewedResults += [pscustomobject]@{
+                Name = $name
+                UIVersion = if ($uiItem) { $uiItem.Version } else { $null }
+                StagedVersion = if ($stagedItem) { $stagedItem.Version } else { $null }
+                Status = $status
+              }
+
+              if ($uiItem -and $uiItem.Version) {
+                Write-Host ("  Reviewed UI match target: SAM_UI_build ({0})" -f $uiItem.Version)
+              }
+              Write-Host ("  Reviewed UI match status: {0}" -f $status)
+            }
+            elseif ($classification -eq 'UNCLASSIFIED_DRIFT') {
+              $unclassifiedDriftResults += [pscustomobject]@{
+                Name = $name
+                UIVersion = if ($uiItem) { $uiItem.Version } else { $null }
+                StagedVersion = if ($stagedItem) { $stagedItem.Version } else { $null }
+              }
+              Write-Warning ("UNCLASSIFIED drift detected for {0}. Review ownership before next release." -f $name)
+            }
+          }
+
+          Write-Host '--- Stage 2.1d reviewed UI match summary ---'
+          foreach ($result in ($reviewedResults | Sort-Object Name)) {
+            $uiVer = if ($result.UIVersion) { $result.UIVersion } else { '<missing>' }
+            $stagedVer = if ($result.StagedVersion) { $result.StagedVersion } else { '<missing>' }
+            Write-Host ("REVIEWED {0} | UI={1} | STAGED={2} | STATUS={3}" -f $result.Name, $uiVer, $stagedVer, $result.Status)
+          }
+
+          Write-Host '--- Stage 2.1d unclassified drift summary ---'
+          if ($unclassifiedDriftResults.Count -eq 0) {
+            Write-Host 'No unclassified DLL drift detected.'
+          }
+          else {
+            foreach ($result in ($unclassifiedDriftResults | Sort-Object Name)) {
+              $uiVer = if ($result.UIVersion) { $result.UIVersion } else { '<missing>' }
+              $stagedVer = if ($result.StagedVersion) { $result.StagedVersion } else { '<missing>' }
+              Write-Host ("UNCLASSIFIED {0} | UI={1} | STAGED={2}" -f $result.Name, $uiVer, $stagedVer)
+            }
           }
 
       - name: Install Inno Setup
