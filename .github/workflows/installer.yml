@@ -105,6 +105,45 @@ jobs:
             '/p:Configuration=Release' `
             '/p:UseSharedCompilation=false'
 
+      - name: Restore SAM_UI
+        shell: pwsh
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sln = 'SAM_UI\SAM_UI.sln'
+          if (-not (Test-Path $sln)) {
+            Write-Host "WARN: $sln not found; skipping SAM_UI restore."
+            return
+          }
+
+          msbuild `
+            $sln `
+            '/t:Restore' `
+            '/m:1' '/nr:false' '/v:m' `
+            '/p:Configuration=Release' `
+            '/p:UseSharedCompilation=false'
+
+      - name: Rebuild SAM_UI (with post-build)
+        shell: pwsh
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sln = 'SAM_UI\SAM_UI.sln'
+          if (-not (Test-Path $sln)) {
+            Write-Host "WARN: $sln not found; skipping SAM_UI rebuild."
+            return
+          }
+
+          msbuild `
+            $sln `
+            '/t:Rebuild' `
+            '/m:1' '/nr:false' '/v:m' `
+            '/p:Configuration=Release' `
+            '/p:UseSharedCompilation=false' `
+            '/p:RunPostBuildEvent=OnOutputUpdated'
+
       - name: Restore SAM_Rhino_UI
         shell: pwsh
         env:
@@ -181,7 +220,6 @@ jobs:
             '/p:Configuration=Release' `
             '/p:UseSharedCompilation=false' `
             '/p:RunPostBuildEvent=OnOutputUpdated'
-
 
       - name: Rebuild SAM_Revit_UI 2025 (with post-build)
         shell: pwsh
@@ -293,6 +331,35 @@ jobs:
             }
             Copy-Item $srcFile (Join-Path $samStage $name) -Force
             Write-Host "Pinned runtime file: $name"
+          }
+
+          # Force SAM_UI-managed dependency versions that must not drift to older shared copies.
+          # These files are required by standalone UI and UI launched from Grasshopper.
+          $preferredUiRuntimeFiles = @(
+            'System.Memory.dll',
+            'System.Numerics.Vectors.dll'
+          )
+
+          $uiBuildDir = Join-Path $root 'SAM_UI\build'
+          if (-not (Test-Path $uiBuildDir)) {
+            throw "Required SAM_UI build output folder not found: $uiBuildDir"
+          }
+
+          foreach ($name in $preferredUiRuntimeFiles) {
+            $srcFile = Join-Path $uiBuildDir $name
+            if (-not (Test-Path $srcFile)) {
+              throw "Required SAM UI dependency not found in SAM_UI\build: $name"
+            }
+
+            $stageFile = Join-Path $samStage $name
+            Copy-Item $srcFile $stageFile -Force
+
+            $uiBuildVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($srcFile).FileVersion
+            $stageVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($stageFile).FileVersion
+
+            Write-Host ("Pinned SAM UI dependency: {0} from {1}" -f $name, $srcFile)
+            Write-Host ("SAM_UI\build version for {0}: {1}" -f $name, $uiBuildVer)
+            Write-Host ("Final staged version for {0}: {1}" -f $name, $stageVer)
           }
 
           # User files / Grasshopper user objects
@@ -462,7 +529,7 @@ jobs:
 
             Write-Warning $msg
           }
-          # 
+
           $samFiles = @(Get-ChildItem -Path $samStage -Recurse -File -ErrorAction SilentlyContinue)
           Write-Host "Staged SAM payload files: $($samFiles.Count)"
           Write-Host "Top-level staged SAM DLLs:"
@@ -480,8 +547,8 @@ jobs:
           }
 
           # -------------------------------------------------------------------
-          # STAGE 2.1a DIAGNOSTICS: classify duplicate DLL version drift across
-          # source folders without changing payload ownership.
+          # STAGE 2.1c DIAGNOSTICS: keep current pinned UI ownership and add
+          # candidate summary for the next likely UI-owned DLLs.
           # -------------------------------------------------------------------
           function Get-FileVersionSafe([string]$path) {
             if (-not (Test-Path $path)) { return $null }
