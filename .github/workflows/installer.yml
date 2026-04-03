@@ -221,7 +221,6 @@ jobs:
             '/p:UseSharedCompilation=false' `
             '/p:RunPostBuildEvent=OnOutputUpdated'
 
-
       - name: Rebuild SAM_Revit_UI 2025 (with post-build)
         shell: pwsh
         env:
@@ -358,25 +357,25 @@ jobs:
 
             if (Test-Path $appDataFile) {
               $appDataVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($appDataFile).FileVersion
-              Write-Host "Existing %APPDATA%\SAM version for $name: $appDataVer"
+              Write-Host ("Existing %APPDATA%\SAM version for {0}: {1}" -f $name, $appDataVer)
             } else {
-              Write-Host "Existing %APPDATA%\SAM version for $name: <missing>"
+              Write-Host ("Existing %APPDATA%\SAM version for {0}: <missing>" -f $name)
             }
 
             if (Test-Path $samBuildFile) {
               $samBuildVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($samBuildFile).FileVersion
-              Write-Host "Existing SAM\build version for $name: $samBuildVer"
+              Write-Host ("Existing SAM\build version for {0}: {1}" -f $name, $samBuildVer)
             } else {
-              Write-Host "Existing SAM\build version for $name: <missing>"
+              Write-Host ("Existing SAM\build version for {0}: <missing>" -f $name)
             }
 
             $uiBuildVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($srcFile).FileVersion
             Copy-Item $srcFile $stageFile -Force
             $stageVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($stageFile).FileVersion
 
-            Write-Host "Pinned SAM UI dependency: $name from $srcFile"
-            Write-Host "SAM_UI\build version for $name: $uiBuildVer"
-            Write-Host "Final staged version for $name: $stageVer"
+            Write-Host ("Pinned SAM UI dependency: {0} from {1}" -f $name, $srcFile)
+            Write-Host ("SAM_UI\build version for {0}: {1}" -f $name, $uiBuildVer)
+            Write-Host ("Final staged version for {0}: {1}" -f $name, $stageVer)
           }
 
           # User files / Grasshopper user objects
@@ -546,7 +545,7 @@ jobs:
 
             Write-Warning $msg
           }
-          # 
+
           $samFiles = @(Get-ChildItem -Path $samStage -Recurse -File -ErrorAction SilentlyContinue)
           Write-Host "Staged SAM payload files: $($samFiles.Count)"
           Write-Host "Top-level staged SAM DLLs:"
