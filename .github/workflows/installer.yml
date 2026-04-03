@@ -297,7 +297,8 @@ jobs:
 
           # Force SAM_UI-managed dependency versions that may otherwise be older in %APPDATA%\SAM
           $preferredUiRuntimeFiles = @(
-            'System.Memory.dll'
+            'System.Memory.dll',
+            'System.Numerics.Vectors.dll'
           )
 
           foreach ($name in $preferredUiRuntimeFiles) {
