@@ -302,17 +302,12 @@ jobs:
           )
 
           foreach ($name in $preferredUiRuntimeFiles) {
-            $candidateSources = @(
-              (Join-Path $root "SAM_UI\build\$name"),
-              (Join-Path $samAppData $name),
-              (Join-Path $root "SAM\build\$name")
-            ) | Where-Object { Test-Path $_ }
+            $srcFile = Join-Path $root "SAM_UI\build\$name"
 
-            if ($candidateSources.Count -eq 0) {
-              throw "Required SAM UI runtime/dependency file not found: $name"
+            if (-not (Test-Path $srcFile)) {
+              throw "Required SAM UI dependency not found in SAM_UI\\build: $name"
             }
 
-            $srcFile = $candidateSources[0]
             Copy-Item $srcFile (Join-Path $samStage $name) -Force
             Write-Host "Pinned SAM UI dependency: $name from $srcFile"
           }
