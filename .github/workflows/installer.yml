@@ -68,6 +68,12 @@ jobs:
           if (-not $tag) {
             $tag = "v$(Get-Date -Format yyyyMMdd).${{ github.run_number }}"
           }
+
+          # Normalise manual version strings so release/tag names stay valid.
+          $tag = $tag.Trim()
+          $tag = ($tag -replace '\s+','-')
+          $tag = ($tag -replace '[^0-9A-Za-z_.-]','-')
+
           "version=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           Write-Host "Version: $tag"
 
@@ -547,8 +553,8 @@ jobs:
           }
 
           # -------------------------------------------------------------------
-          # STAGE 2.1c DIAGNOSTICS: keep current pinned UI ownership and add
-          # candidate summary for the next likely UI-owned DLLs.
+          # STAGE 2.1d DIAGNOSTICS: keep current pinned UI ownership and add
+          # guardrails for reviewed matches and any unclassified future drift.
           # -------------------------------------------------------------------
           function Get-FileVersionSafe([string]$path) {
             if (-not (Test-Path $path)) { return $null }
@@ -565,10 +571,10 @@ jobs:
             'System.Numerics.Vectors.dll'
           )
 
-          $uiOwnedCandidateFiles = @(
+          $uiOwnedReviewedMatchFiles = @(
+            'Microsoft.CSharp.dll',
             'System.Buffers.dll',
-            'System.Runtime.CompilerServices.Unsafe.dll',
-            'Microsoft.CSharp.dll'
+            'System.Runtime.CompilerServices.Unsafe.dll'
           )
 
           $knownAcceptedDriftFiles = @(
@@ -601,8 +607,9 @@ jobs:
             }
           }
 
-          Write-Host '--- Stage 2.1c DLL version diagnostics ---'
-          $candidateDriftResults = @()
+          Write-Host '--- Stage 2.1d DLL version diagnostics ---'
+          $reviewedResults = @()
+          $unclassifiedDriftResults = @()
 
           foreach ($name in ($dllIndex.Keys | Sort-Object)) {
             $items = @($dllIndex[$name])
@@ -620,8 +627,8 @@ jobs:
             if ($uiOwnedPinnedFiles -contains $name) {
               $classification = 'PINNED_UI_OWNER'
             }
-            elseif ($uiOwnedCandidateFiles -contains $name) {
-              $classification = 'UI_OWNER_CANDIDATE'
+            elseif ($uiOwnedReviewedMatchFiles -contains $name) {
+              $classification = 'REVIEWED_UI_MATCH'
             }
             elseif ($knownAcceptedDriftFiles -contains $name) {
               $classification = 'KNOWN_ACCEPTED_DRIFT'
@@ -636,11 +643,7 @@ jobs:
             $uiItem = $items | Where-Object { $_.Source -eq 'SAM_UI_build' } | Select-Object -First 1
             $stagedItem = $items | Where-Object { $_.Source -eq 'STAGED_SAM' } | Select-Object -First 1
 
-            if ($classification -eq 'UI_OWNER_CANDIDATE') {
-              if ($uiItem -and $uiItem.Version) {
-                Write-Host ("  Candidate UI owner version: SAM_UI_build ({0})" -f $uiItem.Version)
-              }
-
+            if ($classification -eq 'REVIEWED_UI_MATCH') {
               $status = 'INSUFFICIENT_DATA'
               if ($uiItem -and $stagedItem -and $uiItem.Version -and $stagedItem.Version) {
                 if ($uiItem.Version -eq $stagedItem.Version) {
@@ -651,22 +654,45 @@ jobs:
                 }
               }
 
-              $candidateDriftResults += [pscustomobject]@{
+              $reviewedResults += [pscustomobject]@{
                 Name = $name
                 UIVersion = if ($uiItem) { $uiItem.Version } else { $null }
                 StagedVersion = if ($stagedItem) { $stagedItem.Version } else { $null }
                 Status = $status
               }
 
-              Write-Host ("  Candidate drift status: {0}" -f $status)
+              if ($uiItem -and $uiItem.Version) {
+                Write-Host ("  Reviewed UI match target: SAM_UI_build ({0})" -f $uiItem.Version)
+              }
+              Write-Host ("  Reviewed UI match status: {0}" -f $status)
+            }
+            elseif ($classification -eq 'UNCLASSIFIED_DRIFT') {
+              $unclassifiedDriftResults += [pscustomobject]@{
+                Name = $name
+                UIVersion = if ($uiItem) { $uiItem.Version } else { $null }
+                StagedVersion = if ($stagedItem) { $stagedItem.Version } else { $null }
+              }
+              Write-Warning ("UNCLASSIFIED drift detected for {0}. Review ownership before next release." -f $name)
             }
           }
 
-          Write-Host '--- Stage 2.1c candidate summary ---'
-          foreach ($result in ($candidateDriftResults | Sort-Object Name)) {
+          Write-Host '--- Stage 2.1d reviewed UI match summary ---'
+          foreach ($result in ($reviewedResults | Sort-Object Name)) {
             $uiVer = if ($result.UIVersion) { $result.UIVersion } else { '<missing>' }
             $stagedVer = if ($result.StagedVersion) { $result.StagedVersion } else { '<missing>' }
-            Write-Host ("CANDIDATE {0} | UI={1} | STAGED={2} | STATUS={3}" -f $result.Name, $uiVer, $stagedVer, $result.Status)
+            Write-Host ("REVIEWED {0} | UI={1} | STAGED={2} | STATUS={3}" -f $result.Name, $uiVer, $stagedVer, $result.Status)
+          }
+
+          Write-Host '--- Stage 2.1d unclassified drift summary ---'
+          if ($unclassifiedDriftResults.Count -eq 0) {
+            Write-Host 'No unclassified DLL drift detected.'
+          }
+          else {
+            foreach ($result in ($unclassifiedDriftResults | Sort-Object Name)) {
+              $uiVer = if ($result.UIVersion) { $result.UIVersion } else { '<missing>' }
+              $stagedVer = if ($result.StagedVersion) { $result.StagedVersion } else { '<missing>' }
+              Write-Host ("UNCLASSIFIED {0} | UI={1} | STAGED={2}" -f $result.Name, $uiVer, $stagedVer)
+            }
           }
 
       - name: Install Inno Setup
