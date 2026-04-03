@@ -333,50 +333,34 @@ jobs:
             Copy-Item $srcFile (Join-Path $samStage $name) -Force
             Write-Host "Pinned runtime file: $name"
           }
+		  
+  				  $requiredUiFiles = @(
+		  'SAM_UI\build\System.Memory.dll',
+		  'SAM_UI\build\System.Numerics.Vectors.dll'
+		)
 
-          # Force SAM_UI-managed dependency versions that must not drift to older shared copies.
-          # These files are required by standalone UI and UI launched from Grasshopper.
+		foreach ($rel in $requiredUiFiles) {
+		  $p = Join-Path $root $rel
+		  if (-not (Test-Path $p)) {
+			throw "Required SAM_UI build output missing: $p"
+		  }
+		}
+
+          # Force SAM_UI-managed dependency versions that may otherwise be older in %APPDATA%\SAM
           $preferredUiRuntimeFiles = @(
             'System.Memory.dll',
             'System.Numerics.Vectors.dll'
           )
 
-          $uiBuildDir = Join-Path $root 'SAM_UI\build'
-          if (-not (Test-Path $uiBuildDir)) {
-            throw "Required SAM_UI build output folder not found: $uiBuildDir"
-          }
-
           foreach ($name in $preferredUiRuntimeFiles) {
-            $srcFile = Join-Path $uiBuildDir $name
+            $srcFile = Join-Path $root "SAM_UI\build\$name"
+
             if (-not (Test-Path $srcFile)) {
-              throw "Required SAM UI dependency not found in SAM_UI\build: $name"
+              throw "Required SAM UI dependency not found in SAM_UI\\build: $name"
             }
 
-            $appDataFile = Join-Path $samAppData $name
-            $samBuildFile = Join-Path $root "SAM\build\$name"
-            $stageFile = Join-Path $samStage $name
-
-            if (Test-Path $appDataFile) {
-              $appDataVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($appDataFile).FileVersion
-              Write-Host "Existing %APPDATA%\SAM version for $name: $appDataVer"
-            } else {
-              Write-Host "Existing %APPDATA%\SAM version for $name: <missing>"
-            }
-
-            if (Test-Path $samBuildFile) {
-              $samBuildVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($samBuildFile).FileVersion
-              Write-Host "Existing SAM\build version for $name: $samBuildVer"
-            } else {
-              Write-Host "Existing SAM\build version for $name: <missing>"
-            }
-
-            $uiBuildVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($srcFile).FileVersion
-            Copy-Item $srcFile $stageFile -Force
-            $stageVer = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($stageFile).FileVersion
-
-            Write-Host "Pinned SAM UI dependency: $name from $srcFile"
-            Write-Host "SAM_UI\build version for $name: $uiBuildVer"
-            Write-Host "Final staged version for $name: $stageVer"
+            Copy-Item $srcFile (Join-Path $samStage $name) -Force
+            Write-Host ("Pinned SAM UI dependency: {0} from {1}" -f $name, $srcFile)
           }
 
           # User files / Grasshopper user objects
