@@ -11,6 +11,10 @@ To find out more about SAM visit:
 [![Build & Release SAM-BIM Installer](https://github.com/SAM-BIM/SAM_Deploy/actions/workflows/installer.yml/badge.svg?branch=master)](https://github.com/SAM-BIM/SAM_Deploy/actions/workflows/installer.yml)
 [![Latest Release](https://img.shields.io/github/v/release/SAM-BIM/SAM_Deploy?label=latest%20release)](https://github.com/SAM-BIM/SAM_Deploy/releases/latest)
 
+Note:
+- the badge above shows the `master` workflow status
+- branch and PR testing should be checked from the **Actions** tab or from PR checks
+
 ## Installing
 
 Download the latest release from:
