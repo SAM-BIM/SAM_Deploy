@@ -579,10 +579,18 @@ jobs:
 
           $samFiles = @(Get-ChildItem -Path $samStage -Recurse -File -ErrorAction SilentlyContinue)
           Write-Host "Staged SAM payload files: $($samFiles.Count)"
-          Write-Host "Top-level staged SAM DLLs:"
+          $samVerEnv = if ($env:SAMVersion) { $env:SAMVersion } else { '<unset>' }
+          Write-Host "Effective SAMVersion env value: $samVerEnv"
+          Write-Host "Top-level staged SAM DLLs (FileVersion confirms Stage 2 stamping):"
           Get-ChildItem -Path $samStage -File -Filter *.dll -ErrorAction SilentlyContinue |
             Sort-Object Name |
-            Select-Object Name,Length |
+            Select-Object Name, Length, @{
+              Name = 'FileVersion'
+              Expression = {
+                try { [System.Diagnostics.FileVersionInfo]::GetVersionInfo($_.FullName).FileVersion }
+                catch { '<unreadable>' }
+              }
+            } |
             Format-Table -AutoSize
 
           foreach ($year in $revitYears) {
