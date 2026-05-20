@@ -84,6 +84,40 @@ jobs:
           "version=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           Write-Host "Version: $tag"
 
+      - name: Compute SAMVersion
+        id: samver
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Prefer head_ref when its a sow branch (release-promotion PRs from sow/* to main),
+          # else use base_ref on PR events / ref_name on push/dispatch events.
+          $headRef = '${{ github.head_ref }}'
+          $baseRef = '${{ github.base_ref }}'
+          $refName = '${{ github.ref_name }}'
+          if ($headRef -match '^sow/\d{4}-Q\d$') {
+            $ref = $headRef
+          } elseif ('${{ github.event_name }}' -eq 'pull_request') {
+            $ref = $baseRef
+          } else {
+            $ref = $refName
+          }
+          # .NET AssemblyVersion components are UInt16 (max 65535). Cap to 60000 for headroom.
+          $run = ${{ github.run_number }} % 60000
+          if ($ref -match 'sow/(\d{4})-Q(\d)') {
+            $v = "$($Matches[1]).$($Matches[2]).$run.0"
+            $src = "branch '$ref'"
+          } else {
+            $now = (Get-Date).ToUniversalTime()
+            $quarter = [int][Math]::Ceiling($now.Month / 3.0)
+            $v = "$($now.Year).$quarter.$run.0"
+            $src = "date $($now.ToString('yyyy-MM-dd')) (ref '$ref' not sow/yyyy-Qx)"
+          }
+          Write-Host "SAMVersion = $v (from $src)"
+          "samversion=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          # Also expose as env var so msbuild picks it up as a property for ALL subsequent
+          # steps without having to thread /p:SAMVersion=... through each invocation.
+          "SAMVersion=$v" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
