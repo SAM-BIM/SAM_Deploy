@@ -1,67 +1,88 @@
 [submodule "SAM_Revit"]
 	path = SAM_Revit
 	url = https://github.com/SAM-BIM/SAM_Revit.git
+	branch = sow/2026-Q2
 [submodule "SAM_Solver"]
 	path = SAM_Solver
 	url = https://github.com/SAM-BIM/SAM_Solver.git
+	branch = sow/2026-Q2
 [submodule "SAM_Topologic"]
 	path = SAM_Topologic
 	url = https://github.com/SAM-BIM/SAM_Topologic.git
+	branch = sow/2026-Q2
 [submodule "SAM_LadybugTools"]
 	path = SAM_LadybugTools
 	url = https://github.com/SAM-BIM/SAM_LadybugTools.git
+	branch = sow/2026-Q2
 [submodule "SAM_gbXML"]
 	path = SAM_gbXML
 	url = https://github.com/SAM-BIM/SAM_gbXML.git
+	branch = sow/2026-Q2
 [submodule "SAM_Tas"]
 	path = SAM_Tas
 	url = https://github.com/SAM-BIM/SAM_Tas.git
+	branch = sow/2026-Q2
 [submodule "SAM_GEM"]
 	path = SAM_GEM
 	url = https://github.com/SAM-BIM/SAM_GEM.git
+	branch = sow/2026-Q2
 [submodule "SAM_BHoM"]
 	path = SAM_BHoM
 	url = https://github.com/SAM-BIM/SAM_BHoM.git
+	branch = sow/2026-Q2
 [submodule "SAM_Excel"]
 	path = SAM_Excel
 	url = https://github.com/SAM-BIM/SAM_Excel.git
+	branch = sow/2026-Q2
 [submodule "SAM"]
 	path = SAM
 	url = https://github.com/SAM-BIM/SAM.git
+	branch = sow/2026-Q2
 [submodule "SAM_IFC"]
 	path = SAM_IFC
 	url = https://github.com/SAM-BIM/SAM_IFC.git
+	branch = sow/2026-Q2
 [submodule "SAM_OpenStudio"]
 	path = SAM_OpenStudio
 	url = https://github.com/SAM-BIM/SAM_OpenStudio.git
+	branch = sow/2026-Q2
 [submodule "SAM_SQLite"]
 	path = SAM_SQLite
 	url = https://github.com/SAM-BIM/SAM_SQLite.git
+	branch = sow/2026-Q2
 [submodule "SAM_Psychrometrics"]
 	path = SAM_Psychrometrics
 	url = https://github.com/SAM-BIM/SAM_Psychrometrics.git
+	branch = sow/2026-Q2
 [submodule "SAM_SolarCalculator"]
 	path = SAM_SolarCalculator
 	url = https://github.com/SAM-BIM/SAM_SolarCalculator.git
+	branch = sow/2026-Q2
 [submodule "SAM_Windows"]
 	path = SAM_Windows
 	url = https://github.com/SAM-BIM/SAM_Windows.git
-	branch = master
+	branch = sow/2026-Q2
 [submodule "SAM_Rhino_UI"]
 	path = SAM_Rhino_UI
 	url = https://github.com/SAM-BIM/SAM_Rhino_UI.git
+	branch = sow/2026-Q2
 [submodule "SAM_Revit_UI"]
 	path = SAM_Revit_UI
 	url = https://github.com/SAM-BIM/SAM_Revit_UI.git
+	branch = sow/2026-Q2
 [submodule "SAM_UI"]
 	path = SAM_UI
 	url = https://github.com/SAM-BIM/SAM_UI.git
+	branch = sow/2026-Q2
 [submodule "SAM_Mollier"]
 	path = SAM_Mollier
 	url = https://github.com/SAM-BIM/SAM_Mollier.git
+	branch = sow/2026-Q2
 [submodule "SAM_Systems"]
 	path = SAM_Systems
 	url = https://github.com/SAM-BIM/SAM_Systems.git
+	branch = sow/2026-Q2
 [submodule "SAM_Multitasker"]
 	path = SAM_Multitasker
 	url = https://github.com/SAM-BIM/SAM_Multitasker.git
+	branch = sow/2026-Q2

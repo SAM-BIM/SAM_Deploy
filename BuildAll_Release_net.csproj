@@ -98,7 +98,8 @@
       RunPostBuildEvent=OnOutputUpdated;
       ReferencePath=$(WindowsRefPath);
       TreatWarningsAsErrors=true;
-      WarningsNotAsErrors=NU1701
+      WarningsNotAsErrors=NU1701;
+      SAMVersion=$(SAMVersion)
     </CommonCIProps>
   </PropertyGroup>
 
