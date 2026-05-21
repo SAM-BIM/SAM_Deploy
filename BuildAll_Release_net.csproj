@@ -99,7 +99,9 @@
       ReferencePath=$(WindowsRefPath);
       TreatWarningsAsErrors=true;
       WarningsNotAsErrors=NU1701;
-      SAMVersion=$(SAMVersion)
+      SAMVersion=$(SAMVersion);
+      InformationalVersion=$(InformationalVersion);
+      SAMSourceRevision=$(SAMSourceRevision)
     </CommonCIProps>
   </PropertyGroup>
 
