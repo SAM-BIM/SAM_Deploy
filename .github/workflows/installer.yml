@@ -600,12 +600,20 @@ jobs:
           Write-Host "Effective SAMVersion env value:          $samVerEnv"
           Write-Host "Effective InformationalVersion env value: $infoVerEnv"
           Write-Host "Top-level staged SAM DLLs (FileVersion + ProductVersion = SHA-tagged content identity):"
+          # Explicit column formatting via -f rather than Format-Table -AutoSize, because the
+          # CI terminal width auto-detection silently drops right-most columns when the table
+          # is wider than the assumed buffer (~120 chars).
+          $hdr = '{0,-62} {1,10} {2,-22} {3}' -f 'Name', 'Length', 'FileVersion', 'ProductVersion'
+          Write-Host $hdr
+          Write-Host ('-' * $hdr.Length)
           Get-ChildItem -Path $samStage -File -Filter *.dll -ErrorAction SilentlyContinue |
             Sort-Object Name |
-            Select-Object Name, Length,
-              @{ Name = 'FileVersion';    Expression = { try { [System.Diagnostics.FileVersionInfo]::GetVersionInfo($_.FullName).FileVersion }    catch { '<unreadable>' } } },
-              @{ Name = 'ProductVersion'; Expression = { try { [System.Diagnostics.FileVersionInfo]::GetVersionInfo($_.FullName).ProductVersion } catch { '<unreadable>' } } } |
-            Format-Table -AutoSize
+            ForEach-Object {
+              $fi = try { [System.Diagnostics.FileVersionInfo]::GetVersionInfo($_.FullName) } catch { $null }
+              $fv = if ($fi) { $fi.FileVersion } else { '<unreadable>' }
+              $pv = if ($fi) { $fi.ProductVersion } else { '<unreadable>' }
+              Write-Host ('{0,-62} {1,10} {2,-22} {3}' -f $_.Name, $_.Length, $fv, $pv)
+            }
 
           foreach ($year in $revitYears) {
             $targetDir = Join-Path $samStage ("Revit $year")
