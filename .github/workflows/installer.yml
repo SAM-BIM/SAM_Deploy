@@ -118,6 +118,22 @@ jobs:
           # steps without having to thread /p:SAMVersion=... through each invocation.
           "SAMVersion=$v" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
+          # Compute source revision (short SAM_Deploy commit SHA — captures all submodule
+          # pointers via gitlinks, so it's the content fingerprint of THIS exact installer).
+          # Exposed two ways:
+          # - InformationalVersion env var: SDK projects with GenerateAssemblyInfo=true pick this
+          #   up automatically and stamp AssemblyInformationalVersionAttribute → visible as
+          #   'Product version' in Windows Properties → Details.
+          # - SAMSourceRevision env var: available if Directory.Build.props is updated to
+          #   compose it explicitly (covers GenerateAssemblyInfo=false projects too).
+          $sha = (& git rev-parse --short HEAD 2>$null).Trim()
+          if (-not $sha) { $sha = 'unknown' }
+          $infoVer = "$v+$sha"
+          Write-Host "InformationalVersion = $infoVer"
+          "InformationalVersion=$infoVer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SAMSourceRevision=$sha" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "informationalversion=$infoVer" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
@@ -580,17 +596,15 @@ jobs:
           $samFiles = @(Get-ChildItem -Path $samStage -Recurse -File -ErrorAction SilentlyContinue)
           Write-Host "Staged SAM payload files: $($samFiles.Count)"
           $samVerEnv = if ($env:SAMVersion) { $env:SAMVersion } else { '<unset>' }
-          Write-Host "Effective SAMVersion env value: $samVerEnv"
-          Write-Host "Top-level staged SAM DLLs (FileVersion confirms Stage 2 stamping):"
+          $infoVerEnv = if ($env:InformationalVersion) { $env:InformationalVersion } else { '<unset>' }
+          Write-Host "Effective SAMVersion env value:          $samVerEnv"
+          Write-Host "Effective InformationalVersion env value: $infoVerEnv"
+          Write-Host "Top-level staged SAM DLLs (FileVersion + ProductVersion = SHA-tagged content identity):"
           Get-ChildItem -Path $samStage -File -Filter *.dll -ErrorAction SilentlyContinue |
             Sort-Object Name |
-            Select-Object Name, Length, @{
-              Name = 'FileVersion'
-              Expression = {
-                try { [System.Diagnostics.FileVersionInfo]::GetVersionInfo($_.FullName).FileVersion }
-                catch { '<unreadable>' }
-              }
-            } |
+            Select-Object Name, Length,
+              @{ Name = 'FileVersion';    Expression = { try { [System.Diagnostics.FileVersionInfo]::GetVersionInfo($_.FullName).FileVersion }    catch { '<unreadable>' } } },
+              @{ Name = 'ProductVersion'; Expression = { try { [System.Diagnostics.FileVersionInfo]::GetVersionInfo($_.FullName).ProductVersion } catch { '<unreadable>' } } } |
             Format-Table -AutoSize
 
           foreach ($year in $revitYears) {
