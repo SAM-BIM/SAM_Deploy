@@ -8,6 +8,11 @@
     <Solution Include="SAM\SAM.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
+    <!-- SAM_OCCT depends only on SAM. Its native OCCT layer is skipped in CI
+         (SAM_OCCT_SKIP_NATIVE_BUILD=true); managed assemblies are built. -->
+    <Solution Include="SAM_OCCT\SAM_OCCT.sln" Condition="Exists('SAM_OCCT\SAM_OCCT.sln')">
+      <Properties>Configuration=Release;Platform=Any CPU</Properties>
+    </Solution>
     <Solution Include="SAM_Systems\SAM_Systems.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
