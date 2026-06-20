@@ -253,42 +253,97 @@ jobs:
             throw "SAM.Occt.Native.dll was not produced in $outDir."
           }
 
-          # Copy the OCCT runtime + third-party DLLs next to the wrapper.
+          # Copy the OCCT toolkits (TK*.dll) next to the wrapper.
           Get-ChildItem -Path $binDir -Filter '*.dll' | Copy-Item -Destination $outDir -Force
-          $thirdParty = Get-ChildItem -Path $sdkRoot -Recurse -Filter '*.dll' -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -match '3rdparty' }
-          if ($thirdParty) { $thirdParty | Copy-Item -Destination $outDir -Force }
+
+          # Ship only the third-party DLLs the engine actually needs, not the SDK's
+          # whole 3rdparty tree. That tree is ~340 DLLs (VTK, Qt, Tcl/Tk, ffmpeg, ...)
+          # for OCCT's Draw/Inspector GUI tools, which SAM.Occt.Native never loads;
+          # the real runtime closure is just FreeType / FreeImage / TBB / VC runtime.
+          # Resolve it precisely with dumpbin: BFS the (regular + delay-load) import
+          # closure from the wrapper + TK toolkits and copy each dependency found in
+          # the SDK; unresolved names are OS/system DLLs and are skipped.
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $dumpbin = $null
+          if (Test-Path $vswhere) {
+            $dumpbin = & $vswhere -latest -products * -find '**\dumpbin.exe' 2>$null | Select-Object -First 1
+          }
+
+          # Index every DLL in the SDK by name (first hit wins; bin/ holds release).
+          $sdkIndex = @{}
+          Get-ChildItem -Path $sdkRoot -Recurse -Filter '*.dll' -ErrorAction SilentlyContinue | ForEach-Object {
+            $k = $_.Name.ToLowerInvariant()
+            if (-not $sdkIndex.ContainsKey($k)) { $sdkIndex[$k] = $_.FullName }
+          }
+
+          if ($dumpbin -and (Test-Path $dumpbin)) {
+            $seen = @{}
+            $queue = New-Object System.Collections.Queue
+            Get-ChildItem -Path $outDir -Filter '*.dll' | ForEach-Object {
+              $seen[$_.Name.ToLowerInvariant()] = $true; $queue.Enqueue($_.FullName)
+            }
+            while ($queue.Count -gt 0) {
+              $cur = $queue.Dequeue()
+              $out = (& $dumpbin /nologo /dependents $cur 2>$null) -join "`n"
+              foreach ($m in [regex]::Matches($out, '(?im)^\s+([A-Za-z0-9_.+-]+\.dll)\s*$')) {
+                $dep = $m.Groups[1].Value.ToLowerInvariant()
+                if ($seen.ContainsKey($dep)) { continue }
+                $seen[$dep] = $true
+                if ($sdkIndex.ContainsKey($dep)) {          # in SDK -> real dep, ship it
+                  Copy-Item -LiteralPath $sdkIndex[$dep] -Destination $outDir -Force
+                  $queue.Enqueue($sdkIndex[$dep])
+                }                                            # else -> system/OS DLL, skip
+              }
+            }
+          }
+          else {
+            Write-Host "::warning::dumpbin not found; falling back to an explicit third-party allowlist (freetype/FreeImage/tbb/VC runtime)."
+            Get-ChildItem -Path $sdkRoot -Recurse -Filter '*.dll' -ErrorAction SilentlyContinue |
+              Where-Object { $_.FullName -match '(?i)3rdparty' -and
+                             $_.Name -match '(?i)^(freetype|FreeImage|FreeImagePlus|tbb12|tbbmalloc|tbbmalloc_proxy|msvcp140|vcruntime140|concrt140|vccorlib140)' -and
+                             $_.Name -notmatch '(?i)(_debug|d)\.dll$' } |
+              Copy-Item -Destination $outDir -Force
+          }
 
           # Deploy into the curated payload that "Stage payload" packages.
           $samDir = Join-Path $env:APPDATA 'SAM'
           New-Item -ItemType Directory -Force -Path $samDir | Out-Null
           Get-ChildItem -Path $outDir -Filter '*.dll' | Copy-Item -Destination $samDir -Force
 
-          # Bundle the licence/notice files for the third-party runtime DLLs we
-          # just shipped (FreeType, FreeImage, Qt, VTK, TBB, ...), straight from
-          # the SDK so they always match exactly what was deployed. Preserve the
-          # per-package folder structure under licenses\3rdparty. (OCCT's own
-          # LGPL texts are committed in SAM_Installer\licenses\OCCT.)
+          # Bundle licence/notice files only for the third-party packages that
+          # actually contributed a shipped DLL (so notices match the payload, with
+          # no Qt/VTK/etc. noise). OCCT's own LGPL texts are committed under
+          # SAM_Installer\licenses\OCCT.
           $licDest = Join-Path $samDir 'licenses\3rdparty'
-          $licFiles = Get-ChildItem -Path $sdkRoot -Recurse -File -ErrorAction SilentlyContinue |
-            Where-Object {
-              $_.FullName -match '(?i)3rdparty' -and
-              $_.FullName -notmatch '(?i)\\(include|lib\\cmake|share)\\' -and
-              $_.Extension -notin @('.h','.hpp','.cmake','.cpp','.c','.py','.prl','.dll','.lib') -and
-              $_.Name -match '(?i)(^license|^copying|^lgpl|license\.terms|^\.license|^license-)'
-            }
-          foreach ($lf in $licFiles) {
-            $idx = $lf.FullName.IndexOf('3rdparty', [System.StringComparison]::OrdinalIgnoreCase)
-            $rel = $lf.FullName.Substring($idx)            # e.g. 3rdparty-vc14-64\freetype-2.13.3-x64\LICENSE.TXT
-            $dst = Join-Path $licDest $rel
-            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dst) | Out-Null
-            Copy-Item -LiteralPath $lf.FullName -Destination $dst -Force
+          $shipped = Get-ChildItem -Path $outDir -Filter '*.dll' | ForEach-Object { $_.Name.ToLowerInvariant() }
+          $pkgDirs = @{}
+          foreach ($n in $shipped) {
+            if (-not $sdkIndex.ContainsKey($n)) { continue }
+            $p = $sdkIndex[$n]
+            $i = $p.IndexOf('3rdparty', [System.StringComparison]::OrdinalIgnoreCase)
+            if ($i -lt 0) { continue }                       # OCCT TK*.dll, not 3rdparty
+            $parts = $p.Substring($i) -split '[\\/]'          # 3rdpartyRoot \ pkg \ ...
+            if ($parts.Count -lt 2) { continue }
+            $pkgRel = $parts[0] + '\' + $parts[1]
+            $pkgDirs[$pkgRel] = $p.Substring(0, $i) + $pkgRel
           }
-          $licCount = ($licFiles | Measure-Object).Count
-          if ($licCount -eq 0) { Write-Host "::warning::No third-party licence files found under the SDK 3rdparty tree — verify notices for the shipped non-OCCT DLLs." }
+          $licCount = 0
+          foreach ($pkgRel in $pkgDirs.Keys) {
+            Get-ChildItem -Path $pkgDirs[$pkgRel] -File -ErrorAction SilentlyContinue |
+              Where-Object { $_.Name -match '(?i)(^license|^copying|^lgpl|license\.terms|^\.license|^license-)' -and
+                             $_.Extension -notin @('.h','.hpp','.cmake','.cpp','.c','.py','.prl','.dll','.lib') } |
+              ForEach-Object {
+                $dst = Join-Path (Join-Path $licDest $pkgRel) $_.Name
+                New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dst) | Out-Null
+                Copy-Item -LiteralPath $_.FullName -Destination $dst -Force
+                $licCount++
+              }
+          }
+          if ($pkgDirs.Count -gt 0 -and $licCount -eq 0) { Write-Host "::warning::Shipped third-party DLLs but found no licence files for them — verify notices." }
 
           $tkCount = (Get-ChildItem -Path $outDir -Filter 'TK*.dll' | Measure-Object).Count
-          Write-Host "OCCT native engine deployed: SAM.Occt.Native.dll + $tkCount TK*.dll into $samDir ($licCount third-party licence files bundled)"
+          $tpCount = (Get-ChildItem -Path $outDir -Filter '*.dll' | Measure-Object).Count - $tkCount
+          Write-Host "OCCT native engine deployed: SAM.Occt.Native.dll + $tkCount TK*.dll + $tpCount third-party DLLs ($($pkgDirs.Count) pkgs, $licCount licence files) into $samDir"
 
       - name: Restore (single node)
         shell: pwsh
