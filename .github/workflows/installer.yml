@@ -264,8 +264,31 @@ jobs:
           New-Item -ItemType Directory -Force -Path $samDir | Out-Null
           Get-ChildItem -Path $outDir -Filter '*.dll' | Copy-Item -Destination $samDir -Force
 
+          # Bundle the licence/notice files for the third-party runtime DLLs we
+          # just shipped (FreeType, FreeImage, Qt, VTK, TBB, ...), straight from
+          # the SDK so they always match exactly what was deployed. Preserve the
+          # per-package folder structure under licenses\3rdparty. (OCCT's own
+          # LGPL texts are committed in SAM_Installer\licenses\OCCT.)
+          $licDest = Join-Path $samDir 'licenses\3rdparty'
+          $licFiles = Get-ChildItem -Path $sdkRoot -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object {
+              $_.FullName -match '(?i)3rdparty' -and
+              $_.FullName -notmatch '(?i)\\(include|lib\\cmake|share)\\' -and
+              $_.Extension -notin @('.h','.hpp','.cmake','.cpp','.c','.py','.prl','.dll','.lib') -and
+              $_.Name -match '(?i)(^license|^copying|^lgpl|license\.terms|^\.license|^license-)'
+            }
+          foreach ($lf in $licFiles) {
+            $idx = $lf.FullName.IndexOf('3rdparty', [System.StringComparison]::OrdinalIgnoreCase)
+            $rel = $lf.FullName.Substring($idx)            # e.g. 3rdparty-vc14-64\freetype-2.13.3-x64\LICENSE.TXT
+            $dst = Join-Path $licDest $rel
+            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dst) | Out-Null
+            Copy-Item -LiteralPath $lf.FullName -Destination $dst -Force
+          }
+          $licCount = ($licFiles | Measure-Object).Count
+          if ($licCount -eq 0) { Write-Host "::warning::No third-party licence files found under the SDK 3rdparty tree — verify notices for the shipped non-OCCT DLLs." }
+
           $tkCount = (Get-ChildItem -Path $outDir -Filter 'TK*.dll' | Measure-Object).Count
-          Write-Host "OCCT native engine deployed: SAM.Occt.Native.dll + $tkCount TK*.dll into $samDir"
+          Write-Host "OCCT native engine deployed: SAM.Occt.Native.dll + $tkCount TK*.dll into $samDir ($licCount third-party licence files bundled)"
 
       - name: Restore (single node)
         shell: pwsh

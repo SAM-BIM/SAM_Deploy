@@ -50,5 +50,15 @@ modified version), provided the exported toolkit interfaces are preserved.
 SAM loads these DLLs from %APPDATA%\SAM at runtime; replacing them there is
 sufficient and does not require relinking SAM.
 
+Third-party runtime bundled with OCCT
+-------------------------------------
+The OCCT runtime ships alongside third-party libraries (e.g. FreeType,
+FreeImage, Qt, VTK, Intel TBB). Their individual licence and notice files are
+installed, preserving each package's folder, under:
+
+    %APPDATA%\SAM\licenses\3rdparty
+
+Refer to those files for the terms governing each non-OCCT component.
+
 Project site:  https://dev.opencascade.org/
 Licensing:     https://dev.opencascade.org/resources/licensing
