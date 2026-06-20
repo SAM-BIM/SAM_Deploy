@@ -132,6 +132,13 @@ begin
     Content := Content + SamDir + 'SAM.Architectural.Grasshopper.gha' + #13#10;
   if FileExists(SamDir + 'SAM.Analytical.Grasshopper.gha') then
     Content := Content + SamDir + 'SAM.Analytical.Grasshopper.gha' + #13#10;
+  // OCCT Grasshopper components (registered after the core SAM GHAs they build on).
+  if FileExists(SamDir + 'SAM.Core.Grasshopper.OCCT.gha') then
+    Content := Content + SamDir + 'SAM.Core.Grasshopper.OCCT.gha' + #13#10;
+  if FileExists(SamDir + 'SAM.Geometry.Grasshopper.OCCT.gha') then
+    Content := Content + SamDir + 'SAM.Geometry.Grasshopper.OCCT.gha' + #13#10;
+  if FileExists(SamDir + 'SAM.Analytical.Grasshopper.OCCT.gha') then
+    Content := Content + SamDir + 'SAM.Analytical.Grasshopper.OCCT.gha' + #13#10;
 
   if Content <> '#Order of files is important' + #13#10 then
     SaveStringToFile(GhDir + 'SAM.ghlink', Content, False);
