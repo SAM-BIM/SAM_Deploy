@@ -253,23 +253,23 @@ jobs:
             throw "SAM.Occt.Native.dll was not produced in $outDir."
           }
 
-          # Copy the OCCT toolkits (TK*.dll) next to the wrapper.
-          Get-ChildItem -Path $binDir -Filter '*.dll' | Copy-Item -Destination $outDir -Force
-
-          # Ship only the third-party DLLs the engine actually needs, not the SDK's
-          # whole 3rdparty tree. That tree is ~340 DLLs (VTK, Qt, Tcl/Tk, ffmpeg, ...)
-          # for OCCT's Draw/Inspector GUI tools, which SAM.Occt.Native never loads;
-          # the real runtime closure is just FreeType / FreeImage / TBB / VC runtime.
-          # Resolve it precisely with dumpbin: BFS the (regular + delay-load) import
-          # closure from the wrapper + TK toolkits and copy each dependency found in
-          # the SDK; unresolved names are OS/system DLLs and are skipped.
+          # Ship only what the engine actually loads, not the SDK's whole bin +
+          # 3rdparty tree. The SDK has 74 TK*.dll and ~340 3rdparty DLLs (VTK, Qt,
+          # Tcl/Tk, ffmpeg, ...); most exist for OCCT's Draw/Inspector GUI tools
+          # (TKIVtk->VTK, TKDraw->Tcl/Tk, ...) that SAM.Occt.Native never links.
+          # Resolve the real runtime closure with dumpbin: BFS the (regular +
+          # delay-load) import graph starting ONLY from the wrapper, copying each
+          # dependency found in the SDK (TK toolkits + FreeType/FreeImage/TBB/VC
+          # runtime). Seeding from the wrapper alone — not from every TK*.dll —
+          # keeps the GUI toolkits and their Qt/VTK payload out of the closure.
+          # Unresolved names are OS/system DLLs and are skipped.
           $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
           $dumpbin = $null
           if (Test-Path $vswhere) {
             $dumpbin = & $vswhere -latest -products * -find '**\dumpbin.exe' 2>$null | Select-Object -First 1
           }
 
-          # Index every DLL in the SDK by name (first hit wins; bin/ holds release).
+          # Index every DLL in the SDK by name (bin/ TK toolkits + 3rdparty; first hit wins).
           $sdkIndex = @{}
           Get-ChildItem -Path $sdkRoot -Recurse -Filter '*.dll' -ErrorAction SilentlyContinue | ForEach-Object {
             $k = $_.Name.ToLowerInvariant()
@@ -279,9 +279,9 @@ jobs:
           if ($dumpbin -and (Test-Path $dumpbin)) {
             $seen = @{}
             $queue = New-Object System.Collections.Queue
-            Get-ChildItem -Path $outDir -Filter '*.dll' | ForEach-Object {
-              $seen[$_.Name.ToLowerInvariant()] = $true; $queue.Enqueue($_.FullName)
-            }
+            # Seed ONLY from the wrapper (already built into $outDir).
+            $seen['sam.occt.native.dll'] = $true
+            $queue.Enqueue((Join-Path $outDir 'SAM.Occt.Native.dll'))
             while ($queue.Count -gt 0) {
               $cur = $queue.Dequeue()
               $out = (& $dumpbin /nologo /dependents $cur 2>$null) -join "`n"
@@ -297,7 +297,8 @@ jobs:
             }
           }
           else {
-            Write-Host "::warning::dumpbin not found; falling back to an explicit third-party allowlist (freetype/FreeImage/tbb/VC runtime)."
+            Write-Host "::warning::dumpbin not found; falling back to all TK toolkits + an explicit third-party allowlist (freetype/FreeImage/tbb/VC runtime)."
+            Get-ChildItem -Path $binDir -Filter 'TK*.dll' | Copy-Item -Destination $outDir -Force
             Get-ChildItem -Path $sdkRoot -Recurse -Filter '*.dll' -ErrorAction SilentlyContinue |
               Where-Object { $_.FullName -match '(?i)3rdparty' -and
                              $_.Name -match '(?i)^(freetype|FreeImage|FreeImagePlus|tbb12|tbbmalloc|tbbmalloc_proxy|msvcp140|vcruntime140|concrt140|vccorlib140)' -and
