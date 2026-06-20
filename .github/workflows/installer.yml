@@ -25,6 +25,12 @@ jobs:
       contents: read
     env:
       STRICT_UNCLASSIFIED_DRIFT: 'false'
+      # SAM.Geometry.Grasshopper.OCCT has a BeforeTargets="Build" step that runs
+      # build-native.ps1 (vcpkg/OCCT SDK), which fails on the runner. The native
+      # engine is built by the dedicated "Build OCCT native engine" step instead,
+      # so skip the in-project native build during the managed compile (same flag
+      # SAM_OCCT's own build.yml uses).
+      SAM_OCCT_SKIP_NATIVE_BUILD: 'true'
 
     steps:
       - name: Checkout (with private submodules)
@@ -154,9 +160,10 @@ jobs:
       # The SDK is fetched from the OCCT_SDK_URL repo secret (a hosted zip of the
       # official OpenCASCADE 8.0.0 vc14 64-bit package; OCCT is LGPL, so the
       # runtime DLLs are redistributable). If the secret is not set the step
-      # SKIPS with a warning and the installer still ships everything else — the
-      # OCCT Grasshopper nodes will load but report native status 64 until the
-      # engine is present.
+      # SKIPS with a warning and the installer still ships everything else — but
+      # SAM.Occt.Native.dll is absent, so OCCT operations take the missing-native
+      # path (NativeAvailable == false / SAM_OCCT_NATIVE_MISSING) until the engine
+      # is present.
       # -----------------------------------------------------------------------
       - name: Cache OpenCASCADE SDK
         uses: actions/cache@v4
