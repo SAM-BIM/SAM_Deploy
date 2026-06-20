@@ -86,3 +86,7 @@
 	path = SAM_Multitasker
 	url = https://github.com/SAM-BIM/SAM_Multitasker.git
 	branch = sow/2026-Q2
+[submodule "SAM_OCCT"]
+	path = SAM_OCCT
+	url = https://github.com/SAM-BIM/SAM_OCCT.git
+	branch = sow/2026-Q2
