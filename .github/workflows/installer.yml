@@ -276,6 +276,7 @@ jobs:
             if (-not $sdkIndex.ContainsKey($k)) { $sdkIndex[$k] = $_.FullName }
           }
 
+          $usedDumpbin = $false
           if ($dumpbin -and (Test-Path $dumpbin)) {
             $seen = @{}
             $queue = New-Object System.Collections.Queue
@@ -295,9 +296,18 @@ jobs:
                 }                                            # else -> system/OS DLL, skip
               }
             }
+            $usedDumpbin = $true
           }
-          else {
-            Write-Host "::warning::dumpbin not found; falling back to all TK toolkits + an explicit third-party allowlist (freetype/FreeImage/tbb/VC runtime)."
+
+          # Safety net: dumpbin discards stderr and needs the VC environment, so a
+          # silent failure would copy zero dependencies and leave the wrapper without
+          # its OCCT TK*.dll runtime. If the closure clearly failed (too few TK
+          # toolkits resolved) — or dumpbin was absent — fall back to copying ALL TK
+          # toolkits + the third-party allowlist so the engine is never shipped broken.
+          $tkResolved = (Get-ChildItem -Path $outDir -Filter 'TK*.dll' -ErrorAction SilentlyContinue | Measure-Object).Count
+          if (-not $usedDumpbin -or $tkResolved -lt 5) {
+            if ($usedDumpbin) { Write-Host "::warning::dumpbin resolved only $tkResolved TK*.dll (closure likely failed); falling back to all TK toolkits + third-party allowlist." }
+            else { Write-Host "::warning::dumpbin not found; using all TK toolkits + third-party allowlist (freetype/FreeImage/tbb/VC runtime)." }
             Get-ChildItem -Path $binDir -Filter 'TK*.dll' | Copy-Item -Destination $outDir -Force
             Get-ChildItem -Path $sdkRoot -Recurse -Filter '*.dll' -ErrorAction SilentlyContinue |
               Where-Object { $_.FullName -match '(?i)3rdparty' -and
