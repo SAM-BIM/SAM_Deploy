@@ -1,0 +1,64 @@
+Open CASCADE Technology (OCCT) — Third-Party Notice
+====================================================
+
+This SAM installation includes binary components of Open CASCADE Technology
+(OCCT) version 8.0.0, used by the SAM_OCCT geometry engine
+(SAM.Occt.Native.dll) through dynamic linking.
+
+The OCCT runtime libraries distributed with SAM include (non-exhaustive):
+the OCCT modeling, mesh, data-exchange and visualization toolkits
+(TK*.dll) and the third-party runtime they require (e.g. freetype.dll,
+FreeImage.dll). These files are installed alongside the SAM assemblies in:
+
+    %APPDATA%\SAM
+
+Copyright
+---------
+Open CASCADE Technology
+Copyright (c) OPEN CASCADE SAS and contributors.
+
+Licence
+-------
+OCCT is licensed under the GNU Lesser General Public License, version 2.1,
+with an additional exception (the "OCCT exception"). The full licence text
+and the exception are included in this folder:
+
+    LICENSE_LGPL_21.txt        (GNU LGPL v2.1)
+    OCCT_LGPL_EXCEPTION.txt    (OCCT additional exception)
+
+SAM links OCCT dynamically only. SAM's own source is not a derivative work of
+OCCT; only the OCCT binaries listed above are governed by the OCCT licence.
+
+Corresponding source
+---------------------
+The complete corresponding source code for the OCCT 8.0.0 binaries
+distributed with SAM is the official Open CASCADE Technology 8.0.0 release,
+available from:
+
+    https://dev.opencascade.org/release          (8.0.0 source release)
+    https://github.com/Open-Cascade-SAS/OCCT  (tag: V8_0_0)
+
+If the above locations become unavailable, a copy of the corresponding OCCT
+8.0.0 source can be obtained by contacting the SAM maintainers
+(https://github.com/SAM-BIM).
+
+Replacing the OCCT binaries
+---------------------------
+Because OCCT is dynamically linked, you may replace the OCCT runtime DLLs in
+%APPDATA%\SAM with your own build of the same OCCT 8.0.0 (or a compatible,
+modified version), provided the exported toolkit interfaces are preserved.
+SAM loads these DLLs from %APPDATA%\SAM at runtime; replacing them there is
+sufficient and does not require relinking SAM.
+
+Third-party runtime bundled with OCCT
+-------------------------------------
+The OCCT runtime ships alongside third-party libraries (e.g. FreeType,
+FreeImage, Qt, VTK, Intel TBB). Their individual licence and notice files are
+installed, preserving each package's folder, under:
+
+    %APPDATA%\SAM\licenses\3rdparty
+
+Refer to those files for the terms governing each non-OCCT component.
+
+Project site:  https://dev.opencascade.org/
+Licensing:     https://dev.opencascade.org/resources/licensing
