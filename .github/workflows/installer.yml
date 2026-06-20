@@ -327,19 +327,40 @@ jobs:
             $pkgRel = $parts[0] + '\' + $parts[1]
             $pkgDirs[$pkgRel] = $p.Substring(0, $i) + $pkgRel
           }
+          # Per-package, not just a global total: every shipped third-party
+          # package must carry at least one notice. If a package has no licence
+          # file in the SDK (e.g. the MS VC runtime), write a placeholder pointing
+          # to its terms so no shipped DLL lacks a notice, and warn.
           $licCount = 0
+          $pkgsNoNotice = @()
           foreach ($pkgRel in $pkgDirs.Keys) {
-            Get-ChildItem -Path $pkgDirs[$pkgRel] -File -ErrorAction SilentlyContinue |
-              Where-Object { $_.Name -match '(?i)(^license|^copying|^lgpl|license\.terms|^\.license|^license-)' -and
-                             $_.Extension -notin @('.h','.hpp','.cmake','.cpp','.c','.py','.prl','.dll','.lib') } |
-              ForEach-Object {
-                $dst = Join-Path (Join-Path $licDest $pkgRel) $_.Name
-                New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dst) | Out-Null
-                Copy-Item -LiteralPath $_.FullName -Destination $dst -Force
-                $licCount++
-              }
+            $pkgLicFiles = Get-ChildItem -Path $pkgDirs[$pkgRel] -File -ErrorAction SilentlyContinue |
+              Where-Object { $_.Name -match '(?i)(^license|^copying|^lgpl|license\.terms|^\.license|^license-|^notice)' -and
+                             $_.Extension -notin @('.h','.hpp','.cmake','.cpp','.c','.py','.prl','.dll','.lib') }
+            $pkgDestDir = Join-Path $licDest $pkgRel
+            $pkgN = 0
+            foreach ($f in $pkgLicFiles) {
+              New-Item -ItemType Directory -Force -Path $pkgDestDir | Out-Null
+              Copy-Item -LiteralPath $f.FullName -Destination (Join-Path $pkgDestDir $f.Name) -Force
+              $pkgN++; $licCount++
+            }
+            if ($pkgN -eq 0) {
+              $pkgsNoNotice += $pkgRel
+              New-Item -ItemType Directory -Force -Path $pkgDestDir | Out-Null
+              $stub = Join-Path $pkgDestDir 'THIRD-PARTY-NOTICE.txt'
+              @(
+                "Third-party component shipped with SAM: $pkgRel"
+                ""
+                "No licence text accompanied this component in the OpenCASCADE SDK."
+                "Its redistribution is governed by that component's own licence:"
+                " - Microsoft Visual C++ runtime (msvc-*): the Microsoft Visual Studio / Build Tools redistributable terms."
+                " - Otherwise: refer to the upstream project for $pkgRel."
+                "Verify the applicable terms before public distribution."
+              ) | Set-Content -LiteralPath $stub -Encoding UTF8
+              Write-Host "::warning::Third-party package '$pkgRel' shipped a DLL but no licence file was found in the SDK; wrote a placeholder notice. Verify its licensing."
+            }
           }
-          if ($pkgDirs.Count -gt 0 -and $licCount -eq 0) { Write-Host "::warning::Shipped third-party DLLs but found no licence files for them — verify notices." }
+          if ($pkgsNoNotice.Count -gt 0) { Write-Host ("::warning::Packages shipped without an SDK licence file: {0}" -f ($pkgsNoNotice -join ', ')) }
 
           $tkCount = (Get-ChildItem -Path $outDir -Filter 'TK*.dll' | Measure-Object).Count
           $tpCount = (Get-ChildItem -Path $outDir -Filter '*.dll' | Measure-Object).Count - $tkCount
