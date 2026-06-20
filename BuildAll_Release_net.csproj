@@ -8,6 +8,12 @@
     <Solution Include="SAM\SAM.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
+    <!-- OCCT engine: managed assemblies + Grasshopper components. References SAM\build\*.dll
+         so it must build after SAM. The native SAM.Occt.Native.dll + OpenCASCADE runtime are
+         produced separately (see installer.yml "OCCT native" steps), not by this .sln. -->
+    <Solution Include="SAM_OCCT\SAM_OCCT.sln" Condition="Exists('SAM_OCCT\SAM_OCCT.sln')">
+      <Properties>Configuration=Release;Platform=Any CPU</Properties>
+    </Solution>
     <Solution Include="SAM_Systems\SAM_Systems.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>

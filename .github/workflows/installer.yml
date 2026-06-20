@@ -142,6 +142,108 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      # -----------------------------------------------------------------------
+      # OCCT NATIVE ENGINE
+      # SAM_OCCT's managed assemblies + Grasshopper components are built by
+      # BuildAll (they post-build into %APPDATA%\SAM like every other module).
+      # The native engine (SAM.Occt.Native.dll + the OpenCASCADE TK*.dll runtime)
+      # is C++ and is NOT produced by the .sln, so we build it here against a
+      # PREBUILT OCCT 8.0 SDK (no multi-hour vcpkg-from-source build) and drop the
+      # result into %APPDATA%\SAM so "Stage payload" packages it automatically.
+      #
+      # The SDK is fetched from the OCCT_SDK_URL repo secret (a hosted zip of the
+      # official OpenCASCADE 8.0.0 vc14 64-bit package; OCCT is LGPL, so the
+      # runtime DLLs are redistributable). If the secret is not set the step
+      # SKIPS with a warning and the installer still ships everything else — the
+      # OCCT Grasshopper nodes will load but report native status 64 until the
+      # engine is present.
+      # -----------------------------------------------------------------------
+      - name: Cache OpenCASCADE SDK
+        uses: actions/cache@v4
+        with:
+          path: C:\OCCT
+          key: occt-sdk-8.0.0-vc14-64
+
+      - name: Build OCCT native engine (prebuilt OCCT SDK)
+        shell: pwsh
+        env:
+          OCCT_SDK_URL: ${{ secrets.OCCT_SDK_URL }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $repo   = Join-Path (Get-Location) 'SAM_OCCT'
+          if (-not (Test-Path $repo)) {
+            Write-Host "::warning::SAM_OCCT submodule not present; skipping native engine build."
+            return
+          }
+
+          $sdkRoot = 'C:\OCCT'
+          $incProbe = Get-ChildItem -Path $sdkRoot -Recurse -Filter 'gp_Pnt.hxx' -ErrorAction SilentlyContinue | Select-Object -First 1
+
+          if (-not $incProbe) {
+            if ([string]::IsNullOrWhiteSpace($env:OCCT_SDK_URL)) {
+              Write-Host "::warning::No OCCT SDK found at $sdkRoot and OCCT_SDK_URL secret is not set."
+              Write-Host "::warning::Skipping native OCCT engine build. SAM_OCCT managed assemblies/Grasshopper nodes still ship, but the native engine (SAM.Occt.Native.dll + TK*.dll) will be absent."
+              return
+            }
+
+            Write-Host "Downloading OpenCASCADE SDK from OCCT_SDK_URL ..."
+            New-Item -ItemType Directory -Force -Path $sdkRoot | Out-Null
+            $zip = Join-Path $env:RUNNER_TEMP 'occt-sdk.zip'
+            Invoke-WebRequest -Uri $env:OCCT_SDK_URL -OutFile $zip
+            Write-Host "Extracting SDK to $sdkRoot ..."
+            Expand-Archive -Path $zip -DestinationPath $sdkRoot -Force
+            Remove-Item $zip -Force
+            $incProbe = Get-ChildItem -Path $sdkRoot -Recurse -Filter 'gp_Pnt.hxx' -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $incProbe) { throw "OCCT SDK downloaded but gp_Pnt.hxx not found under $sdkRoot — check the zip layout." }
+          }
+
+          # Discover SDK layout (robust to the exact folder name in the zip).
+          $incDir = $incProbe.Directory.FullName
+          $libProbe = Get-ChildItem -Path $sdkRoot -Recurse -Filter 'TKernel.lib' -ErrorAction SilentlyContinue | Select-Object -First 1
+          $binProbe = Get-ChildItem -Path $sdkRoot -Recurse -Filter 'TKernel.dll' -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $libProbe) { throw "TKernel.lib not found under $sdkRoot." }
+          if (-not $binProbe) { throw "TKernel.dll not found under $sdkRoot." }
+          $libDir = $libProbe.Directory.FullName
+          $binDir = $binProbe.Directory.FullName
+          Write-Host "OCCT inc: $incDir"
+          Write-Host "OCCT lib: $libDir"
+          Write-Host "OCCT bin: $binDir"
+
+          $nativeSrc = Join-Path $repo 'native\SAM.Occt.Native'
+          $nativeBld = Join-Path $repo 'native\build\x64-windows'
+          $outDir    = Join-Path $repo 'build'
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+
+          # Configure + build the thin wrapper directly with CMake (no vcpkg
+          # toolchain → no manifest-mode OpenCASCADE-from-source build).
+          & cmake -S $nativeSrc -B $nativeBld -G "Visual Studio 17 2022" -A x64 `
+            "-DSAM_OCCT_OUTPUT_DIRECTORY=$outDir" `
+            "-DSAM_OCCT_OCCT_INCLUDE_DIR=$incDir" `
+            "-DSAM_OCCT_OCCT_LIBRARY_DIR=$libDir"
+          if ($LASTEXITCODE -ne 0) { throw "CMake configure failed." }
+
+          & cmake --build $nativeBld --config Release
+          if ($LASTEXITCODE -ne 0) { throw "Native build failed." }
+
+          if (-not (Test-Path (Join-Path $outDir 'SAM.Occt.Native.dll'))) {
+            throw "SAM.Occt.Native.dll was not produced in $outDir."
+          }
+
+          # Copy the OCCT runtime + third-party DLLs next to the wrapper.
+          Get-ChildItem -Path $binDir -Filter '*.dll' | Copy-Item -Destination $outDir -Force
+          $thirdParty = Get-ChildItem -Path $sdkRoot -Recurse -Filter '*.dll' -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match '3rdparty' }
+          if ($thirdParty) { $thirdParty | Copy-Item -Destination $outDir -Force }
+
+          # Deploy into the curated payload that "Stage payload" packages.
+          $samDir = Join-Path $env:APPDATA 'SAM'
+          New-Item -ItemType Directory -Force -Path $samDir | Out-Null
+          Get-ChildItem -Path $outDir -Filter '*.dll' | Copy-Item -Destination $samDir -Force
+
+          $tkCount = (Get-ChildItem -Path $outDir -Filter 'TK*.dll' | Measure-Object).Count
+          Write-Host "OCCT native engine deployed: SAM.Occt.Native.dll + $tkCount TK*.dll into $samDir"
+
       - name: Restore (single node)
         shell: pwsh
         env:
