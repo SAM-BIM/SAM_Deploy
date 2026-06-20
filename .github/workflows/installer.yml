@@ -157,13 +157,17 @@ jobs:
       # PREBUILT OCCT 8.0 SDK (no multi-hour vcpkg-from-source build) and drop the
       # result into %APPDATA%\SAM so "Stage payload" packages it automatically.
       #
-      # The SDK is fetched from the OCCT_SDK_URL repo secret (a hosted zip of the
-      # official OpenCASCADE 8.0.0 vc14 64-bit package; OCCT is LGPL, so the
-      # runtime DLLs are redistributable). If the secret is not set the step
-      # SKIPS with a warning and the installer still ships everything else — but
-      # SAM.Occt.Native.dll is absent, so OCCT operations take the missing-native
-      # path (NativeAvailable == false / SAM_OCCT_NATIVE_MISSING) until the engine
-      # is present.
+      # The SDK is fetched from a GitHub Release asset (a zip of the official
+      # OpenCASCADE 8.0.0 vc14 64-bit package; OCCT is LGPL, so the runtime DLLs
+      # are redistributable). By default it is pulled from the OCCT_SDK_REPO repo
+      # (private) at tag OCCT_SDK_TAG, asset OCCT_SDK_ASSET, authenticated with the
+      # SUBMODULES_PAT the workflow already uses. Override any of those with repo
+      # variables, or set the OCCT_SDK_URL secret to download from a presigned URL
+      # instead. If NONE of those is available the step SKIPS with a warning and
+      # the installer still ships everything else — but SAM.Occt.Native.dll is
+      # absent, so OCCT operations take the missing-native path
+      # (NativeAvailable == false / SAM_OCCT_NATIVE_MISSING) until the engine is
+      # present.
       # -----------------------------------------------------------------------
       - name: Cache OpenCASCADE SDK
         uses: actions/cache@v4
@@ -175,6 +179,10 @@ jobs:
         shell: pwsh
         env:
           OCCT_SDK_URL: ${{ secrets.OCCT_SDK_URL }}
+          OCCT_SDK_REPO: ${{ vars.OCCT_SDK_REPO || 'SAM-BIM/SAM_OCCT' }}
+          OCCT_SDK_TAG: ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}
+          OCCT_SDK_ASSET: ${{ vars.OCCT_SDK_ASSET || 'opencascade-8.0.0-vc14-64-combined.zip' }}
+          GH_TOKEN: ${{ secrets.SUBMODULES_PAT }}
         run: |
           $ErrorActionPreference = 'Stop'
 
@@ -188,16 +196,24 @@ jobs:
           $incProbe = Get-ChildItem -Path $sdkRoot -Recurse -Filter 'gp_Pnt.hxx' -ErrorAction SilentlyContinue | Select-Object -First 1
 
           if (-not $incProbe) {
-            if ([string]::IsNullOrWhiteSpace($env:OCCT_SDK_URL)) {
-              Write-Host "::warning::No OCCT SDK found at $sdkRoot and OCCT_SDK_URL secret is not set."
+            $zip = Join-Path $env:RUNNER_TEMP 'occt-sdk.zip'
+            New-Item -ItemType Directory -Force -Path $sdkRoot | Out-Null
+
+            if (-not [string]::IsNullOrWhiteSpace($env:OCCT_SDK_URL)) {
+              Write-Host "Downloading OpenCASCADE SDK from OCCT_SDK_URL ..."
+              Invoke-WebRequest -Uri $env:OCCT_SDK_URL -OutFile $zip
+            }
+            elseif (-not [string]::IsNullOrWhiteSpace($env:GH_TOKEN)) {
+              Write-Host "Downloading OpenCASCADE SDK release asset '$($env:OCCT_SDK_ASSET)' from $($env:OCCT_SDK_REPO)@$($env:OCCT_SDK_TAG) ..."
+              & gh release download $env:OCCT_SDK_TAG --repo $env:OCCT_SDK_REPO --pattern $env:OCCT_SDK_ASSET --output $zip --clobber
+              if ($LASTEXITCODE -ne 0) { throw "gh release download failed (check the release tag/asset name and that SUBMODULES_PAT can read $($env:OCCT_SDK_REPO))." }
+            }
+            else {
+              Write-Host "::warning::No OCCT SDK found at $sdkRoot, no OCCT_SDK_URL secret, and no SUBMODULES_PAT to fetch the release asset."
               Write-Host "::warning::Skipping native OCCT engine build. SAM_OCCT managed assemblies/Grasshopper nodes still ship, but the native engine (SAM.Occt.Native.dll + TK*.dll) will be absent."
               return
             }
 
-            Write-Host "Downloading OpenCASCADE SDK from OCCT_SDK_URL ..."
-            New-Item -ItemType Directory -Force -Path $sdkRoot | Out-Null
-            $zip = Join-Path $env:RUNNER_TEMP 'occt-sdk.zip'
-            Invoke-WebRequest -Uri $env:OCCT_SDK_URL -OutFile $zip
             Write-Host "Extracting SDK to $sdkRoot ..."
             Expand-Archive -Path $zip -DestinationPath $sdkRoot -Force
             Remove-Item $zip -Force
