@@ -105,6 +105,24 @@ git add .gitmodules <all-submodule-paths>
 git commit -m "chore: track sow/2026-Q3 in submodules"
 ```
 
+## Why the sow branch makes testing easier
+
+Because `sow/2026-Q3`'s `.gitmodules` says `branch = sow/2026-Q3`, you can re-bump and
+test-build the in-progress quarter without touching `master` (the last-shipped,
+reproducible release):
+
+```bash
+git submodule update --remote          # pulls the latest sow/2026-Q3 tip of all 23 repos
+git commit -am "bump"
+git push origin sow/2026-Q3
+# then trigger a test build from the sow branch:
+gh workflow run installer.yml --ref sow/2026-Q3
+```
+
+Doing these iterative bumps on `sow/2026-Q3` keeps `master` pristine — rebuilding
+`master` (or its release tag) always reproduces exactly what was shipped. When the
+quarter is done, fast-forward `sow/2026-Q3` into `master` and tag the release.
+
 ## Releasing a new installer (tagging)
 
 The **installer workflow runs automatically when you push a Git tag that starts with `v`** (for example `v2026.Q2.1`), and it can also be run manually via GitHub Actions ("Run workflow").
