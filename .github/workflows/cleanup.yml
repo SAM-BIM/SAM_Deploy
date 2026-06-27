@@ -22,8 +22,9 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
-          delete_run_by_conclusion: failed,cancelled
+          delete_run_by_conclusion: failed,cancelled,startup_failure,timed_out
           retain_days: 14
           keep_minimum_runs: 0
-          head_branch: ${{ github.event.repository.default_branch }}
+          # No head_branch filter: clean failed/cancelled runs on every branch
+          # (feature branches, tags, etc.), not just the default branch.
           workflow_id: installer.yml
