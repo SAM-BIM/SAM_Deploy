@@ -91,7 +91,7 @@ git commit
 git push
 ```
 
-**About `git submodule update --remote`:** this command follows the `branch = ...` setting per submodule in `.gitmodules` — NOT the parent repo's current branch. Every SAM-BIM submodule in this repo is configured with `branch = sow/2026-Q2`, so `--remote` correctly pulls each submodule's `sow/2026-Q2` HEAD. Without those entries the command would silently pull each submodule's default branch (`master` = last-shipped state) instead.
+**About `git submodule update --remote`:** this command follows the `branch = ...` setting per submodule in `.gitmodules` — NOT the parent repo's current branch. Every SAM-BIM submodule in this repo is configured with `branch = sow/2026-Q3`, so `--remote` correctly pulls each submodule's `sow/2026-Q3` HEAD. Without those entries the command would silently pull each submodule's default branch (`master` = last-shipped state) instead.
 
 **Quarterly transitions:** when a new sow branch is cut (e.g. `sow/2026-Q3`), the `branch =` entries in `.gitmodules` must be updated to match. One-liner that does all 22 submodules at once:
 
@@ -157,7 +157,7 @@ Why `git push origin v2026.Q2.1` (and not just `git push`)?
 You can also run the installer workflow manually — useful for **test builds, customer-specific snapshots, and pre-release verification**:
 
 1. Go to **Actions → Build & Release SAM-BIM Installer**
-2. Pick the **branch** to build from (typically `sow/2026-Q2`; can also be `master` or a feature branch)
+2. Pick the **branch** to build from (typically `sow/2026-Q3`; can also be `master` or a feature branch)
 3. Click **Run workflow**
 4. Fill in the inputs:
    - **Version** (optional): the label baked into the installer filename and (if released) the GitHub Release tag. Allowed characters: letters, digits, `.`, `_`, `-`. Anything else is replaced with `-`. Examples:
