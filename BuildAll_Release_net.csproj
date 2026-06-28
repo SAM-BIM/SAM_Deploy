@@ -17,13 +17,13 @@
     <Solution Include="SAM_OCCT\SAM_OCCT.sln" Condition="Exists('SAM_OCCT\SAM_OCCT.sln')">
       <Properties>Configuration=Release;Platform=Any CPU;SAM_OCCT_SKIP_NATIVE_BUILD=true</Properties>
     </Solution>
-    <Solution Include="SAM_Systems\SAM_Systems.sln">
-      <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
     <Solution Include="SAM_Psychrometrics\SAM_Psychrometrics.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
     <Solution Include="SAM_Mollier\SAM_Mollier.sln">
+      <Properties>Configuration=Release;Platform=Any CPU</Properties>
+    </Solution>
+    <Solution Include="SAM_Systems\SAM_Systems.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
     <Solution Include="SAM_Windows\SAM_Windows.sln">
