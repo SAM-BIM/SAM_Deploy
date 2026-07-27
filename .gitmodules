@@ -90,3 +90,7 @@
 	path = SAM_OCCT
 	url = https://github.com/SAM-BIM/SAM_OCCT.git
 	branch = sow/2026-Q3
+[submodule "SAM_Validation"]
+	path = SAM_Validation
+	url = https://github.com/SAM-BIM/SAM_Validation.git
+	branch = sow/2026-Q3
