@@ -32,9 +32,6 @@
     <Solution Include="SAM_IFC\SAM_IFC.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
-    <Solution Include="SAM_Topologic\SAM_Topologic.sln">
-      <Properties>Configuration=Release;Platform=Any CPU</Properties>
-    </Solution>
 
     <!-- Optional modules (skip if submodule not present) -->
     <Solution Include="SAM_Acoustic\SAM_Acoustic.sln" Condition="Exists('SAM_Acoustic\SAM_Acoustic.sln')">

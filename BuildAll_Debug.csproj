@@ -19,9 +19,6 @@
 	<Solution Include="SAM_IFC/SAM_IFC.sln">
       <Properties>Configuration=Debug;Platform=x64</Properties>
     </Solution>
-	<Solution Include="SAM_Topologic/SAM_Topologic.sln">
-      <Properties>Configuration=Debug;Platform=Any CPU</Properties>
-    </Solution>		
 	<Solution Include="SAM_BHom/SAM_BHom.sln">
       <Properties>Configuration=Debug;Platform=Any CPU</Properties>
     </Solution>
@@ -36,6 +33,13 @@
     </Solution>		
 	<Solution Include="SAM_Solver/SAM_Solver.sln">
       <Properties>Configuration=Debug;Platform=Any CPU</Properties>
+    </Solution>
+    <!-- Replaces SAM_Topologic: SAM.Analytical.Revit.UI references
+         SAM_OCCT/build/SAM.{Core,Geometry,Analytical}.OCCT.dll by HintPath since the Revit
+         topology conversion moved off Topologic. Needs only SAM and SAM_Solver, both already
+         above. -->
+    <Solution Include="SAM_OCCT/SAM_OCCT.sln">
+      <Properties>Configuration=Debug;Platform=Any CPU;SAM_OCCT_SKIP_NATIVE_BUILD=true</Properties>
     </Solution>
     <Solution Include="SAM_SolarCalculator/SAM_SolarCalculator.sln">
       <Properties>Configuration=Debug;Platform=Any CPU</Properties>
@@ -60,19 +64,10 @@
       <Properties>Configuration=Debug;Platform=x64</Properties>
     </Solution>
     <Solution Include="SAM_Revit/SAM_Revit.sln">
-      <Properties>Configuration=Debug2020;Platform=Any CPU;TargetFrameworkVersion=v4.8;ReferencePath=$(MSBuildProjectDirectory)\SAM_Revit\references\Revit 2020</Properties>
+      <Properties>Configuration=Debug2025;Platform=Any CPU</Properties>
     </Solution>
 	<Solution Include="SAM_Revit/SAM_Revit.sln">
-      <Properties>Configuration=Debug2021;Platform=Any CPU;TargetFrameworkVersion=v4.8;ReferencePath=$(MSBuildProjectDirectory)\SAM_Revit\references\Revit 2021</Properties>
-    </Solution>
-	<Solution Include="SAM_Revit/SAM_Revit.sln">
-      <Properties>Configuration=Debug2022;Platform=Any CPU;TargetFrameworkVersion=v4.8;ReferencePath=$(MSBuildProjectDirectory)\SAM_Revit\references\Revit 2022</Properties>
-    </Solution>
-	<Solution Include="SAM_Revit/SAM_Revit.sln">
-      <Properties>Configuration=Debug2023;Platform=Any CPU;TargetFrameworkVersion=v4.8;ReferencePath=$(MSBuildProjectDirectory)\SAM_Revit\references\Revit 2023</Properties>
-    </Solution>
-	<Solution Include="SAM_Revit/SAM_Revit.sln">
-      <Properties>Configuration=Debug2024;Platform=Any CPU;TargetFrameworkVersion=v4.8;ReferencePath=$(MSBuildProjectDirectory)\SAM_Revit\references\Revit 2024</Properties>
+      <Properties>Configuration=Debug2026;Platform=Any CPU</Properties>
     </Solution>
 	<Solution Include="SAM_UI/SAM_UI.sln">
       <Properties>Configuration=Debug;Platform=Any CPU</Properties>
@@ -81,19 +76,10 @@
       <Properties>Configuration=Debug;Platform=Any CPU</Properties>
     </Solution>
     <Solution Include="SAM_Revit_UI/SAM_Revit_UI.sln">
-      <Properties>Configuration=Debug2020;Platform=Any CPU;TargetFrameworkVersion=v4.8;ReferencePath=$(MSBuildProjectDirectory)\SAM_Revit\references\Revit 2020</Properties>
+      <Properties>Configuration=Debug2025;Platform=Any CPU</Properties>
     </Solution>
 	<Solution Include="SAM_Revit_UI/SAM_Revit_UI.sln">
-      <Properties>Configuration=Debug2021;Platform=Any CPU;TargetFrameworkVersion=v4.8;ReferencePath=$(MSBuildProjectDirectory)\SAM_Revit\references\Revit 2021</Properties>
-    </Solution>
-	<Solution Include="SAM_Revit_UI/SAM_Revit_UI.sln">
-      <Properties>Configuration=Debug2022;Platform=Any CPU;TargetFrameworkVersion=v4.8;ReferencePath=$(MSBuildProjectDirectory)\SAM_Revit\references\Revit 2022</Properties>
-    </Solution>
-	<Solution Include="SAM_Revit_UI/SAM_Revit_UI.sln">
-      <Properties>Configuration=Debug2023;Platform=Any CPU;TargetFrameworkVersion=v4.8;ReferencePath=$(MSBuildProjectDirectory)\SAM_Revit\references\Revit 2023</Properties>
-    </Solution>
-	<Solution Include="SAM_Revit_UI/SAM_Revit_UI.sln">
-      <Properties>Configuration=Debug2024;Platform=Any CPU;TargetFrameworkVersion=v4.8;ReferencePath=$(MSBuildProjectDirectory)\SAM_Revit\references\Revit 2024</Properties>
+      <Properties>Configuration=Debug2026;Platform=Any CPU</Properties>
     </Solution>
 	<Solution Include="SAM_Multitasker/SAM_Multitasker.sln">
       <Properties>Configuration=Debug;Platform=Any CPU</Properties>
