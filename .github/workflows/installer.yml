@@ -467,62 +467,14 @@ jobs:
             '/p:Configuration=Release' `
             '/p:UseSharedCompilation=false'
 
-      - name: Restore SAM_Revit_UI 2025
-        shell: pwsh
-        env:
-          MSBUILDDISABLENODEREUSE: '1'
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $sln = 'SAM_Revit_UI\SAM_Revit_UI.sln'
-          if (-not (Test-Path $sln)) {
-            Write-Host "WARN: $sln not found; skipping SAM_Revit_UI restore."
-            return
-          }
-
-          msbuild `
-            $sln `
-            '/t:Restore' `
-            '/m:1' '/nr:false' '/v:m' `
-            '/p:Configuration=Release2025' `
-            '/p:UseSharedCompilation=false'
-
-      - name: Restore SAM_Revit_UI 2026
-        shell: pwsh
-        env:
-          MSBUILDDISABLENODEREUSE: '1'
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $sln = 'SAM_Revit_UI\SAM_Revit_UI.sln'
-          if (-not (Test-Path $sln)) {
-            Write-Host "WARN: $sln not found; skipping SAM_Revit_UI restore."
-            return
-          }
-
-          msbuild `
-            $sln `
-            '/t:Restore' `
-            '/m:1' '/nr:false' '/v:m' `
-            '/p:Configuration=Release2026' `
-            '/p:UseSharedCompilation=false'
-
-      - name: Restore SAM_Revit_UI 2027
-        shell: pwsh
-        env:
-          MSBUILDDISABLENODEREUSE: '1'
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $sln = 'SAM_Revit_UI\SAM_Revit_UI.sln'
-          if (-not (Test-Path $sln)) {
-            Write-Host "WARN: $sln not found; skipping SAM_Revit_UI restore."
-            return
-          }
-
-          msbuild `
-            $sln `
-            '/t:Restore' `
-            '/m:1' '/nr:false' '/v:m' `
-            '/p:Configuration=Release2027' `
-            '/p:UseSharedCompilation=false'
+      # NOTE: SAM_Revit_UI is NOT restored here, per Revit year, ahead of the rebuilds.
+      # obj\project.assets.json is one file per project, not one per configuration, so
+      # restoring 2025 then 2026 then 2027 in a row leaves it holding only the LAST
+      # restore's target framework. While every year was net8.0-windows that was
+      # invisible; Revit 2027 restores net10.0-windows, so the Release2025 rebuild would
+      # then fail NETSDK1005 ("doesn't have a target for net8.0-windows") even though
+      # nothing about 2025 changed. Each year's restore is folded into that same year's
+      # rebuild step below instead.
 
       - name: Rebuild SAM_Rhino_UI (with post-build)
         shell: pwsh
@@ -556,6 +508,15 @@ jobs:
             return
           }
 
+          # Restore immediately before this year's rebuild, not batched with the other
+          # years - see the note above the SAM_Rhino_UI rebuild step.
+          msbuild `
+            $sln `
+            '/t:Restore' `
+            '/m:1' '/nr:false' '/v:m' `
+            '/p:Configuration=Release2025' `
+            '/p:UseSharedCompilation=false'
+
           msbuild `
             $sln `
             '/t:Rebuild' `
@@ -584,6 +545,13 @@ jobs:
 
           msbuild `
             $sln `
+            '/t:Restore' `
+            '/m:1' '/nr:false' '/v:m' `
+            '/p:Configuration=Release2026' `
+            '/p:UseSharedCompilation=false'
+
+          msbuild `
+            $sln `
             '/t:Rebuild' `
             '/m:1' '/nr:false' '/v:m' `
             '/p:Configuration=Release2026' `
@@ -607,6 +575,13 @@ jobs:
             Write-Host "WARN: $sln not found; skipping SAM_Revit_UI rebuild."
             return
           }
+
+          msbuild `
+            $sln `
+            '/t:Restore' `
+            '/m:1' '/nr:false' '/v:m' `
+            '/p:Configuration=Release2027' `
+            '/p:UseSharedCompilation=false'
 
           msbuild `
             $sln `
