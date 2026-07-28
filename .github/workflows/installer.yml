@@ -140,10 +140,16 @@ jobs:
           "SAMSourceRevision=$sha" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "informationalversion=$infoVer" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-      - name: Setup .NET 8
+      # Revit 2025 and 2026 target net8.0-windows; Revit 2027 targets net10.0-windows
+      # (RevitAPI 27.0.4.0 binds System.Runtime 10.0.0.0, so a net8 target fails CS1705).
+      # Both SDKs are installed side by side - the 2027 configurations cannot build without
+      # the .NET 10 SDK, and everything else still needs 8.
+      - name: Setup .NET 8 and .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.x'
+          dotnet-version: |
+            8.x
+            10.x
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
@@ -499,6 +505,25 @@ jobs:
             '/p:Configuration=Release2026' `
             '/p:UseSharedCompilation=false'
 
+      - name: Restore SAM_Revit_UI 2027
+        shell: pwsh
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sln = 'SAM_Revit_UI\SAM_Revit_UI.sln'
+          if (-not (Test-Path $sln)) {
+            Write-Host "WARN: $sln not found; skipping SAM_Revit_UI restore."
+            return
+          }
+
+          msbuild `
+            $sln `
+            '/t:Restore' `
+            '/m:1' '/nr:false' '/v:m' `
+            '/p:Configuration=Release2027' `
+            '/p:UseSharedCompilation=false'
+
       - name: Rebuild SAM_Rhino_UI (with post-build)
         shell: pwsh
         env:
@@ -539,6 +564,12 @@ jobs:
             '/p:UseSharedCompilation=false' `
             '/p:RunPostBuildEvent=OnOutputUpdated'
 
+      - name: Snapshot Revit 2025 outputs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & "$env:GITHUB_WORKSPACE\.github\scripts\snapshot-revit-build.ps1" -Year '2025'
+
       - name: Rebuild SAM_Revit_UI 2026 (with post-build)
         shell: pwsh
         env:
@@ -558,6 +589,38 @@ jobs:
             '/p:Configuration=Release2026' `
             '/p:UseSharedCompilation=false' `
             '/p:RunPostBuildEvent=OnOutputUpdated'
+
+      - name: Snapshot Revit 2026 outputs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & "$env:GITHUB_WORKSPACE\.github\scripts\snapshot-revit-build.ps1" -Year '2026'
+
+      - name: Rebuild SAM_Revit_UI 2027 (with post-build)
+        shell: pwsh
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sln = 'SAM_Revit_UI\SAM_Revit_UI.sln'
+          if (-not (Test-Path $sln)) {
+            Write-Host "WARN: $sln not found; skipping SAM_Revit_UI rebuild."
+            return
+          }
+
+          msbuild `
+            $sln `
+            '/t:Rebuild' `
+            '/m:1' '/nr:false' '/v:m' `
+            '/p:Configuration=Release2027' `
+            '/p:UseSharedCompilation=false' `
+            '/p:RunPostBuildEvent=OnOutputUpdated'
+
+      - name: Snapshot Revit 2027 outputs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & "$env:GITHUB_WORKSPACE\.github\scripts\snapshot-revit-build.ps1" -Year '2027'
 
       # -----------------------------------------------------------------------
       # STAGING: build a curated payload that matches the older working pipeline
@@ -675,7 +738,13 @@ jobs:
 
           # Overlay Revit-specific outputs only. Do NOT seed year folders with all root DLLs.
           $revitYears = @('2025','2026','2027')
+          # _revitsnap holds one folder per Revit year, captured right after that year was
+          # rebuilt. It is listed first and carries the highest weight below, because
+          # SAM_Revit\build and SAM_Revit_UI\build are a SINGLE shared directory that each
+          # Release20xx rebuild overwrites - files taken straight from there carry no year in
+          # their path, match no year, and would be published to all three.
           $revitRoots = @(
+            (Join-Path $root '_revitsnap'),
             (Join-Path $root 'SAM_Revit'),
             (Join-Path $root 'SAM_Revit_UI')
           )
@@ -701,7 +770,8 @@ jobs:
                 if ($targets.Count -eq 0) { $targets = $revitYears }
 
                 $w = 0
-                if ($f.FullName -match '\\build\\') { $w = 2 }
+                if ($f.FullName -match '\\_revitsnap\\') { $w = 3 }
+                elseif ($f.FullName -match '\\build\\') { $w = 2 }
                 elseif ($f.FullName -match '\\bin\\') { $w = 1 }
 
                 foreach ($year in $targets) {
