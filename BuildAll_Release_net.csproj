@@ -82,7 +82,26 @@
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
 
-    <!-- Revit core only. Host entry UI repos are rebuilt explicitly in installer.yml -->
+    <!-- Revit core only, 2025/2026. Host entry UI repos are rebuilt explicitly in installer.yml.
+         There is deliberately NO Release2027 entry here - do not add one the same way. SAM_Revit's
+         core projects (SAM.Analytical.Revit etc) are referenced from SAM_Revit_UI via
+         ProjectReference, not a prebuilt DLL HintPath, so installer.yml's later
+         "Rebuild SAM_Revit_UI 2027" step already transitively rebuilds them at Release2027 -
+         confirmed in the run that added Revit 2027 support (SAM.Analytical.Revit rebuilt 5 times
+         across the workflow: 2 explicit here for 2025/2026, 3 transitive via SAM_Revit_UI for
+         2025/2026/2027). A third entry here would be pure redundant work for zero functional gain.
+
+         It would also be actively dangerous: this project's Restore and Rebuild targets each run
+         as ONE global MSBuild-task batch over every @(Solution) item (see below), invoked as two
+         SEPARATE msbuild command-line calls from installer.yml. obj\project.assets.json is one file
+         per project, not one per configuration - restoring Release2025 then Release2026 then
+         Release2027 in the same Restore pass would leave it holding only the last restore's target
+         framework. 2025/2026 share net8.0-windows so that was always invisible; Release2027 is
+         net10.0-windows, so the later Rebuild pass would then fail Release2025/2026 with
+         NETSDK1005 ("doesn't have a target for net8.0-windows") for a project this file never
+         touched a moment before. The Grasshopper.Revit projects are unaffected either way - they
+         have no 2027 configuration (RhinoInside.Revit has no 2027 build yet), so their 2027
+         ActiveCfg maps to 2026 with no Build.0 and a Release2027 solution build already skips them. -->
     <Solution Include="SAM_Revit\SAM_Revit.sln">
       <Properties>Configuration=Release2025;Platform=Any CPU</Properties>
     </Solution>
