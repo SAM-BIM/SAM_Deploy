@@ -904,6 +904,52 @@ jobs:
           }
 
           # -------------------------------------------------------------------
+          # Assert each year's payload was actually built for THAT year.
+          #
+          # File counts alone cannot show this: most of a year folder is
+          # year-agnostic SAM DLLs, so a payload assembled from the wrong year
+          # has the same count as a correct one. Before per-year snapshots
+          # existed, "Revit 2027" was staged from whatever built last and still
+          # reported a plausible DLL count with Loader=True.
+          #
+          # The TargetFramework attribute is the thing that actually differs:
+          # Revit 2025/2026 are net8.0-windows, Revit 2027 is net10.0-windows.
+          # Shipping a net10 assembly to Revit 2025 (or vice versa) produces an
+          # add-in that cannot load at all, so this is a hard failure.
+          # -------------------------------------------------------------------
+          $expectedTfm = @{ '2025' = 'v8.0'; '2026' = 'v8.0'; '2027' = 'v10.0' }
+          $tfmProbe = 'SAM.Analytical.Revit.UI.dll'
+          $tfmFailures = @()
+
+          foreach ($year in $revitYears) {
+            $probePath = Join-Path (Join-Path $samStage ("Revit $year")) $tfmProbe
+            if (-not (Test-Path $probePath)) {
+              $tfmFailures += "Revit ${year}: $tfmProbe missing from payload"
+              continue
+            }
+
+            $raw = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($probePath))
+            $m = [regex]::Match($raw, '\.NETCoreApp,Version=v(\d+\.\d+)')
+            if (-not $m.Success) {
+              $tfmFailures += "Revit ${year}: could not read TargetFramework from $tfmProbe"
+              continue
+            }
+
+            $found = 'v' + $m.Groups[1].Value
+            $want  = $expectedTfm[$year]
+            if ($found -ne $want) {
+              $tfmFailures += "Revit ${year}: expected $want but payload is $found"
+            } else {
+              Write-Host "Revit ${year} payload TargetFramework: .NETCoreApp $found (expected $want) OK"
+            }
+          }
+
+          if ($tfmFailures.Count -gt 0) {
+            $tfmFailures | ForEach-Object { Write-Host "PAYLOAD TFM ERROR: $_" }
+            throw "One or more Revit payloads were built for the wrong target framework."
+          }
+
+          # -------------------------------------------------------------------
           # STAGE 2.2 OWNERSHIP POLICY + DIAGNOSTICS
           #
           # Policy:
