@@ -1,0 +1,12 @@
+# Workflow YAML must stay LF.
+#
+# Both files under .github/workflows were authored with LF. A tool once rewrote
+# installer.yml as CRLF while making a 3-line edit, which turned the diff into
+# +1173/-1173 across a 1171-line file and hid the real change from review
+# (82d105c, reverted in 980b924). Pinning eol here makes Git normalise on commit
+# so that cannot happen silently again.
+*.yml   text eol=lf
+*.yaml  text eol=lf
+
+# Deliberately NO `* text=auto` catch-all: this repo tracks binaries (.exe, .dll,
+# .sqlite, .png, .gha) and a blanket text rule risks corrupting them on checkout.
