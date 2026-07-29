@@ -124,12 +124,12 @@ jobs:
           # steps without having to thread /p:SAMVersion=... through each invocation.
           "SAMVersion=$v" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-          # Compute source revision (short SAM_Deploy commit SHA ÔÇö captures all submodule
+          # Compute source revision (short SAM_Deploy commit SHA — captures all submodule
           # pointers via gitlinks, so it's the content fingerprint of THIS exact installer).
           # Exposed two ways:
           # - InformationalVersion env var: SDK projects with GenerateAssemblyInfo=true pick this
-          #   up automatically and stamp AssemblyInformationalVersionAttribute ÔåÆ visible as
-          #   'Product version' in Windows Properties ÔåÆ Details.
+          #   up automatically and stamp AssemblyInformationalVersionAttribute → visible as
+          #   'Product version' in Windows Properties → Details.
           # - SAMSourceRevision env var: available if Directory.Build.props is updated to
           #   compose it explicitly (covers GenerateAssemblyInfo=false projects too).
           $sha = (& git rev-parse --short HEAD 2>$null).Trim()
@@ -170,7 +170,7 @@ jobs:
       # SUBMODULES_PAT the workflow already uses. Override any of those with repo
       # variables, or set the OCCT_SDK_URL secret to download from a presigned URL
       # instead. If NONE of those is available the step SKIPS with a warning and
-      # the installer still ships everything else ÔÇö but SAM.Occt.Native.dll is
+      # the installer still ships everything else — but SAM.Occt.Native.dll is
       # absent, so OCCT operations take the missing-native path
       # (NativeAvailable == false / SAM_OCCT_NATIVE_MISSING) until the engine is
       # present.
@@ -224,7 +224,7 @@ jobs:
             Expand-Archive -Path $zip -DestinationPath $sdkRoot -Force
             Remove-Item $zip -Force
             $incProbe = Get-ChildItem -Path $sdkRoot -Recurse -Filter 'gp_Pnt.hxx' -ErrorAction SilentlyContinue | Select-Object -First 1
-            if (-not $incProbe) { throw "OCCT SDK downloaded but gp_Pnt.hxx not found under $sdkRoot ÔÇö check the zip layout." }
+            if (-not $incProbe) { throw "OCCT SDK downloaded but gp_Pnt.hxx not found under $sdkRoot — check the zip layout." }
           }
 
           # Discover SDK layout (robust to the exact folder name in the zip).
@@ -245,7 +245,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
           # Configure + build the thin wrapper directly with CMake (no vcpkg
-          # toolchain ÔåÆ no manifest-mode OpenCASCADE-from-source build).
+          # toolchain → no manifest-mode OpenCASCADE-from-source build).
           & cmake -S $nativeSrc -B $nativeBld -G "Visual Studio 17 2022" -A x64 `
             "-DSAM_OCCT_OUTPUT_DIRECTORY=$outDir" `
             "-DSAM_OCCT_OCCT_INCLUDE_DIR=$incDir" `
@@ -266,7 +266,7 @@ jobs:
           # Resolve the real runtime closure with dumpbin: BFS the (regular +
           # delay-load) import graph starting ONLY from the wrapper, copying each
           # dependency found in the SDK (TK toolkits + FreeType/FreeImage/TBB/VC
-          # runtime). Seeding from the wrapper alone ÔÇö not from every TK*.dll ÔÇö
+          # runtime). Seeding from the wrapper alone — not from every TK*.dll —
           # keeps the GUI toolkits and their Qt/VTK payload out of the closure.
           # Unresolved names are OS/system DLLs and are skipped.
           $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
@@ -308,7 +308,7 @@ jobs:
           # Safety net: dumpbin discards stderr and needs the VC environment, so a
           # silent failure would copy zero dependencies and leave the wrapper without
           # its OCCT TK*.dll runtime. If the closure clearly failed (too few TK
-          # toolkits resolved) ÔÇö or dumpbin was absent ÔÇö fall back to copying ALL TK
+          # toolkits resolved) — or dumpbin was absent — fall back to copying ALL TK
           # toolkits + the third-party allowlist so the engine is never shipped broken.
           $tkResolved = (Get-ChildItem -Path $outDir -Filter 'TK*.dll' -ErrorAction SilentlyContinue | Measure-Object).Count
           if (-not $usedDumpbin -or $tkResolved -lt 5) {
