@@ -22,6 +22,10 @@
 	path = SAM_Tas
 	url = https://github.com/SAM-BIM/SAM_Tas.git
 	branch = sow/2026-Q3
+[submodule "SAM_Tas_Grasshopper"]
+	path = SAM_Tas_Grasshopper
+	url = https://github.com/SAM-BIM/SAM_Tas_Grasshopper.git
+	branch = sow/2026-Q3
 [submodule "SAM_GEM"]
 	path = SAM_GEM
 	url = https://github.com/SAM-BIM/SAM_GEM.git

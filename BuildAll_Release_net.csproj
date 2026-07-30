@@ -66,6 +66,9 @@
     <Solution Include="SAM_Tas\SAM_Tas.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
+    <Solution Include="SAM_Tas_Grasshopper\SAM_Tas_Grasshopper.sln">
+      <Properties>Configuration=Release;Platform=Any CPU</Properties>
+    </Solution>
     <Solution Include="SAM_Excel\SAM_Excel.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
