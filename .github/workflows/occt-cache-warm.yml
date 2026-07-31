@@ -18,12 +18,16 @@
 #
 # SAFETY / SCOPE (deliberately minimal - see SAM_Deploy PR history for the
 # post-split maintenance programme this belongs to):
-#   - Downloads, extracts and validates the OCCT SDK, and lets actions/cache
-#     save it. Nothing else.
+#   - Downloads, extracts and validates the OCCT SDK, and saves it. Nothing
+#     else.
 #   - Does NOT check out submodules, does NOT build any SAM assembly, does NOT
 #     invoke cmake/MSBuild, does NOT run ISCC, does NOT touch SAM_OCCT.
 #   - Cannot create a tag or a GitHub Release: there is no `release` job here,
 #     no `permissions: contents: write`, and nothing in this file pushes tags.
+#   - Takes `actions: write` for ONE reason only: deleting the master-scoped
+#     OCCT cache entry when the restored copy fails validation. See the
+#     "Repair or warm the OCCT SDK cache" step for why a delete is unavoidable
+#     and how the blast radius is pinned to a single key + this exact ref.
 #   - Triggers are `schedule` (runs against the default branch automatically)
 #     and manual `workflow_dispatch` - never `push` to any branch, so merging
 #     this file does not itself trigger a run.
@@ -37,10 +41,19 @@ on:
 
 permissions:
   contents: read
+  # Required ONLY to delete a corrupt master-scoped OCCT cache entry before
+  # re-saving a repaired one. GitHub cache entries are immutable per (key,
+  # scope): actions/cache/save cannot overwrite an existing key, so without a
+  # delete a corrupt entry would stay authoritative forever. Scope of the
+  # delete is pinned to the exact OCCT key AND refs/heads/master.
+  actions: write
 
 concurrency:
   group: warm-occt-cache
   cancel-in-progress: false
+
+env:
+  OCCT_CACHE_KEY: ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}-Windows-x64-v1
 
 jobs:
   warm-occt-cache:
@@ -63,25 +76,66 @@ jobs:
           }
           Write-Host "Ref check passed: running on refs/heads/master."
 
-      # Same key scheme as installer.yml's "Cache OpenCASCADE SDK" step, so a
-      # cache saved here is the exact one a build run restores. No restore-keys
-      # here either, for the same schema-invalidation reason as installer.yml
-      # (see that workflow's comment) - a schema bump must always cold-miss.
-      - name: Cache OpenCASCADE SDK
-        id: occt-cache
-        uses: actions/cache@v4
+      # RESTORE ONLY (not the combined actions/cache@v4).
+      #
+      # actions/cache@v4 registers a post-job save that it SKIPS whenever the
+      # primary key hit exactly. That is fatal for repair: if the master-scoped
+      # entry is corrupt, the exact key still hits, this job would delete and
+      # re-download C:\OCCT locally, and the post-job save would then decline to
+      # store the repaired tree because "the key already exists". The corrupt
+      # entry would survive every future run. Splitting restore from save is
+      # what lets the steps below decide for themselves whether to save.
+      #
+      # Key is $OCCT_CACHE_KEY (job env), textually identical to the key in
+      # installer.yml so a cache saved here is exactly the one a build restores.
+      # No restore-keys, deliberately: a prefix fallback that omits the schema
+      # token would let a future v1 -> v2 bump restore marker-complete v1
+      # contents, skip the download meant to invalidate them, and re-save them
+      # under v2. A schema bump must always cold-miss.
+      - name: Restore OCCT SDK cache
+        id: occt-restore
+        uses: actions/cache/restore@v4
         with:
           path: C:\OCCT
-          key: ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}-${{ runner.os }}-x64-v1
+          key: ${{ env.OCCT_CACHE_KEY }}
 
-      - name: Download + validate OCCT SDK
+      - name: Report OCCT SDK cache status
+        shell: pwsh
+        run: |
+          if ('${{ steps.occt-restore.outputs.cache-hit }}' -eq 'true') {
+            Write-Host "OCCT SDK cache: HIT on primary key '${{ env.OCCT_CACHE_KEY }}' (master scope)."
+          } else {
+            Write-Host "OCCT SDK cache: MISS on primary key '${{ env.OCCT_CACHE_KEY }}' - will download cold and save."
+          }
+
+      # Decides between three outcomes and reports which one honestly:
+      #   valid hit    -> nothing to do, no save (the stored entry is good)
+      #   miss         -> download, validate, save (first population)
+      #   corrupt hit  -> DELETE the stored entry, download, validate, save
+      #
+      # The delete is unavoidable. GitHub cache entries are immutable for a
+      # given (key, scope) pair: actions/cache/save compresses the tree, calls
+      # reserveCache, gets a 409 because the key exists, and then logs that
+      # failure NON-FATALLY. A save-without-delete would therefore print a
+      # warning buried in the log, leave the corrupt entry in place, and still
+      # report the job green - the precise "claims self-healing but isn't"
+      # failure mode this step exists to prevent.
+      #
+      # Blast radius: `gh cache delete` is given the exact primary key AND
+      # --ref refs/heads/master (github.ref, already proven to be master by the
+      # guard step above). It cannot match a different key, and it cannot reach
+      # another branch's scope. It runs ONLY on the corrupt-hit path.
+      - name: Repair or warm the OCCT SDK cache
+        id: occt-warm
         shell: pwsh
         env:
           OCCT_SDK_URL: ${{ secrets.OCCT_SDK_URL }}
           OCCT_SDK_REPO: ${{ vars.OCCT_SDK_REPO || 'SAM-BIM/SAM_OCCT' }}
           OCCT_SDK_TAG: ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}
           OCCT_SDK_ASSET: ${{ vars.OCCT_SDK_ASSET || 'opencascade-8.0.0-vc14-64-combined.zip' }}
-          GH_TOKEN: ${{ secrets.SUBMODULES_PAT }}
+          OCCT_SDK_GH_TOKEN: ${{ secrets.SUBMODULES_PAT }}
+          CACHE_ADMIN_TOKEN: ${{ github.token }}
+          CACHE_HIT: ${{ steps.occt-restore.outputs.cache-hit }}
         run: |
           $ErrorActionPreference = 'Stop'
           $sdkRoot = 'C:\OCCT'
@@ -95,15 +149,26 @@ jobs:
             [pscustomobject]@{ Valid = [bool]($inc -and $lib -and $bin) }
           }
 
-          $probe = Test-OcctSdk $sdkRoot
-
-          if ($probe.Valid) {
-            Write-Host "Restored OCCT SDK at $sdkRoot already valid (gp_Pnt.hxx, TKernel.lib, TKernel.dll all present) - nothing to warm."
+          if ((Test-OcctSdk $sdkRoot).Valid) {
+            Write-Host "Restored OCCT SDK at $sdkRoot is valid (gp_Pnt.hxx, TKernel.lib, TKernel.dll all present) - master scope already warm, no save needed."
+            "save=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
             return
           }
 
+          if ($env:CACHE_HIT -eq 'true') {
+            # Corrupt exact hit: the stored master entry is bad. Remove it, or
+            # the save below is a no-op and the corruption is permanent.
+            Write-Host "::warning::The cache entry restored for key '$($env:OCCT_CACHE_KEY)' in refs/heads/master is INVALID (missing one of gp_Pnt.hxx / TKernel.lib / TKernel.dll). Deleting that entry so a repaired SDK can be stored under the same key."
+            $env:GH_TOKEN = $env:CACHE_ADMIN_TOKEN
+            & gh cache delete $env:OCCT_CACHE_KEY --ref 'refs/heads/master' --repo $env:GITHUB_REPOSITORY
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to delete the corrupt cache entry '$($env:OCCT_CACHE_KEY)' at refs/heads/master. Without that delete the repaired SDK CANNOT be stored (cache keys are immutable per scope), so this job must fail rather than report a repair that did not happen. Check that the workflow has 'actions: write' permission."
+            }
+            Write-Host "Deleted the corrupt master-scoped entry for key '$($env:OCCT_CACHE_KEY)'."
+          }
+
           if (Test-Path $sdkRoot) {
-            Write-Host "::warning::Existing $sdkRoot is incomplete or corrupt - deleting and re-downloading."
+            Write-Host "Removing incomplete local $sdkRoot before re-downloading."
             Remove-Item $sdkRoot -Recurse -Force
           }
 
@@ -114,8 +179,9 @@ jobs:
             Write-Host "Downloading OpenCASCADE SDK from OCCT_SDK_URL ..."
             Invoke-WebRequest -Uri $env:OCCT_SDK_URL -OutFile $zip
           }
-          elseif (-not [string]::IsNullOrWhiteSpace($env:GH_TOKEN)) {
+          elseif (-not [string]::IsNullOrWhiteSpace($env:OCCT_SDK_GH_TOKEN)) {
             Write-Host "Downloading OpenCASCADE SDK release asset '$($env:OCCT_SDK_ASSET)' from $($env:OCCT_SDK_REPO)@$($env:OCCT_SDK_TAG) ..."
+            $env:GH_TOKEN = $env:OCCT_SDK_GH_TOKEN
             & gh release download $env:OCCT_SDK_TAG --repo $env:OCCT_SDK_REPO --pattern $env:OCCT_SDK_ASSET --output $zip --clobber
             if ($LASTEXITCODE -ne 0) { throw "gh release download failed (check the release tag/asset name and that SUBMODULES_PAT can read $($env:OCCT_SDK_REPO))." }
           }
@@ -127,7 +193,40 @@ jobs:
           Expand-Archive -Path $zip -DestinationPath $sdkRoot -Force
           Remove-Item $zip -Force
 
-          $probe = Test-OcctSdk $sdkRoot
-          if (-not $probe.Valid) { throw "OCCT SDK downloaded but gp_Pnt.hxx/TKernel.lib/TKernel.dll not all found under $sdkRoot — check the zip layout." }
+          if (-not (Test-OcctSdk $sdkRoot).Valid) { throw "OCCT SDK downloaded but gp_Pnt.hxx/TKernel.lib/TKernel.dll not all found under $sdkRoot - check the zip layout." }
 
-          Write-Host "OCCT SDK warmed and validated at $sdkRoot - actions/cache will save it under the default-branch scope on job success."
+          Write-Host "OCCT SDK downloaded and validated at $sdkRoot - will be saved to the master cache scope."
+          "save=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      # Only runs when the step above actually produced something new to store,
+      # i.e. after a cold miss or after a corrupt entry was deleted. Saving on
+      # the valid-hit path would just log a "key already exists" warning.
+      - name: Save OCCT SDK cache
+        if: steps.occt-warm.outputs.save == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: C:\OCCT
+          key: ${{ env.OCCT_CACHE_KEY }}
+
+      # actions/cache/save swallows its own failures (a reserveCache 409 is
+      # logged, not thrown), so "the save step was green" is NOT evidence that
+      # the cache exists. Ask the API instead, and fail if the entry this job
+      # promised to leave behind is not actually there.
+      - name: Verify master-scoped cache entry
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $entries = & gh cache list --key $env:OCCT_CACHE_KEY --ref 'refs/heads/master' --repo $env:GITHUB_REPOSITORY --json key,ref,sizeInBytes,createdAt | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw "Could not list caches to verify the warm result." }
+
+          # --key is a PREFIX filter, so match the exact key ourselves.
+          $match = @($entries | Where-Object { $_.key -eq $env:OCCT_CACHE_KEY -and $_.ref -eq 'refs/heads/master' })
+          if ($match.Count -eq 0) {
+            throw "No cache entry for key '$($env:OCCT_CACHE_KEY)' exists in refs/heads/master after this run. The default-branch scope is still cold; do not treat this run as a successful warm."
+          }
+
+          $m = $match[0]
+          Write-Host "Verified: key '$($m.key)' present in $($m.ref), $([math]::Round($m.sizeInBytes / 1MB, 1)) MB, created $($m.createdAt)."
+          Write-Host "Every branch forked from master can now restore this entry on its first installer run."

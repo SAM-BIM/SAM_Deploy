@@ -169,20 +169,29 @@ jobs:
       # (NativeAvailable == false / SAM_OCCT_NATIVE_MISSING) until the engine is
       # present.
       # -----------------------------------------------------------------------
-      # Key kept identical to occt-cache-warm.yml's (this same branch's PR),
-      # so a cache that workflow saves in the master scope is actually found
-      # by this step if installer.yml is ever run directly against master -
-      # review finding (chatgpt-codex-connector): these two must match or
-      # this workflow silently never benefits from the warmed cache. The
-      # fuller cache-key/validation hardening (corrupt-cache redownload,
-      # exact hit/miss logging) lives in sow/2026-Q3 via PR #27 and reaches
-      # master at the next quarterly promotion; this is only the minimal key
-      # alignment needed so the two files agree today.
+      # Key kept BYTE-FOR-BYTE identical to occt-cache-warm.yml's (this same
+      # branch's PR) and to installer.yml's on sow/2026-Q3 (PR #27), so a cache
+      # the warmer saves in the master scope is actually found by this step -
+      # review finding (chatgpt-codex-connector): these must match or this
+      # workflow silently never benefits from the warmed cache.
+      #
+      # 'Windows' is spelled out rather than using ${{ runner.os }} so the three
+      # copies of this key can be compared as literal text; runs-on is
+      # windows-2022, for which runner.os is always exactly 'Windows'.
+      #
+      # SCOPE NOTE: this PR deliberately changes only the key here. The fuller
+      # hardening (split restore/save, three-marker validation, corrupt-entry
+      # deletion, hit/miss logging) lives in sow/2026-Q3 via PR #27 and reaches
+      # master at the next quarterly promotion. Until then this step keeps the
+      # older single-marker check, so if it ever runs on master against a
+      # corrupt entry it will not self-repair - run "Warm OCCT SDK cache
+      # (default branch)", which does, and which is the only workflow that
+      # writes this key on master today.
       - name: Cache OpenCASCADE SDK
         uses: actions/cache@v4
         with:
           path: C:\OCCT
-          key: ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}-${{ runner.os }}-x64-v1
+          key: ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}-Windows-x64-v1
 
       - name: Build OCCT native engine (prebuilt OCCT SDK)
         shell: pwsh
