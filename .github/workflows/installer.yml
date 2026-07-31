@@ -174,11 +174,38 @@ jobs:
       # (NativeAvailable == false / SAM_OCCT_NATIVE_MISSING) until the engine is
       # present.
       # -----------------------------------------------------------------------
+      # Key = SDK identity (OCCT_SDK_TAG, same var the download step below falls
+      # back to) + runner OS + arch + an explicit cache-schema version. No commit
+      # SHA, branch name or run number, so the SAME cache is reused by every
+      # branch that can read it - see the restore-keys note and cache-warm
+      # workflow below for why a branch's *first* run can still miss.
+      #
+      # restore-keys lets a future schema-version bump (v1 -> v2) still land a
+      # fallback hit against the previous schema's cache instead of a cold miss;
+      # the validation step below re-checks the restored SDK regardless of
+      # which key satisfied the restore.
       - name: Cache OpenCASCADE SDK
+        id: occt-cache
         uses: actions/cache@v4
         with:
           path: C:\OCCT
-          key: occt-sdk-8.0.0-vc14-64
+          key: ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}-${{ runner.os }}-x64-v1
+          restore-keys: |
+            ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}-${{ runner.os }}-x64-
+
+      - name: Report OCCT SDK cache status
+        shell: pwsh
+        run: |
+          $hit = '${{ steps.occt-cache.outputs.cache-hit }}'
+          if ($hit -eq 'true') {
+            Write-Host "OCCT SDK cache: EXACT HIT on primary key."
+          } elseif (Test-Path 'C:\OCCT\gp_Pnt.hxx' -PathType Leaf) {
+            Write-Host "OCCT SDK cache: FALLBACK HIT via restore-keys (schema/version prefix matched)."
+          } elseif (Test-Path 'C:\OCCT') {
+            Write-Host "OCCT SDK cache: FALLBACK HIT via restore-keys (contents not yet verified)."
+          } else {
+            Write-Host "OCCT SDK cache: MISS - no cache restored, next step will download cold."
+          }
 
       - name: Build OCCT native engine (prebuilt OCCT SDK)
         shell: pwsh
@@ -198,9 +225,28 @@ jobs:
           }
 
           $sdkRoot = 'C:\OCCT'
-          $incProbe = Get-ChildItem -Path $sdkRoot -Recurse -Filter 'gp_Pnt.hxx' -ErrorAction SilentlyContinue | Select-Object -First 1
 
-          if (-not $incProbe) {
+          # A restored cache is only trustworthy if all three load-bearing
+          # markers are present (a partial/corrupt cache entry, or one from an
+          # incompatible SDK layout, must not be silently treated as good).
+          function Test-OcctSdk([string]$root) {
+            $inc = Get-ChildItem -Path $root -Recurse -Filter 'gp_Pnt.hxx'  -ErrorAction SilentlyContinue | Select-Object -First 1
+            $lib = Get-ChildItem -Path $root -Recurse -Filter 'TKernel.lib' -ErrorAction SilentlyContinue | Select-Object -First 1
+            $bin = Get-ChildItem -Path $root -Recurse -Filter 'TKernel.dll' -ErrorAction SilentlyContinue | Select-Object -First 1
+            [pscustomobject]@{ Valid = [bool]($inc -and $lib -and $bin); Inc = $inc; Lib = $lib; Bin = $bin }
+          }
+
+          $probe = Test-OcctSdk $sdkRoot
+
+          if ($probe.Valid) {
+            Write-Host "Restored OCCT SDK at $sdkRoot validated (gp_Pnt.hxx, TKernel.lib, TKernel.dll all present) - skipping download."
+          }
+          else {
+            if (Test-Path $sdkRoot) {
+              Write-Host "::warning::Restored/existing OCCT SDK at $sdkRoot is incomplete or corrupt (missing one of gp_Pnt.hxx / TKernel.lib / TKernel.dll) - deleting and re-downloading."
+              Remove-Item $sdkRoot -Recurse -Force
+            }
+
             $zip = Join-Path $env:RUNNER_TEMP 'occt-sdk.zip'
             New-Item -ItemType Directory -Force -Path $sdkRoot | Out-Null
 
@@ -222,18 +268,14 @@ jobs:
             Write-Host "Extracting SDK to $sdkRoot ..."
             Expand-Archive -Path $zip -DestinationPath $sdkRoot -Force
             Remove-Item $zip -Force
-            $incProbe = Get-ChildItem -Path $sdkRoot -Recurse -Filter 'gp_Pnt.hxx' -ErrorAction SilentlyContinue | Select-Object -First 1
-            if (-not $incProbe) { throw "OCCT SDK downloaded but gp_Pnt.hxx not found under $sdkRoot — check the zip layout." }
+            $probe = Test-OcctSdk $sdkRoot
+            if (-not $probe.Valid) { throw "OCCT SDK downloaded but gp_Pnt.hxx/TKernel.lib/TKernel.dll not all found under $sdkRoot — check the zip layout." }
           }
 
           # Discover SDK layout (robust to the exact folder name in the zip).
-          $incDir = $incProbe.Directory.FullName
-          $libProbe = Get-ChildItem -Path $sdkRoot -Recurse -Filter 'TKernel.lib' -ErrorAction SilentlyContinue | Select-Object -First 1
-          $binProbe = Get-ChildItem -Path $sdkRoot -Recurse -Filter 'TKernel.dll' -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $libProbe) { throw "TKernel.lib not found under $sdkRoot." }
-          if (-not $binProbe) { throw "TKernel.dll not found under $sdkRoot." }
-          $libDir = $libProbe.Directory.FullName
-          $binDir = $binProbe.Directory.FullName
+          $incDir = $probe.Inc.Directory.FullName
+          $libDir = $probe.Lib.Directory.FullName
+          $binDir = $probe.Bin.Directory.FullName
           Write-Host "OCCT inc: $incDir"
           Write-Host "OCCT lib: $libDir"
           Write-Host "OCCT bin: $binDir"
