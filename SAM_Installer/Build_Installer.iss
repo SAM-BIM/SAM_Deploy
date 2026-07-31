@@ -85,37 +85,6 @@ Filename: "{userappdata}\SAM\SAMdependencies\install.bat"; WorkingDir: "{userapp
 Type: filesandordirs; Name: "{userappdata}\SAM"
 
 [Code]
-procedure AppendGhPathIfExists(var Content: string; const Path: string);
-begin
-  if FileExists(Path) then
-    Content := Content + Path + #13#10;
-end;
-
-procedure CreateSamGhLink;
-var
-  GhDir, SamDir, Content: string;
-begin
-  GhDir := ExpandConstant('{userappdata}\Grasshopper\Libraries\');
-  SamDir := ExpandConstant('{userappdata}\SAM\');
-  if not DirExists(GhDir) then
-    ForceDirectories(GhDir);
-
-  Content := '#Order of files is important' + #13#10;
-  AppendGhPathIfExists(Content, SamDir + 'SAM.Core.Grasshopper.gha');
-  AppendGhPathIfExists(Content, SamDir + 'SAM.Architectural.Grasshopper.gha');
-  AppendGhPathIfExists(Content, SamDir + 'SAM.Analytical.Grasshopper.gha');
-  AppendGhPathIfExists(Content, SamDir + 'SAM.Geometry.Grasshopper.gha');
-  AppendGhPathIfExists(Content, SamDir + 'SAM.Math.Grasshopper.gha');
-  AppendGhPathIfExists(Content, SamDir + 'SAM.Weather.Grasshopper.gha');
-  AppendGhPathIfExists(Content, SamDir + 'SAM.Core.Mollier.UI.Grasshopper.gha');
-  AppendGhPathIfExists(Content, SamDir + 'SAM.Analytical.UI.Grasshopper.gha');
-  AppendGhPathIfExists(Content, SamDir + 'SAM.Analytical.UI.WPF.Grasshopper.gha');
-  AppendGhPathIfExists(Content, SamDir + 'SAM.Weather.UI.Grasshopper.gha');
-
-  SaveStringToFile(GhDir + 'SAM.ghlink', Content, False);
-end;
-
-
 procedure CreateStandaloneGhLink;
 var
   GhDir, SamDir, Content: string;
