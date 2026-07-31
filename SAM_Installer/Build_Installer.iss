@@ -134,6 +134,19 @@ begin
     Content := Content + SamDir + 'SAM.Architectural.Grasshopper.gha' + #13#10;
   if FileExists(SamDir + 'SAM.Analytical.Grasshopper.gha') then
     Content := Content + SamDir + 'SAM.Analytical.Grasshopper.gha' + #13#10;
+  // TAS Grasshopper components (registered after the core SAM GHAs they build on).
+  if FileExists(SamDir + 'SAM.Core.Grasshopper.Tas.gha') then
+    Content := Content + SamDir + 'SAM.Core.Grasshopper.Tas.gha' + #13#10;
+  if FileExists(SamDir + 'SAM.Analytical.Grasshopper.Tas.gha') then
+    Content := Content + SamDir + 'SAM.Analytical.Grasshopper.Tas.gha' + #13#10;
+  if FileExists(SamDir + 'SAM.Weather.Grasshopper.Tas.gha') then
+    Content := Content + SamDir + 'SAM.Weather.Grasshopper.Tas.gha' + #13#10;
+  if FileExists(SamDir + 'SAM.Core.Grasshopper.Tas.UKBR.gha') then
+    Content := Content + SamDir + 'SAM.Core.Grasshopper.Tas.UKBR.gha' + #13#10;
+  if FileExists(SamDir + 'SAM.Analytical.Grasshopper.Tas.GenOpt.gha') then
+    Content := Content + SamDir + 'SAM.Analytical.Grasshopper.Tas.GenOpt.gha' + #13#10;
+  if FileExists(SamDir + 'SAM.Analytical.Grasshopper.Tas.TPD.gha') then
+    Content := Content + SamDir + 'SAM.Analytical.Grasshopper.Tas.TPD.gha' + #13#10;
   // OCCT Grasshopper components (registered after the core SAM GHAs they build on).
   if FileExists(SamDir + 'SAM.Core.Grasshopper.OCCT.gha') then
     Content := Content + SamDir + 'SAM.Core.Grasshopper.OCCT.gha' + #13#10;
