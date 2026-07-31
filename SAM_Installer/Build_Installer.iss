@@ -40,7 +40,6 @@ Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2026"
 Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2027"
 
 ; Rhino package caches
-Name: "{userappdata}\McNeel\Rhinoceros\packages\7.0\SAM"
 Name: "{userappdata}\McNeel\Rhinoceros\packages\8.0\SAM"
 Name: "{userappdata}\McNeel\Rhinoceros\packages\9.0\SAM"
 
@@ -55,7 +54,6 @@ Source: "build\SAM\*";                 DestDir: "{userappdata}\SAM";            
 ; ---------- Third-party licences (OCCT LGPL-2.1 + exception; required because the OCCT TK*.dll runtime is bundled) ----------
 Source: "licenses\OCCT\*";             DestDir: "{userappdata}\SAM\licenses\OCCT";                  Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "build\SAMdependencies\*";     DestDir: "{userappdata}\SAM\SAMdependencies";                Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "build\SAM_Rhino_UI\*";        DestDir: "{userappdata}\McNeel\Rhinoceros\packages\7.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\SAM_Rhino_UI\*";        DestDir: "{userappdata}\McNeel\Rhinoceros\packages\8.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\SAM_Rhino_UI\*";        DestDir: "{userappdata}\McNeel\Rhinoceros\packages\9.0\SAM"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 
