@@ -1,0 +1,116 @@
+# -----------------------------------------------------------------------------
+# OCCT SDK cache warm (default branch only)
+#
+# WHY THIS EXISTS
+# GitHub Actions cache scoping grants a workflow run read access only to caches
+# created on (a) its own branch and (b) the repository's actual default branch
+# (`master` here). installer.yml (Build & Release SAM-BIM Installer) triggers
+# only on workflow_dispatch and `v*` tag pushes and has never once run against
+# `master` - every run so far has been on sow/2026-Q3 or a feature branch
+# derived from it. Because of that, the default-branch cache scope has always
+# been empty, so a brand-new feature branch can NEVER restore an existing OCCT
+# SDK cache (~208 MB / ~10 min native-engine cost) no matter how stable the
+# cache key is - confirmed by CI log analysis across 8 installer.yml runs.
+#
+# This workflow's only job is to populate that missing default-branch cache
+# entry so every branch that forks from `master` (directly or via sow/*)
+# inherits a warm cache on its very first run.
+#
+# SAFETY / SCOPE (deliberately minimal - see SAM_Deploy PR history for the
+# post-split maintenance programme this belongs to):
+#   - Downloads, extracts and validates the OCCT SDK, and lets actions/cache
+#     save it. Nothing else.
+#   - Does NOT check out submodules, does NOT build any SAM assembly, does NOT
+#     invoke cmake/MSBuild, does NOT run ISCC, does NOT touch SAM_OCCT.
+#   - Cannot create a tag or a GitHub Release: there is no `release` job here,
+#     no `permissions: contents: write`, and nothing in this file pushes tags.
+#   - Triggers are `schedule` (runs against the default branch automatically)
+#     and manual `workflow_dispatch` - never `push` to any branch, so merging
+#     this file does not itself trigger a run.
+# -----------------------------------------------------------------------------
+name: Warm OCCT SDK cache (default branch)
+
+on:
+  schedule:
+    - cron: '0 2 * * 1' # weekly, Monday 02:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: warm-occt-cache
+  cancel-in-progress: false
+
+jobs:
+  warm-occt-cache:
+    runs-on: windows-2022
+    steps:
+      # Same key/restore-keys scheme as installer.yml's "Cache OpenCASCADE SDK"
+      # step, so a cache saved here is the exact one a build run restores.
+      - name: Cache OpenCASCADE SDK
+        id: occt-cache
+        uses: actions/cache@v4
+        with:
+          path: C:\OCCT
+          key: ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}-${{ runner.os }}-x64-v1
+          restore-keys: |
+            ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}-${{ runner.os }}-x64-
+
+      - name: Download + validate OCCT SDK
+        shell: pwsh
+        env:
+          OCCT_SDK_URL: ${{ secrets.OCCT_SDK_URL }}
+          OCCT_SDK_REPO: ${{ vars.OCCT_SDK_REPO || 'SAM-BIM/SAM_OCCT' }}
+          OCCT_SDK_TAG: ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}
+          OCCT_SDK_ASSET: ${{ vars.OCCT_SDK_ASSET || 'opencascade-8.0.0-vc14-64-combined.zip' }}
+          GH_TOKEN: ${{ secrets.SUBMODULES_PAT }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sdkRoot = 'C:\OCCT'
+
+          # Mirrors installer.yml's Test-OcctSdk validation exactly, so a cache
+          # this workflow saves is guaranteed to pass that same check later.
+          function Test-OcctSdk([string]$root) {
+            $inc = Get-ChildItem -Path $root -Recurse -Filter 'gp_Pnt.hxx'  -ErrorAction SilentlyContinue | Select-Object -First 1
+            $lib = Get-ChildItem -Path $root -Recurse -Filter 'TKernel.lib' -ErrorAction SilentlyContinue | Select-Object -First 1
+            $bin = Get-ChildItem -Path $root -Recurse -Filter 'TKernel.dll' -ErrorAction SilentlyContinue | Select-Object -First 1
+            [pscustomobject]@{ Valid = [bool]($inc -and $lib -and $bin) }
+          }
+
+          $probe = Test-OcctSdk $sdkRoot
+
+          if ($probe.Valid) {
+            Write-Host "Restored OCCT SDK at $sdkRoot already valid (gp_Pnt.hxx, TKernel.lib, TKernel.dll all present) - nothing to warm."
+            return
+          }
+
+          if (Test-Path $sdkRoot) {
+            Write-Host "::warning::Existing $sdkRoot is incomplete or corrupt - deleting and re-downloading."
+            Remove-Item $sdkRoot -Recurse -Force
+          }
+
+          $zip = Join-Path $env:RUNNER_TEMP 'occt-sdk.zip'
+          New-Item -ItemType Directory -Force -Path $sdkRoot | Out-Null
+
+          if (-not [string]::IsNullOrWhiteSpace($env:OCCT_SDK_URL)) {
+            Write-Host "Downloading OpenCASCADE SDK from OCCT_SDK_URL ..."
+            Invoke-WebRequest -Uri $env:OCCT_SDK_URL -OutFile $zip
+          }
+          elseif (-not [string]::IsNullOrWhiteSpace($env:GH_TOKEN)) {
+            Write-Host "Downloading OpenCASCADE SDK release asset '$($env:OCCT_SDK_ASSET)' from $($env:OCCT_SDK_REPO)@$($env:OCCT_SDK_TAG) ..."
+            & gh release download $env:OCCT_SDK_TAG --repo $env:OCCT_SDK_REPO --pattern $env:OCCT_SDK_ASSET --output $zip --clobber
+            if ($LASTEXITCODE -ne 0) { throw "gh release download failed (check the release tag/asset name and that SUBMODULES_PAT can read $($env:OCCT_SDK_REPO))." }
+          }
+          else {
+            throw "No OCCT_SDK_URL secret and no SUBMODULES_PAT to fetch the release asset - cannot warm the cache."
+          }
+
+          Write-Host "Extracting SDK to $sdkRoot ..."
+          Expand-Archive -Path $zip -DestinationPath $sdkRoot -Force
+          Remove-Item $zip -Force
+
+          $probe = Test-OcctSdk $sdkRoot
+          if (-not $probe.Valid) { throw "OCCT SDK downloaded but gp_Pnt.hxx/TKernel.lib/TKernel.dll not all found under $sdkRoot — check the zip layout." }
+
+          Write-Host "OCCT SDK warmed and validated at $sdkRoot - actions/cache will save it under the default-branch scope on job success."
