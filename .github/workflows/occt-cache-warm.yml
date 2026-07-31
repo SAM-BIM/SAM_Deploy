@@ -46,16 +46,33 @@ jobs:
   warm-occt-cache:
     runs-on: windows-2022
     steps:
-      # Same key/restore-keys scheme as installer.yml's "Cache OpenCASCADE SDK"
-      # step, so a cache saved here is the exact one a build run restores.
+      # A manual workflow_dispatch lets an operator pick ANY ref in the branch
+      # selector. github.ref then reflects that choice, and actions/cache would
+      # save into THAT ref's scope, not master's - silently defeating this
+      # workflow's entire purpose (see the file header) while still reporting
+      # green. schedule runs are always against the default branch already, so
+      # this only ever rejects a mis-targeted manual dispatch; it never affects
+      # the weekly schedule.
+      - name: Require default-branch ref
+        shell: pwsh
+        run: |
+          $ref = '${{ github.ref }}'
+          if ($ref -ne 'refs/heads/master') {
+            Write-Host "::error::This workflow only warms the OCCT SDK cache in the 'master' default-branch scope. It was dispatched against ref '$ref', which would instead populate THAT branch's own cache scope and leave master's scope empty - exactly the bug this workflow exists to fix. Re-run workflow_dispatch with the branch selector set to 'master'."
+            throw "Refusing to run: github.ref ('$ref') is not 'refs/heads/master'."
+          }
+          Write-Host "Ref check passed: running on refs/heads/master."
+
+      # Same key scheme as installer.yml's "Cache OpenCASCADE SDK" step, so a
+      # cache saved here is the exact one a build run restores. No restore-keys
+      # here either, for the same schema-invalidation reason as installer.yml
+      # (see that workflow's comment) - a schema bump must always cold-miss.
       - name: Cache OpenCASCADE SDK
         id: occt-cache
         uses: actions/cache@v4
         with:
           path: C:\OCCT
           key: ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}-${{ runner.os }}-x64-v1
-          restore-keys: |
-            ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}-${{ runner.os }}-x64-
 
       - name: Download + validate OCCT SDK
         shell: pwsh
