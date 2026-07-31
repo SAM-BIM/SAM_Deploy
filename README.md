@@ -32,7 +32,7 @@ The installer stages SAM so it can be used from:
 
 Primary install locations:
 - `%APPDATA%\SAM\` (core payload)
-- `%APPDATA%\McNeel\Rhinoceros\packages\8.0\SAM\1.0.0\` 8.0(Rhino package payload for 7.0, 8.0 and 9.0 )
+- `%APPDATA%\McNeel\Rhinoceros\packages\8.0\SAM\1.0.0\` and `...\9.0\SAM\1.0.0\` (Rhino package payload for Rhino 8 and 9; Rhino 7 is no longer supported)
 - `%APPDATA%\Grasshopper\Libraries*` and `*.ghlink` (Grasshopper discovery)
 
 ## Versioning & stamping
