@@ -52,7 +52,6 @@ jobs:
         run: |
           $paths = @(
             (Join-Path $env:APPDATA 'SAM'),
-            (Join-Path $env:APPDATA 'McNeel\Rhinoceros\packages\7.0\SAM'),
             (Join-Path $env:APPDATA 'McNeel\Rhinoceros\packages\8.0\SAM'),
             (Join-Path $env:APPDATA 'McNeel\Rhinoceros\packages\9.0\SAM')
           )
@@ -825,54 +824,111 @@ jobs:
             Where-Object { $_.Name -notmatch 'Grasshopper' } |
             Remove-Item -Force -ErrorAction SilentlyContinue
 
-          # Rhino UI Yak-style package -> build\SAM_Rhino_UI\1.0.0\*
-          $yakRoot       = Join-Path $stage 'SAM_Rhino_UI'
-          $yakVersion    = '1.0.0'
-          $yakVersionDir = Join-Path $yakRoot $yakVersion
-          New-Item -ItemType Directory -Force -Path $yakVersionDir | Out-Null
+          # Rhino UI Yak-style package -> build\SAM_Rhino_UI\{manifest.txt,1.0.0\*}
+          #
+          # SAM_Rhino_UI is a single net8 RhinoCommon-based plugin whose PostBuild
+          # deploys identically to the Rhino 8 and Rhino 9 package folders. Rhino 7
+          # support was removed, so packages\7.0\SAM is never populated and must not
+          # be used as a staging source (doing so silently produced an empty payload
+          # and empty Rhino 8/9 install folders). The Rhino 8 package root is the
+          # canonical source; Rhino 9 is verified to be an identical copy below.
+          $yakRoot      = Join-Path $stage 'SAM_Rhino_UI'
+          $yakVersion   = '1.0.0'
+          $rhino8Root   = Join-Path $env:APPDATA 'McNeel\Rhinoceros\packages\8.0\SAM'
+          $rhino9Root   = Join-Path $env:APPDATA 'McNeel\Rhinoceros\packages\9.0\SAM'
+          $rhino8VerDir = Join-Path $rhino8Root $yakVersion
+          $rhino9VerDir = Join-Path $rhino9Root $yakVersion
 
-          # Makes tagged releases fail if Rhino payload is missing
-          $rhinoPackageSource = Join-Path $env:APPDATA 'McNeel\Rhinoceros\packages\7.0\SAM\1.0.0'
+          # Fatal on every run (branch or tag): a branch installer artifact with an
+          # empty Rhino package is not a valid build output.
+          if (-not (Test-Path $rhino8VerDir)) {
+            throw "Rhino 8 package output not found at $rhino8VerDir. SAM_Rhino_UI must build and deploy to the Rhino 8 package folder before staging."
+          }
+          if (-not (Test-Path $rhino9VerDir)) {
+            throw "Rhino 9 package output not found at $rhino9VerDir. SAM_Rhino_UI must build and deploy to the Rhino 9 package folder before staging."
+          }
 
-          if (-not (Test-Path $rhinoPackageSource)) {
-            $msg = "No Rhino output directory found at $rhinoPackageSource"
-
-            # Fail for tagged releases so we never publish an installer without Rhino payload
-            if ($env:GITHUB_REF -like 'refs/tags/*') {
-              throw $msg
+          # Compare Rhino 8 vs Rhino 9 outputs by relative path + hash before trusting
+          # either as canonical. Both come from the same build, so they must match.
+          function Get-RelativeFileHashMap([string]$root) {
+            $map = @{}
+            Get-ChildItem -Path $root -Recurse -File | ForEach-Object {
+              $rel = $_.FullName.Substring($root.Length).TrimStart('\')
+              $map[$rel] = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash
             }
-
-            Write-Warning $msg
-          }
-          else {
-            Write-Host "Staging Rhino payload from $rhinoPackageSource -> $yakVersionDir"
-            Copy-Item "$rhinoPackageSource\*" $yakVersionDir -Recurse -Force
+            return $map
           }
 
-          $manifestPath = Join-Path $yakRoot 'manifest.txt'
-          Set-Content -Path $manifestPath -Value $yakVersion -Encoding ascii
+          $rhino8Map = Get-RelativeFileHashMap $rhino8VerDir
+          $rhino9Map = Get-RelativeFileHashMap $rhino9VerDir
+          $allRelPaths = @($rhino8Map.Keys) + @($rhino9Map.Keys) | Sort-Object -Unique
+
+          $diffs = @()
+          foreach ($rel in $allRelPaths) {
+            $h8 = $rhino8Map[$rel]
+            $h9 = $rhino9Map[$rel]
+            if ($h8 -ne $h9) {
+              $diffs += [pscustomobject]@{ RelativePath = $rel; Rhino8 = $h8; Rhino9 = $h9 }
+            }
+          }
+
+          if ($diffs.Count -gt 0) {
+            Write-Host "Rhino 8 vs Rhino 9 package contents differ:"
+            $diffs | ForEach-Object {
+              Write-Host ("  {0}: rhino8={1} rhino9={2}" -f $_.RelativePath, $_.Rhino8, $_.Rhino9)
+            }
+            throw "Rhino 8 and Rhino 9 package outputs are expected to be identical (same net8 RhinoCommon plugin) but $($diffs.Count) file(s) differ. Refusing to silently pick one - see diffs above."
+          }
+          Write-Host "Rhino 8 / Rhino 9 package comparison: $($allRelPaths.Count) file(s) checked, all identical."
+
+          # Stage the complete Rhino 8 package root (manifest.txt + version dir), not
+          # just the contents of 1.0.0, so the manifest travels with the installer.
+          if (Test-Path $yakRoot) { Remove-Item $yakRoot -Recurse -Force }
+          New-Item -ItemType Directory -Force -Path $yakRoot | Out-Null
+          Write-Host "Staging Rhino payload from $rhino8Root -> $yakRoot"
+          Copy-Item "$rhino8Root\*" $yakRoot -Recurse -Force
+
+          $yakVersionDir = Join-Path $yakRoot $yakVersion
+          $manifestPath  = Join-Path $yakRoot 'manifest.txt'
+
+          if (-not (Test-Path $manifestPath)) {
+            throw "Rhino package manifest.txt not found at $manifestPath after staging from $rhino8Root."
+          }
+          $manifestSelectedVersion = (Get-Content -Path $manifestPath -Raw).Trim()
+          if ($manifestSelectedVersion -ne $yakVersion) {
+            throw "Rhino package manifest.txt selects '$manifestSelectedVersion', expected '$yakVersion'."
+          }
+
+          if (-not (Test-Path $yakVersionDir)) {
+            throw "Rhino package version directory not found at $yakVersionDir after staging."
+          }
 
           $stagedRhinoFiles = @(Get-ChildItem -Path $yakVersionDir -Recurse -File -ErrorAction SilentlyContinue)
-          $stagedRhp        = @($stagedRhinoFiles | Where-Object { $_.Extension -ieq '.rhp' })
-
           if ($stagedRhinoFiles.Count -eq 0) {
-            $msg = "Rhino package staging folder is empty: $yakVersionDir"
-
-            if ($env:GITHUB_REF -like 'refs/tags/*') {
-              throw $msg
-            }
-
-            Write-Warning $msg
+            throw "Rhino package staging folder is empty: $yakVersionDir"
           }
 
-          if ($stagedRhp.Count -eq 0) {
-            $msg = "No .rhp files staged for Rhino package. Source checked: $rhinoPackageSource"
-
-            if ($env:GITHUB_REF -like 'refs/tags/*') {
-              throw $msg
+          $requiredRhp = @('SAM.Analytical.Rhino.UI.rhp', 'SAM.Analytical.Rhino.Solver.UI.rhp')
+          foreach ($rhp in $requiredRhp) {
+            if (-not ($stagedRhinoFiles | Where-Object { $_.Name -ieq $rhp })) {
+              throw "Required Rhino plugin '$rhp' not found in staged package: $yakVersionDir"
             }
+          }
 
-            Write-Warning $msg
+          $stdole = $stagedRhinoFiles | Where-Object { $_.Name -ieq 'stdole.dll' }
+          if ($stdole) {
+            throw "stdole.dll must not be packaged with SAM_Rhino_UI (breaks the Rhino 8/9 .NET compatibility check) - found at $($stdole.FullName)"
+          }
+
+          Write-Host "Rhino package staging assertions:"
+          Write-Host "  manifest.txt         : OK (selects $manifestSelectedVersion)"
+          Write-Host "  $yakVersionDir : OK ($($stagedRhinoFiles.Count) file(s))"
+          foreach ($rhp in $requiredRhp) { Write-Host "  $rhp : OK" }
+          Write-Host "  stdole.dll            : absent (OK)"
+          Write-Host "  Rhino 7 staging path  : not used (OK) - single canonical root shared by 8.0 and 9.0"
+          Write-Host "Staged Rhino package inventory:"
+          $stagedRhinoFiles | Sort-Object FullName | ForEach-Object {
+            Write-Host "    $($_.FullName.Substring($yakRoot.Length).TrimStart('\'))"
           }
 
           $samFiles = @(Get-ChildItem -Path $samStage -Recurse -File -ErrorAction SilentlyContinue)
