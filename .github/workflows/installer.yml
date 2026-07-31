@@ -169,11 +169,20 @@ jobs:
       # (NativeAvailable == false / SAM_OCCT_NATIVE_MISSING) until the engine is
       # present.
       # -----------------------------------------------------------------------
+      # Key kept identical to occt-cache-warm.yml's (this same branch's PR),
+      # so a cache that workflow saves in the master scope is actually found
+      # by this step if installer.yml is ever run directly against master -
+      # review finding (chatgpt-codex-connector): these two must match or
+      # this workflow silently never benefits from the warmed cache. The
+      # fuller cache-key/validation hardening (corrupt-cache redownload,
+      # exact hit/miss logging) lives in sow/2026-Q3 via PR #27 and reaches
+      # master at the next quarterly promotion; this is only the minimal key
+      # alignment needed so the two files agree today.
       - name: Cache OpenCASCADE SDK
         uses: actions/cache@v4
         with:
           path: C:\OCCT
-          key: occt-sdk-8.0.0-vc14-64
+          key: ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}-${{ runner.os }}-x64-v1
 
       - name: Build OCCT native engine (prebuilt OCCT SDK)
         shell: pwsh
