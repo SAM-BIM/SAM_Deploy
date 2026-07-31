@@ -177,32 +177,30 @@ jobs:
       # Key = SDK identity (OCCT_SDK_TAG, same var the download step below falls
       # back to) + runner OS + arch + an explicit cache-schema version. No commit
       # SHA, branch name or run number, so the SAME cache is reused by every
-      # branch that can read it - see the restore-keys note and cache-warm
-      # workflow below for why a branch's *first* run can still miss.
+      # branch that can read it - see the cache-warm workflow below for why a
+      # branch's *first* run can still miss.
       #
-      # restore-keys lets a future schema-version bump (v1 -> v2) still land a
-      # fallback hit against the previous schema's cache instead of a cold miss;
-      # the validation step below re-checks the restored SDK regardless of
-      # which key satisfied the restore.
+      # Deliberately NO restore-keys: a prefix fallback that doesn't include the
+      # schema token would let a future v1 -> v2 schema bump restore the old v1
+      # contents (still marker-complete, so the validation step below accepts
+      # it), skip the download meant to invalidate v1, and then save that same
+      # stale content back out under the new v2 key - permanently poisoning the
+      # new schema with old data. A schema bump must always cold-miss and
+      # re-download; the primary key alone (which DOES change on a schema bump)
+      # is what makes that happen.
       - name: Cache OpenCASCADE SDK
         id: occt-cache
         uses: actions/cache@v4
         with:
           path: C:\OCCT
           key: ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}-${{ runner.os }}-x64-v1
-          restore-keys: |
-            ${{ vars.OCCT_SDK_TAG || 'occt-sdk-8.0.0-vc14-64' }}-${{ runner.os }}-x64-
 
       - name: Report OCCT SDK cache status
         shell: pwsh
         run: |
           $hit = '${{ steps.occt-cache.outputs.cache-hit }}'
           if ($hit -eq 'true') {
-            Write-Host "OCCT SDK cache: EXACT HIT on primary key."
-          } elseif (Test-Path 'C:\OCCT\gp_Pnt.hxx' -PathType Leaf) {
-            Write-Host "OCCT SDK cache: FALLBACK HIT via restore-keys (schema/version prefix matched)."
-          } elseif (Test-Path 'C:\OCCT') {
-            Write-Host "OCCT SDK cache: FALLBACK HIT via restore-keys (contents not yet verified)."
+            Write-Host "OCCT SDK cache: HIT on primary key."
           } else {
             Write-Host "OCCT SDK cache: MISS - no cache restored, next step will download cold."
           }
