@@ -41,8 +41,12 @@ Key SHAs: `SAM_Tas` `sow/2026-Q3` = `957dc1d` (pre-PR#27). `SAM_Tas_Grasshopper`
 ~~Review and merge SAM_Tas#27, then PR9 / SAM_Deploy.~~ **Both are done.** SAM_Tas#27 is merged
 (`36aa4eb8`) and the SAM_Deploy integration is complete — see §5.
 
-**The remaining work is validation, not code**: the installer run, the H1–H12 hand-test matrix and
-the clean-profile resource check (old "PR11"). See §5 and §6.
+**The remaining work is validation, not code**: the installer run, the release
+acceptance matrix and the clean-profile resource check (old "PR11"). The matrix
+itself was never actually defined anywhere until now — earlier handovers owed
+"H1–H12 hand tests" without saying what they were. It is now defined as the
+**SAM_Deploy release acceptance matrix v1** in `RELEASE_VALIDATION.md`
+(H1–H12, all results PENDING at definition time). See §5 and §6.
 
 ---
 
@@ -124,9 +128,11 @@ as future work**; they name files that no longer exist (`BuildAll_Release_net.cs
 `BuildAll_Debug_net.csproj`).
 
 **PR11 is the exception — its testing obligations are still owed.** The build/integration half is
-done, but the installer run, the full H1–H12 hand-test matrix and the clean-profile resource check
-have **not** been performed. See §6, which remains accurate: no H1–H12 hand test has been run across
-the entire programme, and the Rhino/Grasshopper smoke test was waived rather than executed.
+done, but the installer run, the release acceptance matrix and the clean-profile resource check
+have **not** been performed. The matrix (previously the undefined phrase "H1–H12") is now defined
+in `RELEASE_VALIDATION.md` — **SAM_Deploy release acceptance matrix v1** — and every row is still
+PENDING: no acceptance test has been run across the entire programme, and the Rhino/Grasshopper
+smoke test was waived rather than executed (H3–H7 now cover it).
 Everything verified to date is *build* verification, not *feature* verification.
 
 ---
@@ -143,7 +149,9 @@ Everything verified to date is *build* verification, not *feature* verification.
   `SAM_Tas_Grasshopper\build` and all six projects' `bin`/`obj`, rebuild **only**
   `SAM_Tas_Grasshopper.sln` (sibling engine outputs already built), confirm the six new `.gha`s carry
   fresh timestamps and both `.ghuser` files deployed, then test in Rhino.
-- **H1–H12 hand tests**: none run, across the entire programme.
+- **Release acceptance tests**: none run, across the entire programme. The acceptance matrix is
+  now defined in `RELEASE_VALIDATION.md` (v1, H1–H12, all PENDING); it supersedes the undefined
+  "H1–H12 hand tests" wording used in earlier handovers.
 - Everything so far was verified by **full Visual Studio MSBuild only** — that is *build*
   verification, not *feature* verification. Say so when reporting status.
 

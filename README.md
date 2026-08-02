@@ -54,6 +54,57 @@ On branches matching `sow/yyyy-Qx` the SAMVersion is derived directly from the b
 git submodule add https://github.com/SAM-BIM/SAM_OpenStudio.git
 ```
 
+## Building locally
+
+Clone with submodules, then use one of the four supported build entry points:
+
+| Entry point | Purpose |
+|---|---|
+| `BuildAll_Debug.csproj` | Full-stack Debug orchestrator |
+| `BuildAll_Release.csproj` | Full-stack Release orchestrator (the same build `installer.yml` drives) |
+| `BuildRevit_Debug.csproj` | Revit + Revit UI Debug helper (SAM_Revit and SAM_Revit_UI only) |
+| `BuildAlls_v4.bat` / `BuildAlls_v4.csproj` | Configurable local developer runner (full Debug + per-year Revit builds with snapshots) |
+
+`BuildAlls_v4.bat` commands:
+
+```bat
+BuildAlls_v4.bat                 rem full Debug Restore;Clean;Rebuild (start-of-day / cold build)
+BuildAlls_v4.bat fast            rem incremental Restore;Build
+BuildAlls_v4.bat pull            rem parallel fast-forward pull of every SAM repo, then full build
+BuildAlls_v4.bat pull fast       rem parallel pull, then incremental build
+BuildAlls_v4.bat skip2027        rem build Revit 2025/2026 only (no .NET 10 SDK required)
+BuildAlls_v4.bat nopause         rem skip the final pause (combine with any of the above)
+```
+
+Prerequisites: Visual Studio with MSBuild (located via `vswhere`), the .NET 8
+SDK, and — unless you pass `skip2027` — the .NET 10 SDK for the Revit 2027
+(net10.0-windows) build. A plain `git clone --recurse-submodules` is
+sufficient: everything BuildAlls_v4 needs is tracked in this repository.
+Optional, non-submodule sibling clones (e.g. `SAM_Acoustic`, `SAM_Origin`) are
+built when present and skipped when absent.
+
+Per-Revit-year Debug output is snapshotted to `_revitsnap\<year>\` by
+`.github/scripts/snapshot-revit-build.ps1` (the same script CI uses), because
+`SAM_Revit`/`SAM_Revit_UI` share one `build\` output folder and Revit 2027's
+net10.0-windows assemblies must never overwrite the net8.0 2025/2026 payload.
+
+## CI checks, test builds and releases
+
+Three different things, kept deliberately separate:
+
+- **PR validation** — automatic. Every pull request to `master` or
+  `sow/2026-Q3` runs `validate.yml`: submodule checkout, workflow/reference
+  checks, and a full `BuildAll_Release.csproj` Restore + Rebuild. It never
+  packages an installer and never publishes anything.
+- **Test installer builds** — manual. Run `installer.yml` from the Actions tab
+  against your branch with **Create GitHub Release on manual run unticked**;
+  the installer is uploaded as a workflow artifact only. Release acceptance
+  testing against such an artifact is defined in
+  [RELEASE_VALIDATION.md](RELEASE_VALIDATION.md).
+- **Public releases** — push a `v*` tag, or run `installer.yml` manually with
+  the release checkbox ticked. This is the only path that publishes to the
+  Releases page.
+
 ## Debugging / building locally
 
 This repository uses **git submodules** (detached HEAD). Useful references:
@@ -93,7 +144,7 @@ git push
 
 **About `git submodule update --remote`:** this command follows the `branch = ...` setting per submodule in `.gitmodules` — NOT the parent repo's current branch. Every SAM-BIM submodule in this repo is configured with `branch = sow/2026-Q3`, so `--remote` correctly pulls each submodule's `sow/2026-Q3` HEAD. Without those entries the command would silently pull each submodule's default branch (`master` = last-shipped state) instead.
 
-**Quarterly transitions:** when a new sow branch is cut (e.g. `sow/2026-Q3`), the `branch =` entries in `.gitmodules` must be updated to match. One-liner that does all 22 submodules at once:
+**Quarterly transitions:** when a new sow branch is cut (e.g. `sow/2026-Q3`), the `branch =` entries in `.gitmodules` must be updated to match. One-liner that updates every configured submodule at once:
 
 ```bash
 for sm in $(git config --file .gitmodules --get-regexp 'submodule\..*\.url' | grep 'SAM-BIM' | awk '{print $1}' | sed 's|submodule\.\(.*\)\.url|\1|'); do
@@ -112,7 +163,7 @@ test-build the in-progress quarter without touching `master` (the last-shipped,
 reproducible release):
 
 ```bash
-git submodule update --remote          # pulls the latest sow/2026-Q3 tip of all 23 repos
+git submodule update --remote          # pulls the latest sow/2026-Q3 tip of every configured submodule
 git commit -am "bump"
 git push origin sow/2026-Q3
 # then trigger a test build from the sow branch:
