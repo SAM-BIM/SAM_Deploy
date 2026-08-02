@@ -23,10 +23,11 @@ set "SCRIPT_DIR=%~dp0"
 set "PROJECT=%SCRIPT_DIR%BuildAlls_v4.csproj"
 set "STARTTIME=%TIME%"
 
-rem SAM_OCCT native layer needs vcpkg + OpenCASCADE, which are not installed on
-rem this machine (same as the CI runner). Skip the native build by default so the
-rem managed assemblies still build. To build the native layer, install vcpkg/OCCT
-rem and run with SAM_OCCT_SKIP_NATIVE_BUILD already set to false in your environment.
+rem SAM_OCCT native layer requires a configured vcpkg + OpenCASCADE environment,
+rem which a normal managed developer build does not need. Native compilation is
+rem therefore skipped by default so the managed assemblies still build. To build the
+rem native layer, set up vcpkg/OCCT and run with SAM_OCCT_SKIP_NATIVE_BUILD already
+rem set to false in your environment.
 if not defined SAM_OCCT_SKIP_NATIVE_BUILD set "SAM_OCCT_SKIP_NATIVE_BUILD=true"
 
 set "DO_PULL=0"

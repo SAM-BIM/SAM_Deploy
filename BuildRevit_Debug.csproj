@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Revit/Revit UI Debug helper - builds only SAM_Revit and SAM_Revit_UI (2025/2026). Renamed
-     from BuildAll_Debug_net.csproj to reflect its actual scope - logic unchanged. See
+<!-- Revit/Revit UI Debug helper - builds only SAM_Revit and SAM_Revit_UI (2025/2026). See
      BuildAll_Debug.csproj for the full-stack Debug build. -->
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>

@@ -41,7 +41,7 @@
          used to live here was for the Grasshopper adapters when they still lived inside
          SAM_Tas.sln; now that they're split into their own repo/solution, that workaround
          (and the SAM_Excel reorder that supported it) is gone - SAM_Excel builds in its
-         normal position below, matching BuildAll_Release_net.csproj's order. -->
+         normal position below, matching BuildAll_Release.csproj's order. -->
     <SolutionToBuild Include="SAM_Tas_Grasshopper\SAM_Tas_Grasshopper.sln"><Config>Debug</Config></SolutionToBuild>
     <SolutionToBuild Include="SAM_Excel\SAM_Excel.sln"><Config>Debug</Config></SolutionToBuild>
     <SolutionToBuild Include="SAM_SQLite\SAM_SQLite.sln"><Config>Debug</Config></SolutionToBuild>
