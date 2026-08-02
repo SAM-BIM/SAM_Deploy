@@ -70,7 +70,16 @@ Pass criteria:
 The exact six filenames are recorded below after being discovered from the
 built output (not guessed):
 
-*(pending — recorded during H5 execution)*
+1. `SAM.Analytical.Grasshopper.Tas.gha`
+2. `SAM.Analytical.Grasshopper.Tas.GenOpt.gha`
+3. `SAM.Analytical.Grasshopper.Tas.TPD.gha`
+4. `SAM.Core.Grasshopper.Tas.gha`
+5. `SAM.Core.Grasshopper.Tas.UKBR.gha`
+6. `SAM.Weather.Grasshopper.Tas.gha`
+
+(Discovered in both the developer build output and the clean-worktree build
+output; all six are logged as compressed into the H1 installer payload — run
+30764391863, "Package installer" step.)
 
 ## H6 — TAS UserObject deployment
 
@@ -83,7 +92,11 @@ Pass criteria:
 - both can be placed on a new canvas;
 - no missing-component or missing-assembly messages occur.
 
-*(exact filenames and component names recorded during H6 execution)*
+Exact filenames and component names (discovered from
+`SAM_Tas_Grasshopper\files\Grasshopper\UserObjects\SAM_Tas\`):
+
+- `Tas Workflow v7.ghuser`
+- `Validation.ghuser`
 
 ## H7 — Representative TAS workflow
 
@@ -176,27 +189,35 @@ Pass criteria:
 
 Environment (recorded at execution time):
 
-- Windows: *(pending)*
-- Rhino 8 / Rhino 9: *(pending)*
-- Revit: *(pending)*
-- Rhino.Inside.Revit: *(pending)*
-- TAS: *(pending)*
-- installer.yml run: *(pending — URL, run number, commit SHA, artifact SHA-256)*
+- Windows: Windows 11 Pro 10.0.26200 (validation VM)
+- Rhino 8 / Rhino 9: Rhino 8 (8.33.26188.13001) / Rhino 9 BETA (9.0.26209.18303)
+- Revit: 2027 (27.0.4.412) on the validation VM; 2025/2026 require a second machine
+- Rhino.Inside.Revit: *(recorded during H8–H10 execution)*
+- TAS: EDSL Tas for Engineers 9.5.7
+- installer.yml run: https://github.com/SAM-BIM/SAM_Deploy/actions/runs/30764391863
+  (run number 210, commit a6a3cde340368256d370c4bc1cfd206dd606a32b,
+  `publish_release=false`, version input `hardening-rc1`)
+- Artifact: `SAM_Install_hardening-rc1.exe`, 241,056,358 bytes
+- Artifact SHA-256: `49C7D047B92B2FCBA42066955D2ADF87F9C4FCD4873F5AD29C62DAB4D274020D`
+- DLL stamping (CI log, "Compute SAMVersion"): SAMVersion `2026.3.210.0`,
+  InformationalVersion `2026.3.210.0+a6a3cde` — matches run number + commit.
+- No tag or GitHub Release was created by either installer run (latest release
+  remains `v20260627.2`; no new refs/tags).
 
 | Test | Result | Environment | Evidence | Notes |
 |---|---|---|---|---|
-| H1 | PENDING | | | |
-| H2 | PENDING | | | |
-| H3 | PENDING | | | |
-| H4 | PENDING | | | |
-| H5 | PENDING | | | |
-| H6 | PENDING | | | |
-| H7 | PENDING | | | |
-| H8 | PENDING | | | |
-| H9 | PENDING | | | |
-| H10 | PENDING | | | |
-| H11 | PENDING | | | |
-| H12 | PENDING | | | |
+| H1 | PASS | GH Actions windows-2022 | run 30764391863 (success, 19m); artifact `SAM_Install_hardening-rc1.exe`; SHA-256 above; release list + tag list unchanged | First confirmation run 30762579846 (on 6ed081a) also succeeded |
+| H2 | PENDING | needs elevated account | | Local-user creation denied from unelevated shell; clean profile required — Michal to create `SAMValTest` (or run elevated) |
+| H3 | PENDING | Rhino 8.33 present | | GUI test — Michal |
+| H4 | PENDING | Rhino 9 BETA present | | GUI test — Michal |
+| H5 | PENDING | | Six filenames recorded above; all six logged as compressed into the installer payload (run 30764391863, "Package installer") | Install-location + freshness checks pending H2 |
+| H6 | PENDING | | Filenames recorded above | GUI placement check pending — Michal |
+| H7 | PENDING | TAS 9.5.7 present | | GUI workflow test — Michal (licence-dependent) |
+| H8 | PENDING | Revit 2025 absent here | | Michal, on the machine with Revit 2025 |
+| H9 | PENDING | Revit 2026 absent here | | Michal, on the machine with Revit 2026 |
+| H10 | PENDING | Revit 2027 27.0.4.412 present | | GUI test — Michal |
+| H11 | PENDING | | | Needs previous release install + uninstall pass — Michal |
+| H12 | PENDING | | Provenance recorded above; CI-log audit: zero Topologic/.pfx/SignInstall references in the full run log; per-year TFM assertion ran and passed (2025/2026=v8.0, 2027=v10.0); Rhino 8/9 package roots staged | Installed-payload audit (FileVersions, duplicates, dev paths) pending H2 |
 
 Rules:
 
