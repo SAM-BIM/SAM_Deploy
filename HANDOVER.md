@@ -38,12 +38,11 @@ Key SHAs: `SAM_Tas` `sow/2026-Q3` = `957dc1d` (pre-PR#27). `SAM_Tas_Grasshopper`
 
 ## 2. Exact next action
 
-**Review and merge [SAM_Tas#27](https://github.com/SAM-BIM/SAM_Tas/pull/27)** (branch
-`chore/remove-grasshopper`, 2 commits). Its PR body contains the full P7C verification report. Confirm
-CI is green and read any Codex review first.
+~~Review and merge SAM_Tas#27, then PR9 / SAM_Deploy.~~ **Both are done.** SAM_Tas#27 is merged
+(`36aa4eb8`) and the SAM_Deploy integration is complete — see §5.
 
-Then **PR9 / SAM_Deploy** — the first step in this programme that touches the installer. It must be
-**one atomic commit** (§5). Nobody has started it.
+**The remaining work is validation, not code**: the installer run, the H1–H12 hand-test matrix and
+the clean-profile resource check (old "PR11"). See §5 and §6.
 
 ---
 
@@ -104,25 +103,31 @@ deliberately left alone). Neither engine project uses `System.Windows.Forms`; th
 
 ---
 
-## 5. PR9 — SAM_Deploy (not started; read before touching it)
+## 5. SAM_Deploy — COMPLETE (do not action the old PR9/PR10 steps)
 
-Unchanged from the original plan: **one atomic commit** that (a) adds the `SAM_Tas_Grasshopper`
-submodule pinned at its post-PR#1 tip, (b) adds `SAM_Tas_Grasshopper.sln` to
-`BuildAll_Release_net.csproj` **immediately after SAM_Tas**, and (c) bumps the `SAM_Tas` gitlink past
-PR#27. Splitting this creates either a window where the installer ships **zero** Tas `.gha`s, or one
-where SAM_Tas and the new repo's outputs collide.
+The TAS split and its SAM_Deploy integration are **done**. `SAM_Tas_Grasshopper` is a submodule, its
+`.sln` builds immediately after `SAM_Tas`, and the `SAM_Tas` gitlink is `36aa4eb8` — PR#27's own merge
+commit. The build orchestrators have since been renamed and consolidated; the tracked set is now:
 
-`SAM_Deploy` is this workspace root's own repo (origin `SAM-BIM/SAM_Deploy.git`). Check
-`git ls-tree HEAD -- SAM_Tas` fresh — do not trust any SHA written in a doc.
-`.github/workflows/installer.yml` does `submodules: recursive` then runs `BuildAll_Release_net.csproj`
-directly, so it inherits the same pinning and needs no separate remediation beyond this one commit.
+| File | Role |
+|---|---|
+| `BuildAll_Debug.csproj` | Full-stack Debug orchestrator |
+| `BuildAll_Release.csproj` | Full-stack Release/installer orchestrator (driven by `installer.yml`) |
+| `BuildRevit_Debug.csproj` | Revit / Revit UI Debug helper (SAM_Revit + SAM_Revit_UI only) |
+| `BuildAlls_v4.bat` / `.csproj` | Configurable local developer runner (`pull`/`fast`/`skip2027`/`nopause`) |
 
-**PR10** (local, untracked `BuildAlls_v4.csproj` at workspace root): insert `SAM_Tas_Grasshopper`
-after SAM_Tas, delete the single-project pre-build line and its comment block, demote SAM_Excel back
-below it. Per Decision #14, do **not** give this file a new tracked home.
+`BuildAlls_v4` is now **intentionally tracked**. This deliberately supersedes the earlier Decision #14
+instruction that it remain untracked and local-only — that instruction is withdrawn, not overlooked.
 
-**PR11**: installer run + the full H1–H12 hand-test matrix (all still owed) + clean-profile resource
-check.
+The PR9 and PR10 actions previously described in this section are complete and **must not be followed
+as future work**; they name files that no longer exist (`BuildAll_Release_net.csproj`,
+`BuildAll_Debug_net.csproj`).
+
+**PR11 is the exception — its testing obligations are still owed.** The build/integration half is
+done, but the installer run, the full H1–H12 hand-test matrix and the clean-profile resource check
+have **not** been performed. See §6, which remains accurate: no H1–H12 hand test has been run across
+the entire programme, and the Rhino/Grasshopper smoke test was waived rather than executed.
+Everything verified to date is *build* verification, not *feature* verification.
 
 ---
 

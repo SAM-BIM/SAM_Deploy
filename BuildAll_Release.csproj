@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Full-stack Release/installer build, driven by .github/workflows/installer.yml. See
+     BuildAll_Debug.csproj for the full-stack Debug build, BuildRevit_Debug.csproj for the
+     Revit/Revit UI Debug helper, and BuildAlls_v4 for the configurable local developer build. -->
 <Project ToolsVersion="12.0"
          DefaultTargets="RestoreCleanRebuild"
          xmlns="http://schemas.microsoft.com/developer/msbuild/2003">

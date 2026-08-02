@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Configurable local developer build (BuildAlls_v4.bat wraps this): adds pull/fast/skip2027/
+     nopause convenience flags on top of a Debug build. See BuildAll_Debug.csproj for the
+     full-stack Debug orchestrator this is based on, BuildAll_Release.csproj for the CI/installer
+     Release build, and BuildRevit_Debug.csproj for the Revit-only Debug helper. -->
+<Project ToolsVersion="12.0" DefaultTargets="RestoreCleanRebuild" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <MSBuildExePath Condition=" '$(MSBuildExePath)' == '' ">C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe</MSBuildExePath>
+    <MSBuildCommonArgs>/m /nr:false /v:m /p:RunPostBuildEvent=OnOutputUpdated</MSBuildCommonArgs>
+    <!-- BuildAlls_v4.bat passes 1/0; treat anything other than an explicit opt-out as "build 2027". -->
+    <SkipRevit2027 Condition=" '$(SkipRevit2027)' == '' ">0</SkipRevit2027>
+    <BuildRevit2027 Condition=" '$(SkipRevit2027)' != '1' And '$(SkipRevit2027)' != 'true' ">true</BuildRevit2027>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Local Debug all-build order -->
+    <SolutionToBuild Include="SAM\SAM.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_Psychrometrics\SAM_Psychrometrics.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_Mollier\SAM_Mollier.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_Systems\SAM_Systems.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_Windows\SAM_Windows.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_IFC\SAM_IFC.sln"><Config>Debug</Config></SolutionToBuild>
+    <!-- <SolutionToBuild Include="SAM_Topologic\SAM_Topologic.sln"><Config>Debug</Config></SolutionToBuild> -->
+    <SolutionToBuild Include="SAM_Acoustic\SAM_Acoustic.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_BHoM\SAM_BHoM.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_gbXML\SAM_gbXML.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_GEM\SAM_GEM.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_LadybugTools\SAM_LadybugTools.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_Solver\SAM_Solver.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_SolarCalculator\SAM_SolarCalculator.sln"><Config>Debug</Config></SolutionToBuild>
+    <!-- Must precede SAM_Tas and SAM_OpenStudio: both benchmark producers reference
+         SAM_Validation\build\SAM.Analytical.Benchmark.dll by HintPath. -->
+    <SolutionToBuild Include="SAM_Validation\SAM_Validation.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_Tas\SAM_Tas.sln"><Config>Debug</Config></SolutionToBuild>
+    <!-- SAM_Tas_Grasshopper's projects reference SAM_Windows\build\SAM.Core.Windows.WPF.dll
+         (progress dialog) and SAM_Tas\build\*.dll (engine, above) - both already built by
+         this point. No SAM_UI dependency: the old SAM.Core.UI.WPF pre-build cycle-break that
+         used to live here was for the Grasshopper adapters when they still lived inside
+         SAM_Tas.sln; now that they're split into their own repo/solution, that workaround
+         (and the SAM_Excel reorder that supported it) is gone - SAM_Excel builds in its
+         normal position below, matching BuildAll_Release.csproj's order. -->
+    <SolutionToBuild Include="SAM_Tas_Grasshopper\SAM_Tas_Grasshopper.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_Excel\SAM_Excel.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_SQLite\SAM_SQLite.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_OpenStudio\SAM_OpenStudio.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_Origin\SAM_Origin.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_Multitasker\SAM_Multitasker.sln"><Config>Debug</Config></SolutionToBuild>
+	<SolutionToBuild Include="SAM_OCCT\SAM_OCCT.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_UI\SAM_UI.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_Rhino_UI\SAM_Rhino_UI.sln"><Config>Debug</Config></SolutionToBuild>
+    <!-- SAM_Revit and SAM_Revit_UI are built separately below, one Revit year at a time, and
+         are deliberately NOT in this list. They share a single ..\..\build\ output directory
+         with no year in the path, so building them through this generic loop would let the
+         last year rebuilt silently overwrite the previous year's binaries in build\ - harmless
+         while every year targeted net8.0-windows, but Revit 2027 targets net10.0-windows, so
+         that overwrite would leave build\ holding assemblies the 2025/2026 Revit process
+         cannot load at all. See RebuildRevitYears/BuildRevitYears below, and
+         scripts\Snapshot-RevitBuild.ps1. -->
+  </ItemGroup>
+
+  <Target Name="Restore">
+    <Message Text="Restoring all solutions (local Debug build order)" Importance="high" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;%(SolutionToBuild.Identity)&quot; /t:Restore /p:Configuration=%(SolutionToBuild.Config) $(MSBuildCommonArgs)" />
+  </Target>
+
+  <Target Name="Clean">
+    <Message Text="Cleaning all solutions (local Debug build order)" Importance="high" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;%(SolutionToBuild.Identity)&quot; /t:Clean /p:Configuration=%(SolutionToBuild.Config) $(MSBuildCommonArgs)" />
+  </Target>
+
+  <Target Name="Rebuild">
+    <Message Text="Rebuilding all solutions (local Debug build order)" Importance="high" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;%(SolutionToBuild.Identity)&quot; /t:Rebuild /p:Configuration=%(SolutionToBuild.Config) $(MSBuildCommonArgs)" />
+  </Target>
+
+  <Target Name="Build">
+    <Message Text="Building all solutions (incremental, local Debug build order)" Importance="high" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;%(SolutionToBuild.Identity)&quot; /t:Build /p:Configuration=%(SolutionToBuild.Config) $(MSBuildCommonArgs)" />
+  </Target>
+
+  <!-- =========================================================================
+       Revit builds (2025, 2026, 2027) - kept out of the generic SolutionToBuild
+       loop above; see the comment in that ItemGroup for why.
+
+       Restore is NOT a separate pass here, unlike the generic targets above.
+       obj\project.assets.json is one file per project, not one per
+       configuration - restoring Debug2025 then Debug2026 then Debug2027 in a
+       row leaves the file holding only the LAST restore's target framework.
+       Since 2025/2026 both restore net8.0-windows that was invisible; 2027
+       restores net10.0-windows, so a build of Debug2025 run after a batched
+       "restore every year first" pass fails NETSDK1005 ("doesn't have a
+       target for net8.0-windows") even though 2025 was never touched.
+       Restore therefore happens immediately before that same year's own
+       Clean/Rebuild or Build, one year at a time, and each year snapshots its
+       output into _revitsnap\<year>\ before the next year's restore can
+       invalidate ..\..\build\'s assets file for a DIFFERENT target framework.
+       ========================================================================= -->
+
+  <Target Name="RebuildRevitYears">
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Restore /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Restore /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Clean /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Clean /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Rebuild /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Rebuild /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;scripts\Snapshot-RevitBuild.ps1&quot; -Year 2025 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
+
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Restore /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Restore /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Clean /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Clean /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Rebuild /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Rebuild /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;scripts\Snapshot-RevitBuild.ps1&quot; -Year 2026 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
+
+    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Restore /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
+    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Restore /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
+    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Clean /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
+    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Clean /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
+    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Rebuild /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
+    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Rebuild /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
+    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;scripts\Snapshot-RevitBuild.ps1&quot; -Year 2027 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
+    <Message Condition=" '$(BuildRevit2027)' != 'true' " Importance="high" Text="SKIPPING Revit 2027 (skip2027 requested)" />
+
+    <!-- Restore build\ to a known-good state for anything downstream that still reads it
+         directly (rather than _revitsnap\<year>\): leave it holding the newest supported
+         year, same as before this Revit block existed. -->
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Restore /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Restore /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Build /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Build /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+  </Target>
+
+  <Target Name="BuildRevitYears">
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Restore /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Restore /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Build /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Build /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;scripts\Snapshot-RevitBuild.ps1&quot; -Year 2025 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
+
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Restore /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Restore /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Build /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Build /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;scripts\Snapshot-RevitBuild.ps1&quot; -Year 2026 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
+
+    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Restore /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
+    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Restore /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
+    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Build /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
+    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Build /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
+    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;scripts\Snapshot-RevitBuild.ps1&quot; -Year 2027 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
+    <Message Condition=" '$(BuildRevit2027)' != 'true' " Importance="high" Text="SKIPPING Revit 2027 (skip2027 requested)" />
+
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Restore /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Restore /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Build /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+    <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Build /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
+  </Target>
+
+  <Target Name="RestoreCleanRebuild" DependsOnTargets="Restore;Clean;Rebuild;RebuildRevitYears" />
+  <Target Name="RestoreBuild" DependsOnTargets="Restore;Build;BuildRevitYears" />
+
+</Project>

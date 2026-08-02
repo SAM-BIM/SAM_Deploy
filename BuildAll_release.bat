@@ -5,4 +5,4 @@ set msbuildexe=C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\C
 echo Building all SAM Solutions
 ::"%msbuildexe%" -t:Restore;Rebuild BuildAll_Release.csproj
 
-"%msbuildexe%" -t:Restore;Rebuild BuildAll_Release_net.csproj
+"%msbuildexe%" -t:Restore;Rebuild BuildAll_Release.csproj

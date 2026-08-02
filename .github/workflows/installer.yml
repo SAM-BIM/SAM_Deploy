@@ -526,7 +526,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           msbuild `
-            '.\BuildAll_Release_net.csproj' `
+            '.\BuildAll_Release.csproj' `
             '/t:Restore' `
             '/m:1' '/nr:false' '/v:m' `
             '/p:Configuration=Release' `
@@ -539,7 +539,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           msbuild `
-            '.\BuildAll_Release_net.csproj' `
+            '.\BuildAll_Release.csproj' `
             '/t:Rebuild' `
             '/m:1' '/nr:false' '/v:m' `
             '/p:Configuration=Release' `
