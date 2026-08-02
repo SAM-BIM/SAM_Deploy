@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Established, tracked Debug orchestrator (verified in PR #26: SAM_Validation -> SAM_Tas ->
+     SAM_Tas_Grasshopper -> SAM_Excel order). For CI/installer Release builds see
+     BuildAll_Release_net.csproj; for the local-only developer runner with pull/fast/skip2027
+     options see BuildAlls_v4.csproj. -->
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Solution Include="SAM/SAM.sln">

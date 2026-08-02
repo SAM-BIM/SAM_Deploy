@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- CI/installer Release orchestrator, driven by .github/workflows/installer.yml. For the
+     tracked Debug orchestrator see BuildAll_Debug.csproj; for the local-only developer runner
+     with pull/fast/skip2027 options see BuildAlls_v4.csproj. -->
 <Project ToolsVersion="12.0"
          DefaultTargets="RestoreCleanRebuild"
          xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
