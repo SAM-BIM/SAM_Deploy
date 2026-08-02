@@ -24,7 +24,10 @@
     <SolutionToBuild Include="SAM_Windows\SAM_Windows.sln"><Config>Debug</Config></SolutionToBuild>
     <SolutionToBuild Include="SAM_IFC\SAM_IFC.sln"><Config>Debug</Config></SolutionToBuild>
     <!-- <SolutionToBuild Include="SAM_Topologic\SAM_Topologic.sln"><Config>Debug</Config></SolutionToBuild> -->
-    <SolutionToBuild Include="SAM_Acoustic\SAM_Acoustic.sln"><Config>Debug</Config></SolutionToBuild>
+    <!-- Optional module: not a SAM_Deploy submodule, so skip when the sibling clone
+         is absent (same Exists pattern as BuildAll_Release.csproj). Without this a
+         clean clone cannot run BuildAlls_v4. -->
+    <SolutionToBuild Include="SAM_Acoustic\SAM_Acoustic.sln" Condition="Exists('SAM_Acoustic\SAM_Acoustic.sln')"><Config>Debug</Config></SolutionToBuild>
     <SolutionToBuild Include="SAM_BHoM\SAM_BHoM.sln"><Config>Debug</Config></SolutionToBuild>
     <SolutionToBuild Include="SAM_gbXML\SAM_gbXML.sln"><Config>Debug</Config></SolutionToBuild>
     <SolutionToBuild Include="SAM_GEM\SAM_GEM.sln"><Config>Debug</Config></SolutionToBuild>
@@ -46,7 +49,7 @@
     <SolutionToBuild Include="SAM_Excel\SAM_Excel.sln"><Config>Debug</Config></SolutionToBuild>
     <SolutionToBuild Include="SAM_SQLite\SAM_SQLite.sln"><Config>Debug</Config></SolutionToBuild>
     <SolutionToBuild Include="SAM_OpenStudio\SAM_OpenStudio.sln"><Config>Debug</Config></SolutionToBuild>
-    <SolutionToBuild Include="SAM_Origin\SAM_Origin.sln"><Config>Debug</Config></SolutionToBuild>
+    <SolutionToBuild Include="SAM_Origin\SAM_Origin.sln" Condition="Exists('SAM_Origin\SAM_Origin.sln')"><Config>Debug</Config></SolutionToBuild>
     <SolutionToBuild Include="SAM_Multitasker\SAM_Multitasker.sln"><Config>Debug</Config></SolutionToBuild>
 	<SolutionToBuild Include="SAM_OCCT\SAM_OCCT.sln"><Config>Debug</Config></SolutionToBuild>
     <SolutionToBuild Include="SAM_UI\SAM_UI.sln"><Config>Debug</Config></SolutionToBuild>
@@ -58,7 +61,8 @@
          while every year targeted net8.0-windows, but Revit 2027 targets net10.0-windows, so
          that overwrite would leave build\ holding assemblies the 2025/2026 Revit process
          cannot load at all. See RebuildRevitYears/BuildRevitYears below, and
-         scripts\Snapshot-RevitBuild.ps1. -->
+         .github\scripts\snapshot-revit-build.ps1 - the single canonical snapshot
+         script, shared with installer.yml. -->
   </ItemGroup>
 
   <Target Name="Restore">
@@ -106,7 +110,7 @@
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Clean /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Rebuild /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Rebuild /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;scripts\Snapshot-RevitBuild.ps1&quot; -Year 2025 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;.github\scripts\snapshot-revit-build.ps1&quot; -Year 2025 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
 
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Restore /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Restore /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
@@ -114,7 +118,7 @@
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Clean /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Rebuild /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Rebuild /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;scripts\Snapshot-RevitBuild.ps1&quot; -Year 2026 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;.github\scripts\snapshot-revit-build.ps1&quot; -Year 2026 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
 
     <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Restore /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
     <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Restore /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
@@ -122,7 +126,7 @@
     <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Clean /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
     <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Rebuild /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
     <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Rebuild /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
-    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;scripts\Snapshot-RevitBuild.ps1&quot; -Year 2027 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
+    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;.github\scripts\snapshot-revit-build.ps1&quot; -Year 2027 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
     <Message Condition=" '$(BuildRevit2027)' != 'true' " Importance="high" Text="SKIPPING Revit 2027 (skip2027 requested)" />
 
     <!-- Restore build\ to a known-good state for anything downstream that still reads it
@@ -139,19 +143,19 @@
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Restore /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Build /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Build /p:Configuration=Debug2025 $(MSBuildCommonArgs)" />
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;scripts\Snapshot-RevitBuild.ps1&quot; -Year 2025 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;.github\scripts\snapshot-revit-build.ps1&quot; -Year 2025 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
 
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Restore /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Restore /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Build /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Build /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;scripts\Snapshot-RevitBuild.ps1&quot; -Year 2026 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;.github\scripts\snapshot-revit-build.ps1&quot; -Year 2026 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
 
     <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Restore /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
     <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Restore /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
     <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Build /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
     <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit_UI\SAM_Revit_UI.sln&quot; /t:Build /p:Configuration=Debug2027 $(MSBuildCommonArgs)" />
-    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;scripts\Snapshot-RevitBuild.ps1&quot; -Year 2027 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
+    <Exec Condition=" '$(BuildRevit2027)' == 'true' " Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;.github\scripts\snapshot-revit-build.ps1&quot; -Year 2027 -RepoRoot &quot;$(MSBuildProjectDirectory)&quot;" />
     <Message Condition=" '$(BuildRevit2027)' != 'true' " Importance="high" Text="SKIPPING Revit 2027 (skip2027 requested)" />
 
     <Exec Command="&quot;$(MSBuildExePath)&quot; &quot;SAM_Revit\SAM_Revit.sln&quot; /t:Restore /p:Configuration=Debug2026 $(MSBuildCommonArgs)" />
