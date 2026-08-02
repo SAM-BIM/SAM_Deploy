@@ -6,10 +6,6 @@
 	path = SAM_Solver
 	url = https://github.com/SAM-BIM/SAM_Solver.git
 	branch = sow/2026-Q3
-[submodule "SAM_Topologic"]
-	path = SAM_Topologic
-	url = https://github.com/SAM-BIM/SAM_Topologic.git
-	branch = sow/2026-Q3
 [submodule "SAM_LadybugTools"]
 	path = SAM_LadybugTools
 	url = https://github.com/SAM-BIM/SAM_LadybugTools.git
