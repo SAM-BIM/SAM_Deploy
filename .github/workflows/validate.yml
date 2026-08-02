@@ -1,0 +1,131 @@
+name: Validate PR
+
+# Non-publishing pull-request validation: proves a PR still builds the full
+# Release orchestrator before it can merge. Never creates an installer, a tag
+# or a GitHub Release - those belong to installer.yml (manual dispatch / v* tag
+# push) alone.
+#
+# Security model: pull_request only (never pull_request_target), read-only
+# permissions, and two mutually exclusive checkout steps. The SUBMODULES_PAT is
+# used solely for same-repository PRs; forked PRs get the default GITHUB_TOKEN
+# (GitHub also withholds secrets from fork pull_request runs, so the PAT cannot
+# leak to forked code).
+
+on:
+  pull_request:
+    branches: [master, 'sow/2026-Q3']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-2022
+    env:
+      # Same flag installer.yml sets (BuildAll_Release.csproj also sets it on the
+      # SAM_OCCT entry itself): the OCCT Grasshopper project's BeforeTargets
+      # native build needs the OCCT SDK/vcpkg, which PR validation does not use.
+      SAM_OCCT_SKIP_NATIVE_BUILD: 'true'
+
+    steps:
+      - name: Checkout (same-repo PR, private submodules)
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.SUBMODULES_PAT }}
+
+      - name: Checkout (fork PR, public submodules only)
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Sync & clean submodules
+        shell: pwsh
+        run: |
+          git submodule sync --recursive
+          git submodule foreach --recursive 'git reset --hard'
+          git submodule foreach --recursive 'git clean -xfd'
+
+      - name: Validate workflow YAML
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -m pip install --quiet pyyaml
+          Get-ChildItem .github/workflows -Filter *.yml | ForEach-Object {
+            python -c "import sys, yaml; yaml.safe_load(open(sys.argv[1], encoding='utf-8'))" $_.FullName
+            if ($LASTEXITCODE -ne 0) { throw "Invalid YAML: $($_.FullName)" }
+            Write-Host "OK: $($_.Name)"
+          }
+
+      - name: Validate repository references
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Files the workflows and supported orchestrators depend on. If a PR
+          # deletes or renames one of these without updating its callers, fail
+          # here rather than in a later installer run.
+          $required = @(
+            'BuildAll_Debug.csproj',
+            'BuildAll_Release.csproj',
+            'BuildRevit_Debug.csproj',
+            'BuildAlls_v4.bat',
+            'BuildAlls_v4.csproj',
+            '.github\scripts\snapshot-revit-build.ps1',
+            'SAM_Installer\Build_Installer.iss',
+            'Install\SAMdependencies\install.bat'
+          )
+          foreach ($r in $required) {
+            if (-not (Test-Path $r)) { throw "Missing required file: $r" }
+            Write-Host "OK: $r"
+          }
+          git ls-files --error-unmatch $required | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "A required file exists but is not tracked." }
+
+      # Revit 2025/2026 target net8.0-windows, Revit 2027 targets net10.0-windows;
+      # both SDKs are required, same as installer.yml.
+      - name: Setup .NET 8 and .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.x
+            10.x
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      # Mirrors installer.yml's "Restore (single node)" / "Rebuild (single node)"
+      # steps exactly - keep the two in sync deliberately. SAMVersion is left
+      # unset: PR validation does not stamp release versions (defaults to 1.0.0.0).
+      - name: Restore (single node)
+        shell: pwsh
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          msbuild `
+            '.\BuildAll_Release.csproj' `
+            '/t:Restore' `
+            '/m:1' '/nr:false' '/v:m' `
+            '/p:Configuration=Release' `
+            '/p:UseSharedCompilation=false'
+
+      - name: Rebuild (single node)
+        shell: pwsh
+        env:
+          MSBUILDDISABLENODEREUSE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          msbuild `
+            '.\BuildAll_Release.csproj' `
+            '/t:Rebuild' `
+            '/m:1' '/nr:false' '/v:m' `
+            '/p:Configuration=Release' `
+            '/p:UseSharedCompilation=false'
