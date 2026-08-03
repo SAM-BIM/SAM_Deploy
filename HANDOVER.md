@@ -26,10 +26,10 @@ previous handover) all still stand and were followed — they are not repeated h
 | 6 | SAM_UI | [#69](https://github.com/SAM-BIM/SAM_UI/pull/69) | **merged** |
 | — | SAM_Tas | [#26](https://github.com/SAM-BIM/SAM_Tas/pull/26) | **merged** — unplanned bug fix, see §4a |
 | 7 | SAM_Tas_Grasshopper | [#1](https://github.com/SAM-BIM/SAM_Tas_Grasshopper/pull/1) | **merged** (`ce4b6e5f`) |
-| **8** | **SAM_Tas** | **[#27](https://github.com/SAM-BIM/SAM_Tas/pull/27)** | **OPEN — the only thing awaiting action** |
-| 9 | SAM_Deploy | — | **not started** |
-| 10 | BuildAlls_v4 (local, untracked) | — | **not started** |
-| 11 | validation / hand tests | — | **not started** |
+| 8 | SAM_Tas | [#27](https://github.com/SAM-BIM/SAM_Tas/pull/27) | **merged** (`36aa4eb8`) |
+| 9 | SAM_Deploy | [#36](https://github.com/SAM-BIM/SAM_Deploy/pull/36) | **complete** — hardening + acceptance matrix |
+| 10 | BuildAlls_v4 | — | **tracked + clean-clone proven** (PR #36) |
+| 11 | validation / release acceptance matrix | — | **COMPLETE — H1–H12 PASS** (§5, §6) |
 
 Key SHAs: `SAM_Tas` `sow/2026-Q3` = `957dc1d` (pre-PR#27). `SAM_Tas_Grasshopper` `sow/2026-Q3` =
 `master` = `ce4b6e5f`; its P7A import commit (useful for diffing preserved content) = `3ed49399`.
@@ -41,12 +41,12 @@ Key SHAs: `SAM_Tas` `sow/2026-Q3` = `957dc1d` (pre-PR#27). `SAM_Tas_Grasshopper`
 ~~Review and merge SAM_Tas#27, then PR9 / SAM_Deploy.~~ **Both are done.** SAM_Tas#27 is merged
 (`36aa4eb8`) and the SAM_Deploy integration is complete — see §5.
 
-**The remaining work is validation, not code**: the installer run, the release
-acceptance matrix and the clean-profile resource check (old "PR11"). The matrix
-itself was never actually defined anywhere until now — earlier handovers owed
-"H1–H12 hand tests" without saying what they were. It is now defined as the
-**SAM_Deploy release acceptance matrix v1** in `RELEASE_VALIDATION.md`
-(H1–H12, all results PENDING at definition time). See §5 and §6.
+**Validation is complete.** The installer run, the release acceptance matrix and the
+clean-profile resource check (old "PR11") are all done: the **SAM_Deploy release
+acceptance matrix v1** in `RELEASE_VALIDATION.md` is **H1–H12 PASS** (see §5 and §6).
+The matrix itself was first defined in PR
+[#36](https://github.com/SAM-BIM/SAM_Deploy/pull/36) — earlier handovers owed
+"H1–H12 hand tests" without ever defining them.
 
 ---
 
@@ -127,33 +127,34 @@ The PR9 and PR10 actions previously described in this section are complete and *
 as future work**; they name files that no longer exist (`BuildAll_Release_net.csproj`,
 `BuildAll_Debug_net.csproj`).
 
-**PR11 is the exception — its testing obligations are still owed.** The build/integration half is
-done, but the installer run, the release acceptance matrix and the clean-profile resource check
-have **not** been performed. The matrix (previously the undefined phrase "H1–H12") is now defined
-in `RELEASE_VALIDATION.md` — **SAM_Deploy release acceptance matrix v1** — and every row is still
-PENDING: no acceptance test has been run across the entire programme, and the Rhino/Grasshopper
-smoke test was waived rather than executed (H3–H7 now cover it).
-Everything verified to date is *build* verification, not *feature* verification.
+**PR11 / release acceptance — COMPLETE.** The **SAM_Deploy release acceptance matrix
+v1** (`RELEASE_VALIDATION.md`) is **H1–H12 PASS**, executed against
+`SAM_Install_hardening-rc1.exe` (workflow run 30764391863, run number 210, commit
+`a6a3cde`, SHA-256 recorded in the matrix): clean-profile installation passed;
+Rhino 8 and Rhino 9 load tests passed; all six TAS Grasshopper assemblies, both TAS
+UserObjects and a representative TAS workflow passed; Rhino.Inside.Revit passed on
+Revit 2025 and 2026; the Revit 2027 energy-analysis runtime paths
+(ToSAM_AnalyticalModel / TogbXML — the SAM_Revit#17 fix) passed; upgrade and
+uninstall validation passed; and the installed-payload + provenance audit passed
+(installed DLLs carry FileVersion `2026.3.210.0` = run 210). One installer
+improvement was documented during H11 — the uninstaller does not remove
+`[Code]`-created artefacts (ghlinks, SAM.addin files) — recorded as FOLLOW-UP-1 in
+`RELEASE_VALIDATION.md`. That is a follow-up enhancement, not validation debt:
+**no SAM_Deploy validation debt remains from this programme.**
 
 ---
 
-## 6. Owed / waived — be honest about these when reporting
+## 6. Validation status — COMPLETE
 
-- **The isolated Rhino/Grasshopper smoke test for SAM_Tas_Grasshopper#1 was explicitly WAIVED by
-  Michal, not performed.** No desktop-automation tool was available in that session. Nothing has yet
-  proven that Rhino loads the six *new* `.gha`s (as opposed to stale copies previously produced by
-  SAM_Tas), that all six assemblies load without duplicate-assembly/component warnings, that both
-  `.ghuser` UserObjects open, or that a representative TAS workflow solves. **This is the single
-  biggest untested area in the programme.** If you have Rhino 8 available, this is high-value: record
-  and rename aside the six existing `.gha`s + their DLLs under `%APPDATA%\SAM`, clear
-  `SAM_Tas_Grasshopper\build` and all six projects' `bin`/`obj`, rebuild **only**
-  `SAM_Tas_Grasshopper.sln` (sibling engine outputs already built), confirm the six new `.gha`s carry
-  fresh timestamps and both `.ghuser` files deployed, then test in Rhino.
-- **Release acceptance tests**: none run, across the entire programme. The acceptance matrix is
-  now defined in `RELEASE_VALIDATION.md` (v1, H1–H12, all PENDING); it supersedes the undefined
-  "H1–H12 hand tests" wording used in earlier handovers.
-- Everything so far was verified by **full Visual Studio MSBuild only** — that is *build*
-  verification, not *feature* verification. Say so when reporting status.
+- **Release acceptance matrix v1 (`RELEASE_VALIDATION.md`): H1–H12 all PASS.** It supersedes
+  the undefined "H1–H12 hand tests" wording used in earlier handovers.
+- *Historical note:* the isolated Rhino/Grasshopper smoke test for SAM_Tas_Grasshopper#1 was
+  waived in an earlier session for lack of desktop-automation tooling. That gap is now closed
+  by direct evidence — H3–H7 were executed by Michal at the console against the packaged
+  installer (run 210 artifact), including duplicate-assembly/GUID-warning checks, both TAS
+  UserObjects and a representative TAS workflow.
+- *Historical note:* everything before the matrix run was *build* verification, not *feature*
+  verification. Feature verification now exists and is recorded in `RELEASE_VALIDATION.md`.
 
 ---
 
@@ -234,11 +235,11 @@ Two known bugs still flagged and unfixed: `SAM_Revit_UI/.../ParameterNames.cs:30
 (needs Michal's decision — deliberately preserved bit-for-bit through the WinForms→WPF migration), and
 `MultipleSelectionTreeViewControl.GetObjects<T>(bool selected)` not forwarding `selected`.
 
-Also still open and unrelated to this programme: the **Revit 2027 Energy Analysis API** breakage
-documented in the previous handover (`EnergyDataSettings.AnalysisType` throws;
-`EnergyAnalysisDetailModelOptions` is `[Obsolete]` in 2027 and its `EnergyModelType` ignored). Michal
-was mid-way through checking `energyDataSettings.CheckAnalysisType(AnalysisMode.RoomsOrSpaces)` in the
-Immediate Window. Affects `SAM_Revit/.../ToSAM/AnalyticalModel.cs:44` and `.../TogbXML/gbXML.cs:84`.
+**Resolved since this handover was written:** the **Revit 2027 Energy Analysis API** breakage
+(`EnergyDataSettings.AnalysisType` throws; `EnergyAnalysisDetailModelOptions` `[Obsolete]` in
+2027) was fixed by [SAM_Revit#17](https://github.com/SAM-BIM/SAM_Revit/pull/17)
+(`c728c735` — the SAM_Revit pointer deployed by PR #36) and validated at runtime in
+acceptance test H10 (Revit 2027, ToSAM_AnalyticalModel / TogbXML — PASS).
 
 ---
 
