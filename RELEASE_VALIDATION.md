@@ -207,17 +207,17 @@ Environment (recorded at execution time):
 | Test | Result | Environment | Evidence | Notes |
 |---|---|---|---|---|
 | H1 | PASS | GH Actions windows-2022 | run 30764391863 (success, 19m); artifact `SAM_Install_hardening-rc1.exe`; SHA-256 above; release list + tag list unchanged | First confirmation run 30762579846 (on 6ed081a) also succeeded |
-| H2 | PENDING | needs elevated account | | Local-user creation denied from unelevated shell; clean profile required — Michal to create `SAMValTest` (or run elevated) |
-| H3 | PENDING | Rhino 8.33 present | | GUI test — Michal |
-| H4 | PENDING | Rhino 9 BETA present | | GUI test — Michal |
-| H5 | PENDING | | Six filenames recorded above; all six logged as compressed into the installer payload (run 30764391863, "Package installer") | Install-location + freshness checks pending H2 |
-| H6 | PENDING | | Filenames recorded above | GUI placement check pending — Michal |
-| H7 | PENDING | TAS 9.5.7 present | | GUI workflow test — Michal (licence-dependent) |
+| H2 | PASS | clean profile, validation VM | Michal: installer completed without errors; SHA-256 confirmed before install; expected %APPDATA%\SAM + Rhino 8/9 package dirs created | Installed payload independently verified to carry only run-210 stamps (see H12) |
+| H3 | PASS | Rhino 8.33.26188.13001 | Michal at console: SAM plugin loads, GH starts, SAM tabs/components appear, no missing-assembly errors, no duplicate assembly/component GUID warnings | |
+| H4 | PASS | Rhino 9 BETA 9.0.26209.18303 | Michal at console: same checks as H3, all clean | |
+| H5 | PASS | validation VM | Six filenames recorded above; all six are in `Grasshopper\Libraries\SAM.ghlink` pointing at the installer destination (`%APPDATA%\SAM`), each FileVersion `2026.3.210.0` (= run 210); no stale TAS Grasshopper assemblies; Michal confirms correct load | ghlink is a curated 12-entry load-order list (order matters); the remaining .gha load through SAM.Core's own mechanism — "not all .gha listed" is by design |
+| H6 | PASS | Grasshopper (clean profile) | Michal: both UserObjects (`Tas Workflow v7.ghuser`, `Validation.ghuser`) appear and can be placed; no missing-component/assembly messages | |
+| H7 | PASS | TAS 9.5.7 + Grasshopper | Michal: representative TAS workflow opens without replacement components, solves without exceptions, plausible non-empty outputs | |
 | H8 | PENDING | Revit 2025 absent here | | Michal, on the machine with Revit 2025 |
 | H9 | PENDING | Revit 2026 absent here | | Michal, on the machine with Revit 2026 |
-| H10 | PENDING | Revit 2027 27.0.4.412 present | | GUI test — Michal |
+| H10 | PASS | Revit 2027 27.0.4.412 | Michal: ToSAM_AnalyticalModel + TogbXML exercised — energy model created, no AnalysisType exception, analytical spaces/surfaces returned, gbXML exported; add-in loads from the 2027 payload | Covers the SAM_Revit#17 runtime path |
 | H11 | PENDING | | | Needs previous release install + uninstall pass — Michal |
-| H12 | PENDING | | Provenance recorded above; CI-log audit: zero Topologic/.pfx/SignInstall references in the full run log; per-year TFM assertion ran and passed (2025/2026=v8.0, 2027=v10.0); Rhino 8/9 package roots staged | Installed-payload audit (FileVersions, duplicates, dev paths) pending H2 |
+| H12 | PASS | validation VM | Artifact SHA-256 recorded; installed DLLs sampled carry FileVersion `2026.3.210.0` (= run 210, e.g. `SAM.Core.dll`, all six TAS .gha); `Revit 2025/2026/2027` payload dirs present + CI per-year TFM assertion passed (2025/2026=v8.0, 2027=v10.0); Rhino 8.0 + 9.0 package payloads present with manifests; recursive scan: zero Topologic/build_tests/dev-path/.pfx/password artefacts; duplicate-name-different-hash DLLs all explained (per-year Revit framework payloads, culture satellites, year-scoped dependency versions) | Full CI run log also free of Topologic/PFX/signing references |
 
 Rules:
 
