@@ -238,9 +238,14 @@ cleanup) for: `SAM.ghlink`, `Libraries-Inside-Revit-<year>\SAM_Revit.ghlink` (+d
 `Autodesk\Revit\Addins\<year>\SAM.addin`, empty `RhinoInside.Revit` dirs; and document
 that `Documents\SAM` is intentionally retained.
 
-**Tracking.** Issues are disabled on SAM-BIM/SAM_Deploy, so this is recorded here as
-the follow-up of record until an issue can be filed (enable Issues on the repo, or file
-in the org tracker and link here).
+**Status: implemented** (branch `fix/uninstall-code-created-artefacts`). `[UninstallDelete]`
+now covers every `[Code]`/`[Run]`-created artefact: `SAM.ghlink`, the per-year
+`SAM_Revit.ghlink` files (+ `dirifempty` on their folders), the per-year `SAM.addin`
+files, `dirifempty` on the `RhinoInside.Revit` payload dirs, and the two
+SAMdependencies `.gha` files. Shared folders (`Addins\<year>`, `Libraries`) are
+never removed, and `{userdocs}\SAM` is documented in the script as intentionally
+retained user data. Issues are disabled on SAM-BIM/SAM_Deploy, so this remains the
+follow-up of record until an issue can be filed.
 
 Rules:
 

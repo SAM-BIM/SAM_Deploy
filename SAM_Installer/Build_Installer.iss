@@ -82,7 +82,38 @@ Source: "build\Rhino.Inside\Revit 2027\RhinoInside.Revit.GH.dll"; DestDir: "{use
 Filename: "{userappdata}\SAM\SAMdependencies\install.bat"; WorkingDir: "{userappdata}\SAM\SAMdependencies"; Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\SAMdependencies\install.bat'))
 
 [UninstallDelete]
+; Core payload tree (also covers the per-Revit-year folders and the .gha copies
+; TryCopyToGha makes inside them).
 Type: filesandordirs; Name: "{userappdata}\SAM"
+; ----------------------------------------------------------------------
+; Artefacts created by [Code]/[Run] at install time - Inno does NOT track
+; these, so they need explicit entries:
+; CreateStandaloneGhLink:
+Type: files; Name: "{userappdata}\Grasshopper\Libraries\SAM.ghlink"
+; CreateRevitGhLink (per Revit year). The Libraries-Inside-Revit folder is a
+; shared Grasshopper location - remove it only if nothing else uses it.
+Type: files; Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2025\SAM_Revit.ghlink"
+Type: files; Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2026\SAM_Revit.ghlink"
+Type: files; Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2027\SAM_Revit.ghlink"
+Type: dirifempty; Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2025"
+Type: dirifempty; Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2026"
+Type: dirifempty; Name: "{userappdata}\Grasshopper\Libraries-Inside-Revit-2027"
+; CreateRevitAddin (per Revit year). Addins\<year> itself is shared with other
+; vendors' add-ins - never remove the folder, only our file.
+Type: files; Name: "{userappdata}\Autodesk\Revit\Addins\2025\SAM.addin"
+Type: files; Name: "{userappdata}\Autodesk\Revit\Addins\2026\SAM.addin"
+Type: files; Name: "{userappdata}\Autodesk\Revit\Addins\2027\SAM.addin"
+; RhinoInside.Revit payload dir: its contents are [Files]-tracked and removed
+; automatically; drop the dir only if empty (Rhino.Inside may have dropped its
+; own runtime files there - those are not ours and stay).
+Type: dirifempty; Name: "{userappdata}\Autodesk\Revit\Addins\2025\RhinoInside.Revit"
+Type: dirifempty; Name: "{userappdata}\Autodesk\Revit\Addins\2026\RhinoInside.Revit"
+Type: dirifempty; Name: "{userappdata}\Autodesk\Revit\Addins\2027\RhinoInside.Revit"
+; SAMdependencies\install.bat ([Run]) xcopies these into Grasshopper\Libraries:
+Type: files; Name: "{userappdata}\Grasshopper\Libraries\Sunglasses.gha"
+Type: files; Name: "{userappdata}\Grasshopper\Libraries\FalseStartToggle.gha"
+; Intentionally retained: {userdocs}\SAM - user documents (settings, libraries,
+; projects). An uninstaller must not delete user data.
 
 [Code]
 procedure CreateStandaloneGhLink;
