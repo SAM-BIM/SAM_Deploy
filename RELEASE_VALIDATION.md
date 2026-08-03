@@ -213,10 +213,34 @@ Environment (recorded at execution time):
 | H5 | PASS | validation VM | Six filenames recorded above; all six are in `Grasshopper\Libraries\SAM.ghlink` pointing at the installer destination (`%APPDATA%\SAM`), each FileVersion `2026.3.210.0` (= run 210); no stale TAS Grasshopper assemblies; Michal confirms correct load | ghlink is a curated 12-entry load-order list (order matters); the remaining .gha load through SAM.Core's own mechanism — "not all .gha listed" is by design |
 | H6 | PASS | Grasshopper (clean profile) | Michal: both UserObjects (`Tas Workflow v7.ghuser`, `Validation.ghuser`) appear and can be placed; no missing-component/assembly messages | |
 | H7 | PASS | TAS 9.5.7 + Grasshopper | Michal: representative TAS workflow opens without replacement components, solves without exceptions, plausible non-empty outputs | |
-| H8 | PENDING | Revit 2025 absent here | | Michal, on the machine with Revit 2025 |
-| H9 | PENDING | Revit 2026 absent here | | Michal, on the machine with Revit 2026 |
+| H8 | PASS | Revit 2025 + Rhino.Inside.Revit (second machine) | Michal: Grasshopper starts, SAM components load from the Revit 2025 payload, representative component places and solves, no framework/duplicate/loader errors | |
+| H9 | PASS | Revit 2026 + Rhino.Inside.Revit (second machine) | Michal: identical checks against the Revit 2026 payload, all clean | |
 | H10 | PASS | Revit 2027 27.0.4.412 | Michal: ToSAM_AnalyticalModel + TogbXML exercised — energy model created, no AnalysisType exception, analytical spaces/surfaces returned, gbXML exported; add-in loads from the 2027 payload | Covers the SAM_Revit#17 runtime path |
-| H11 | PENDING | | | Needs previous release install + uninstall pass — Michal |
+| H11 | PARTIAL | validation VM | Michal: upgrade over previous release completed, current files replaced previous versions, uninstall completed without fatal errors, unrelated files and unrelated Rhino/Grasshopper packages intact. **Residual files verified on disk post-uninstall (not hidden — see FOLLOW-UP-1 below):** `Autodesk\Revit\Addins\2025\SAM.addin`, `...\2026\SAM.addin`, `...\2027\SAM.addin`; empty dirs `Autodesk\Revit\Addins\2025\RhinoInside.Revit`, `...\2026\...`, `...\2027\...`; `Grasshopper\Libraries\SAM.ghlink`; `Grasshopper\Libraries-Inside-Revit-2025\SAM_Revit.ghlink`, `...\2026\SAM_Revit.ghlink`, `...\2027\SAM_Revit.ghlink` (+ their folders); `Documents\SAM`. Correctly removed by uninstall: `%APPDATA%\SAM`, `Grasshopper\UserObjects\SAM`, Rhino 8/9 package payloads | PARTIAL per matrix rules — uninstall symmetry incomplete |
+
+### FOLLOW-UP-1 — uninstall leaves [Code]-created artefacts behind
+
+**Problem.** The uninstaller removes everything Inno tracks (all `[Files]` payloads)
+plus `%APPDATA%\SAM` via `[UninstallDelete]` (`Build_Installer.iss:84-85`), but the
+artefacts created by `[Code]` procedures at install time have no cleanup:
+
+- `CreateStandaloneGhLink` writes `Grasshopper\Libraries\SAM.ghlink` (`Build_Installer.iss:126`)
+- `CreateRevitGhLink` writes `Grasshopper\Libraries-Inside-Revit-<year>\SAM_Revit.ghlink` for 2025/2026/2027 (`Build_Installer.iss:143`)
+- `CreateRevitAddin` writes `Autodesk\Revit\Addins\<year>\SAM.addin` for 2025/2026/2027
+- empty `RhinoInside.Revit` dirs remain after Inno removes their (tracked) contents
+- `Documents\SAM` remains — likely intentionally retained, but undocumented
+
+**Root cause.** `[UninstallDelete]` covers only `{userappdata}\SAM`; nothing deletes
+the ghlinks, addins or leftover dirs.
+
+**Suggested fix.** Add `[UninstallDelete]` entries (or a `CurUninstallStepChanged`
+cleanup) for: `SAM.ghlink`, `Libraries-Inside-Revit-<year>\SAM_Revit.ghlink` (+dir),
+`Autodesk\Revit\Addins\<year>\SAM.addin`, empty `RhinoInside.Revit` dirs; and document
+that `Documents\SAM` is intentionally retained.
+
+**Tracking.** Issues are disabled on SAM-BIM/SAM_Deploy, so this is recorded here as
+the follow-up of record until an issue can be filed (enable Issues on the repo, or file
+in the org tracker and link here).
 | H12 | PASS | validation VM | Artifact SHA-256 recorded; installed DLLs sampled carry FileVersion `2026.3.210.0` (= run 210, e.g. `SAM.Core.dll`, all six TAS .gha); `Revit 2025/2026/2027` payload dirs present + CI per-year TFM assertion passed (2025/2026=v8.0, 2027=v10.0); Rhino 8.0 + 9.0 package payloads present with manifests; recursive scan: zero Topologic/build_tests/dev-path/.pfx/password artefacts; duplicate-name-different-hash DLLs all explained (per-year Revit framework payloads, culture satellites, year-scoped dependency versions) | Full CI run log also free of Topologic/PFX/signing references |
 
 Rules:
