@@ -17,16 +17,29 @@
 # into a path containing the year. The staging step reads these in preference to
 # build\ (they carry the highest weight), which makes each payload genuinely
 # per-year.
+#
+# This is the single canonical implementation, used by BOTH callers:
+#   - .github/workflows/installer.yml (CI, Release20xx builds)
+#   - BuildAlls_v4.csproj (local developer Debug20xx builds)
+# Keep any behaviour change compatible with both.
 
 param(
     [Parameter(Mandatory = $true)]
     [ValidateSet('2025', '2026', '2027')]
-    [string]$Year
+    [string]$Year,
+
+    # Optional: repository root. Defaults to GITHUB_WORKSPACE in CI, otherwise the
+    # parent of the .github folder this script lives in (i.e. the repo root), so
+    # local builds work from any current directory.
+    [Parameter(Mandatory = $false)]
+    [string]$RepoRoot
 )
 
 $ErrorActionPreference = 'Stop'
 
-$root = if ($env:GITHUB_WORKSPACE) { $env:GITHUB_WORKSPACE } else { (Get-Location).Path }
+$root = if (-not [string]::IsNullOrWhiteSpace($RepoRoot)) { $RepoRoot }
+        elseif ($env:GITHUB_WORKSPACE) { $env:GITHUB_WORKSPACE }
+        else { (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path }
 $destRoot = Join-Path $root "_revitsnap\$Year"
 
 $sourceDirs = @(

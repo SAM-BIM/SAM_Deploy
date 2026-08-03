@@ -50,8 +50,8 @@ if not exist "%PROJECT%" (
   exit /b 1
 )
 
-if not exist "%SCRIPT_DIR%scripts\Snapshot-RevitBuild.ps1" (
-  echo ERROR: scripts\Snapshot-RevitBuild.ps1 not found under "%SCRIPT_DIR%"
+if not exist "%SCRIPT_DIR%.github\scripts\snapshot-revit-build.ps1" (
+  echo ERROR: .github\scripts\snapshot-revit-build.ps1 not found under "%SCRIPT_DIR%"
   echo        Every Revit year calls it, so the build would fail after compiling 2025.
   exit /b 1
 )
@@ -106,7 +106,7 @@ echo 1. Fast-forward pulling all SAM repos in parallel
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$ErrorActionPreference='Stop';" ^
   "$repos = Get-ChildItem -Path '%SCRIPT_DIR%' -Directory -Filter 'SAM*';" ^
-  "$jobs = $repos | ForEach-Object { Start-Job -ArgumentList $_.FullName, $_.Name -ScriptBlock { param($path,$name); Set-Location $path; git rev-parse --git-dir 2>&1 | Out-Null; if ($LASTEXITCODE -ne 0) { return [pscustomobject]@{ Name=$name; Exit=0; Out='skipped - not a git repo' } }; $branch = (git symbolic-ref --short -q HEAD 2>$null); if ([string]::IsNullOrWhiteSpace($branch)) { return [pscustomobject]@{ Name=$name; Exit=0; Out='skipped - detached HEAD (worktree?), nothing to fast-forward' } }; $out = git pull --ff-only 2>&1; [pscustomobject]@{ Name=$name; Exit=$LASTEXITCODE; Out=($out -join [Environment]::NewLine) } } };" ^
+  "$jobs = $repos | ForEach-Object { Start-Job -ArgumentList $_.FullName, $_.Name -ScriptBlock { param($path,$name); Set-Location $path; $top = (git rev-parse --show-toplevel 2>$null); if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($top) -or ((Resolve-Path $top).Path -ne (Resolve-Path $path).Path)) { return [pscustomobject]@{ Name=$name; Exit=0; Out='skipped - not a git repo root' } }; $branch = (git symbolic-ref --short -q HEAD 2>$null); if ([string]::IsNullOrWhiteSpace($branch)) { return [pscustomobject]@{ Name=$name; Exit=0; Out='skipped - detached HEAD (worktree?), nothing to fast-forward' } }; $out = git pull --ff-only 2>&1; [pscustomobject]@{ Name=$name; Exit=$LASTEXITCODE; Out=($out -join [Environment]::NewLine) } } };" ^
   "$results = $jobs | Wait-Job | Receive-Job;" ^
   "$jobs | Remove-Job;" ^
   "$results | ForEach-Object { Write-Host ('--- ' + $_.Name + ' ---'); Write-Host $_.Out };" ^
