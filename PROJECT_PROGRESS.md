@@ -4,14 +4,17 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-17 — 2026-Q3 release closeout, candidate freeze (SAM-BIM-AI / Claude).
+2026-09-17 — 2026-Q3 closeout: freeze merged (PR #40), installer run 213 built, acceptance BLOCKED at H2–H12.
 
 ## Current status
-2026-Q3 release candidate FROZEN, not yet released. This commit pins every
-installer submodule to the exact `sow/2026-Q3` tip below and reconciles the one
-master-only commit (#28). Next gates: installer build from this commit →
-fresh H1–H12 on that artifact → quarter-close `sow/2026-Q3 → master` →
-publish → website (`sam-bim.github.io#3`, on hold until the installer is public).
+2026-Q3 release **BLOCKED at the acceptance gate**. The candidate is frozen and built,
+but only H1 of the fresh H1–H12 is proven. Nothing was promoted to master, published or
+tagged, and sam-bim.github.io#3 is still on hold.
+
+- Frozen SAM_Deploy: `sow/2026-Q3` @ `2ce3d87cb7c04285c68e1af0341d9ddba6075dce` (merge of PR #40)
+- Candidate installer: run 213 (https://github.com/SAM-BIM/SAM_Deploy/actions/runs/35157269196),
+  `SAM_Install_v20260916.213.exe`, SHA-256 `6B8253A416C154A31355524CF89791E2B6D364A2AF87AE1A4FBC5F5744621C32`,
+  SAMVersion `2026.3.213.0+2ce3d87`. Actions artifact expires 2026-12-15.
 
 ## Completed
 - Reconciled master-only `dbf2b14` (#28, OCCT cache warmer) into sow via a merge
@@ -62,13 +65,23 @@ publish → website (`sam-bim.github.io#3`, on hold until the installer is publi
 - 24 submodule gitlinks; `.github/workflows/occt-cache-warm.yml` (from master); this file.
 
 ## Validation
-- Pending: installer build + fresh H1–H12 (see RELEASE_VALIDATION.md for the matrix;
-  previous hardening-rc1/run 210 result does NOT cover this candidate).
+- PR #40 Validate PR (full Release build of frozen pins): success (run 35156192266).
+- installer.yml run 213 on `2ce3d87`: success; 24/24 pins checked out exactly; Revit TFM assertions OK.
+- Fresh acceptance (RELEASE_VALIDATION.md, "Results — 2026-Q3 release candidate (run 213)"):
+  H1 PASS; H2–H11 BLOCKED (no clean profile, no operator, no Revit 2025/2026); H12 BLOCKED with
+  partial artifact-level evidence (SAM_OCCT DLLs unstamped, pre-existing, needs owner disposition).
 
 ## Issues / blockers
-- H2 (clean profile), H8/H9 (Revit 2025/2026 + Rhino.Inside) need an operator and
-  hardware not available on the automation VM (Revit 2027 only).
+- H2–H12 must be run by an operator on a clean profile, on Rhino 8/9 and on Revit 2025/2026/2027 hosts,
+  against the run-213 artifact (verify the SHA-256 before installing).
+- Quarter-close merges: master is under "Protect Master v1" in every repo (PR + 1 approving review,
+  no bypass), so each promotion PR needs a human approval.
+- Owner disposition needed: SAM_OCCT assemblies not stamped with SAMVersion (H12 criterion).
 
 ## Next step
-- Build the installer from this commit (installer.yml, workflow_dispatch on
-  `sow/2026-Q3`, `publish_release=false`) and run H1–H12 against that artifact.
+1. Operator runs H2–H12 on `SAM_Install_v20260916.213.exe` (SHA-256 above) and records results in RELEASE_VALIDATION.md.
+2. If 12/12 PASS: open per-repo "Sync master with sow/2026-Q3 (Q3 promotion)" PRs (merge commit,
+   not squash); verify each source is still the frozen SHA; get them approved and merged; check post-merge trees.
+3. Publish the SAME bytes as `v20260916.213` (`gh release create v20260916.213 --repo SAM-BIM/SAM_Deploy
+   --target <SAM_Deploy master merge SHA> SAM_Install_v20260916.213.exe`) and confirm `releases/latest` resolves to it.
+4. Then merge sam-bim.github.io#3 (claims and E01–E04 already checked 2026-09-17).

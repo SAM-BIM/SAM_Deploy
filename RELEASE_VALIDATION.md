@@ -184,7 +184,11 @@ Pass criteria:
 - no unexpected duplicate DLL names with different hashes are present;
 - the complete result table links to screenshots, logs and workflow evidence.
 
-## Results
+## Results — `hardening-rc1` (run 210)
+
+These results cover the `hardening-rc1` artifact only. They do **not** cover the
+2026-Q3 release candidate; see "Results — 2026-Q3 release candidate (run 213)"
+at the end of this document.
 
 Environment (recorded at execution time):
 
@@ -265,4 +269,55 @@ Rules:
 - Keep test installer evidence out of Git unless it is small documentation,
   logs or screenshots suitable for the repository.
 
-SAM_DEPLOY RELEASE ACCEPTANCE COMPLETE — H1–H12 PASS
+SAM_DEPLOY RELEASE ACCEPTANCE COMPLETE — H1–H12 PASS (`hardening-rc1`, run 210 only)
+
+## Results — 2026-Q3 release candidate (run 213)
+
+Fresh acceptance of the frozen 2026-Q3 candidate. The run-210 results above are
+not reused.
+
+Candidate identity:
+
+- SAM_Deploy `sow/2026-Q3` @ `2ce3d87cb7c04285c68e1af0341d9ddba6075dce`
+  (PR [#40](https://github.com/SAM-BIM/SAM_Deploy/pull/40): reconciles master
+  `dbf2b14` (#28) and pins all 24 submodules to their `sow/2026-Q3` tips; the
+  pinned SHAs are in `PROJECT_PROGRESS.md`)
+- installer.yml run: https://github.com/SAM-BIM/SAM_Deploy/actions/runs/35157269196
+  (run number 213, `workflow_dispatch` on `sow/2026-Q3`, `publish_release=false`,
+  version input empty, so the default `v<yyyyMMdd>.<run>` applied)
+- Artifact: `SAM_Install_v20260916.213.exe`, 244,900,344 bytes
+- Artifact SHA-256: `6B8253A416C154A31355524CF89791E2B6D364A2AF87AE1A4FBC5F5744621C32`
+- Stamping (CI log): SAMVersion `2026.3.213.0` (from branch `sow/2026-Q3`),
+  InformationalVersion `2026.3.213.0+2ce3d87`
+- CI log: all 24 submodules were checked out at exactly the pinned SHAs.
+- Also on the frozen pins: PR #40 "Validate PR" full Release build
+  ([run 35156192266](https://github.com/SAM-BIM/SAM_Deploy/actions/runs/35156192266)): success.
+  All 24 `sow/2026-Q3` tips have a green `build` check (SAM also has `test`,
+  SAM_SolarCalculator also has `long-running-tests`).
+
+Automation environment (2026-09-17): Windows 11 Pro 10.0.26200 VM, single
+usable profile (the owner's developer profile, which already holds SAM
+`v20260730.201` plus developer builds in `%APPDATA%\SAM`); Rhino 8
+8.34.26223.11001; Rhino 9 BETA 9.0.26216.12303; Revit 2027 27.0.4.412 only
+(no Revit 2025/2026); Rhino.Inside.Revit 1.35.9698.15636; EDSL Tas 9.5.7.
+
+| Test | Result | Evidence / reason |
+|---|---|---|
+| H1 | PASS | Run 213 succeeded (build success, release job skipped); exactly one artifact; filename carries the run version `v20260916.213`; SHA-256 above; no new tag or release (latest still `v20260627.2`, no `v202609*` tag) |
+| H2 | BLOCKED | No clean Windows profile or clean test machine was available. Installing into the owner's developer profile is not a clean-profile install and would overwrite its `%APPDATA%\SAM` developer deployment |
+| H3 | BLOCKED | Needs the H2 clean-profile install and an operator at Rhino 8 |
+| H4 | BLOCKED | Needs the H2 clean-profile install and an operator at Rhino 9 |
+| H5 | BLOCKED | Artifact-level precondition verified: all six expected TAS `.gha` files are in the Inno "Compressing" list and the staged table shows run-213 stamps. The installed load report was not produced (needs H2) |
+| H6 | BLOCKED | Both `Tas Workflow v7.ghuser` and `Validation.ghuser` are packaged. The Grasshopper placement check needs H2 plus an operator |
+| H7 | BLOCKED | Needs the installed payload, Grasshopper and Tas with an operator |
+| H8 | BLOCKED | Revit 2025 is not installed on the available machine. The CI TFM assertion `Revit 2025 payload TargetFramework: .NETCoreApp v8.0 (expected v8.0) OK` is not a substitute |
+| H9 | BLOCKED | Revit 2026 is not installed on the available machine. CI assertion `v8.0 (expected v8.0) OK` only |
+| H10 | BLOCKED | Revit 2027 is present, but the test needs the installed payload (H2) and an operator-run energy-model path. CI assertion `v10.0 (expected v10.0) OK` only |
+| H11 | BLOCKED | Uninstall deletes `%APPDATA%\SAM` wholesale, which would destroy the developer deployment on the only available profile. Needs a test profile holding `v20260627.2` |
+| H12 | BLOCKED (partial evidence) | Verified from the artifact and CI log: SHA-256 recorded; Revit 2025/2026/2027 TFM assertions OK; Rhino package staged (`manifest.txt` selects `1.0.0`, both `.rhp`); 1,933 packaged files with 0 matches for Topologic / build_tests / `.pfx` / `.snk` / password / user-profile paths; 116 staged top-level SAM DLLs at `2026.3.213.0`. **Finding:** 8 SAM_OCCT managed DLLs are staged at FileVersion `1.0.*` or `0.0.0.0` and the native `SAM.Occt.Native.dll` has no version. SAM_OCCT has no `Directory.Build.props` at either the old or the frozen pin, so this predates Q3, but it does not meet "FileVersion matches run identity" and needs an owner disposition. Installed-payload audit not performed (needs H2). Stage 2.2 drift (warning-only by policy): UNCLASSIFIED `Microsoft.Win32.SystemEvents.dll` (UI 8.0.3026.36720 / staged 8.0.3126.42015), `System.Text.Encodings.Web.dll`, `System.Text.Json.dll`, `System.Threading.Tasks.Extensions.dll` |
+
+**2026-Q3 CANDIDATE ACCEPTANCE INCOMPLETE — H1 PASS, H2–H12 BLOCKED.** The
+candidate must not be promoted to master or published until an operator
+completes H2–H12 against **this** artifact (SHA-256 above) and records the
+results here. Any pin change invalidates run 213 and requires a new freeze,
+build and acceptance.
