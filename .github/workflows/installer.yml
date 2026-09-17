@@ -1322,6 +1322,7 @@ jobs:
             -RepoRoot (Get-Location) `
             -SAMVersion $env:SAMVersion `
             -InformationalVersion $env:InformationalVersion `
+            -OcctSdkRoot 'C:\OCCT' `
             -Enforce `
             -ReportPath 'h12-audit-report.md' `
             -CsvPath 'h12-audit-report.csv'
