@@ -232,7 +232,11 @@ Remaining pass criteria (unchanged):
 - no unexpected duplicate DLL names with different hashes are present;
 - the complete result table links to screenshots, logs and workflow evidence.
 
-## Results
+## Results — `hardening-rc1` (run 210)
+
+These results cover the `hardening-rc1` artifact only. They do **not** cover the
+2026-Q3 release candidate; see "Results — 2026-Q3 release candidate (run 214,
+FINAL ACCEPTED)" at the end of this document for the accepted Q3 record.
 
 Environment (recorded at execution time):
 
@@ -331,4 +335,81 @@ Rules:
 - Keep test installer evidence out of Git unless it is small documentation,
   logs or screenshots suitable for the repository.
 
-SAM_DEPLOY RELEASE ACCEPTANCE COMPLETE — H1–H12 PASS
+SAM_DEPLOY RELEASE ACCEPTANCE COMPLETE — H1–H12 PASS (`hardening-rc1`, run 210 only)
+
+## Results — 2026-Q3 release candidate (run 214, FINAL ACCEPTED)
+
+**Supersedes the run-213 draft record.** Run 213 (`SAM_Install_v20260916.213.exe`,
+SHA-256 `6B8253A4...`) never received an accepted result — its acceptance was
+BLOCKED at H2–H12 and that draft record was carried only in PR
+[#41](https://github.com/SAM-BIM/SAM_Deploy/pull/41) (never merged; the
+`sow/2026-Q3` copy of this file went straight from the run-210 table to this
+section). The H12 provenance gap that blocked run 213 was fixed by PR
+[#42](https://github.com/SAM-BIM/SAM_Deploy/pull/42) (merged, `cbd05b6`); the
+installer was rebuilt from that commit as run 214 and is the candidate accepted
+below. Run 213 is retired and must not be installed, promoted or referenced as
+current.
+
+Candidate identity:
+
+- SAM_Deploy `sow/2026-Q3` @ `cbd05b655076b859c709052d006b6edbb88dd113`
+  (merge of PR #42 onto the PR #40 freeze `2ce3d87`; no other pin changed)
+- installer.yml run: https://github.com/SAM-BIM/SAM_Deploy/actions/runs/35194487176
+  (run number 214)
+- Artifact: `SAM_Install_v20260917.214.exe`
+- Artifact SHA-256: `EFB0BDAB28FDDD9915ED9845EAA4CAD271F2DA4774BF8BB7A5942EE16EF091DB`
+- Stamping: SAMVersion `2026.3.214.0`, InformationalVersion `2026.3.214.0+cbd05b6`
+- H1: **PASS** — run 214 succeeded, one artifact, filename carries `v20260917.214`,
+  SHA-256 above recorded, no tag/release created by the build.
+- H12: **PASS** — full-payload provenance audit (`audit-payload-versions.ps1`,
+  enforce mode, PR #42) ran clean against this artifact: SAM-owned managed and
+  native binaries match SAMVersion/InformationalVersion, OCCT `TK*.dll` toolkit
+  matches the pinned SDK version, no test binaries in the payload, all required
+  SAM_OCCT binaries present.
+
+### Owner manual acceptance (2026-09-17, this exact installer)
+
+Performed by the project owner directly against `SAM_Install_v20260917.214.exe`
+(SHA-256 verified before use, matches above).
+
+| Item | Result |
+|---|---|
+| Clean installation | PASS |
+| SAM_UI standalone | PASS |
+| Part O Iteration 1a workflow | PASS |
+| Part O Iteration 2 workflow | PASS |
+| Rhino SAM `.rhp` | PASS |
+| Grasshopper + SAM | PASS |
+| Grasshopper + OCCT, machine with no OCCT SDK installed | PASS |
+| Revit add-in | PASS |
+| Revit 2026 + Rhino.Inside.Revit + Grasshopper + SAM | PASS |
+| Revit 2027 + Rhino.Inside.Revit + Grasshopper + SAM | PASS (normal integration/load) |
+| SAM_UI launched from the Revit/Rhino environment | PASS |
+| Uninstall | PASS — owner inspected AppData / Autodesk / SAM / McNeel / Grasshopper locations; no remaining SAM installation files |
+
+### Explicit owner waivers (not PASS — do not report as PASS)
+
+| Item | Status | Reason |
+|---|---|---|
+| H8 — Rhino.Inside.Revit 2025 | **OWNER-SKIPPED** | No Revit 2025 environment available; owner accepts this gap for the 2026-Q3 release |
+| H10 — dedicated `ToSAM_AnalyticalModel` + `TogbXML` runtime-path acceptance | **OWNER-SKIPPED** | Skipped for this closeout by owner decision. The general "Revit 2027 + RiR + GH + SAM: PASS (normal integration/load)" result above is evidence the add-in loads and solves on 2027 — it is **not** a substitute for the dedicated energy-analysis runtime-path test (H10 pass criteria are unchanged: this test cannot be replaced by a load/compile-only result) |
+
+### Cross-reference to the original H1–H12 matrix
+
+| Test | Status | Evidence for run 214 |
+|---|---|---|
+| H1 | PASS | See candidate identity above |
+| H2 | PASS | Owner: "Clean installation: PASS" |
+| H3 (Rhino 8) / H4 (Rhino 9) | PASS (generic) | Owner: "Rhino SAM `.rhp`: PASS", "Grasshopper + SAM: PASS". Owner's report does not separately break these out by Rhino version for this closeout (unlike the run-210 table, which recorded exact Rhino 8/9 build numbers) |
+| H5 / H6 / H7 (TAS Grasshopper assemblies / UserObjects / representative TAS workflow) | **NOT EXERCISED THIS CLOSEOUT** | The owner's acceptance pass exercised Part O Iteration 1a/2 workflows instead of a TAS workflow; no TAS-specific evidence was recorded against run 214. Not explicitly waived by the owner either — flagged here rather than assumed |
+| H8 | OWNER-SKIPPED | See waiver table above |
+| H9 | PASS | Owner: "Revit 2026 + Rhino.Inside.Revit + Grasshopper + SAM: PASS" |
+| H10 | OWNER-SKIPPED | See waiver table above |
+| H11 | PASS (uninstall); upgrade-over-previous-version not separately itemized | Owner: "Uninstall: PASS" with a documented location-by-location inspection (matches H11's "do not hide residual files" rule). A clean install was also confirmed (H2); an in-place upgrade over a prior SAM version was not separately called out in the owner's report for this closeout |
+| H12 | PASS | See candidate identity above |
+
+**2026-Q3 CANDIDATE ACCEPTED — H1 PASS, H12 PASS, full owner manual acceptance
+PASS on all items exercised; H8 and the dedicated H10 runtime-path test are
+OWNER-SKIPPED (waived), not PASS. `SAM_Install_v20260917.214.exe` (SHA-256
+above) is the frozen, accepted 2026-Q3 release artifact. No installer rebuild,
+GitHub Release, or tag was created as part of recording this acceptance.**

@@ -4,16 +4,25 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-17 — H12 provenance fix follow-up, branch `feat/h12-payload-audit`
-(SAM-BIM-AI / Claude).
+2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214), branch
+`docs/release-2026-q3-acceptance-run214` (SAM-BIM-AI / Claude).
 
 ## Current status
-2026-Q3 release candidate FROZEN at `2ce3d87` (run 213), superseded by this
-work (see "H12 provenance follow-up" below — not yet merged). Next gates after
-this branch merges: rebuild the installer from the new `sow/2026-Q3` tip →
-fresh H1 + H12 (automated, enforced) on that artifact → owner-run H2–H11 →
-quarter-close `sow/2026-Q3 → master` → publish → website
-(`sam-bim.github.io#3`, on hold until the installer is public).
+2026-Q3 release candidate **ACCEPTED**. Installer `SAM_Install_v20260917.214.exe`
+(installer.yml [run 214](https://github.com/SAM-BIM/SAM_Deploy/actions/runs/35194487176),
+SAM_Deploy `cbd05b655076b859c709052d006b6edbb88dd113`, SAMVersion `2026.3.214.0`,
+SHA-256 `EFB0BDAB28FDDD9915ED9845EAA4CAD271F2DA4774BF8BB7A5942EE16EF091DB`) has
+H1 PASS, H12 PASS, and full owner manual acceptance PASS on every item exercised;
+H8 (Revit 2025) and the dedicated H10 runtime-path test are OWNER-SKIPPED
+(waived) for Q3, not PASS. Full table:
+`RELEASE_VALIDATION.md` → "Results — 2026-Q3 release candidate (run 214, FINAL
+ACCEPTED)". This supersedes the run-213 draft record that was carried only in
+the never-merged PR #41 (run 213 itself is retired — see H12 provenance
+follow-up below, which is what produced run 214).
+Nothing in this closeout rebuilds the installer, dispatches a new workflow run,
+publishes a GitHub Release, tags a commit, or promotes `sow/2026-Q3` to master
+— quarter-close promotion (per-repo `sow/2026-Q3 → master` PRs, then publish,
+then `sam-bim.github.io#3`) remains a separate, not-yet-started next step.
 
 ## H12 provenance follow-up (2026-09-17, branch `feat/h12-payload-audit`)
 
@@ -203,13 +212,24 @@ instruction.
 - 24 submodule gitlinks; `.github/workflows/occt-cache-warm.yml` (from master); this file.
 
 ## Validation
-- Pending: installer build + fresh H1–H12 (see RELEASE_VALIDATION.md for the matrix;
-  previous hardening-rc1/run 210 result does NOT cover this candidate).
+- installer.yml run 214 on `cbd05b6`: H1 PASS, H12 PASS (full-payload provenance
+  audit, PR #42, ran clean).
+- Owner manual acceptance (2026-09-17) against `SAM_Install_v20260917.214.exe`:
+  PASS on every item exercised. H8 (Revit 2025) and the dedicated H10
+  (`ToSAM_AnalyticalModel`/`TogbXML`) runtime-path test are OWNER-SKIPPED
+  (waived), not PASS. Full detail in `RELEASE_VALIDATION.md` → "Results —
+  2026-Q3 release candidate (run 214, FINAL ACCEPTED)".
 
 ## Issues / blockers
-- H2 (clean profile), H8/H9 (Revit 2025/2026 + Rhino.Inside) need an operator and
-  hardware not available on the automation VM (Revit 2027 only).
+- H8 (Revit 2025) and the dedicated H10 runtime-path test remain
+  OWNER-SKIPPED for Q3 — no Revit 2025 environment was available and the
+  owner waived the dedicated H10 acceptance for this closeout.
+- H5–H7 (TAS-specific Grasshopper assembly/UserObject/workflow tests) were not
+  separately re-exercised against run 214; the owner's acceptance pass used
+  Part O workflows instead. Not explicitly waived — flagged for awareness only.
 
 ## Next step
-- Build the installer from this commit (installer.yml, workflow_dispatch on
-  `sow/2026-Q3`, `publish_release=false`) and run H1–H12 against that artifact.
+- Quarter-close promotion (per-repo `sow/2026-Q3 → master` PRs, merge commit,
+  human-approved per "Protect Master v1"; then publish the run-214 bytes as
+  `v20260917.214`; then `sam-bim.github.io#3`) is the natural next step but is
+  **out of scope for this closeout** and was not started here.
