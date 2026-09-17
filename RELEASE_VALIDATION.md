@@ -398,18 +398,34 @@ Performed by the project owner directly against `SAM_Install_v20260917.214.exe`
 
 | Test | Status | Evidence for run 214 |
 |---|---|---|
-| H1 | PASS | See candidate identity above |
-| H2 | PASS | Owner: "Clean installation: PASS" |
-| H3 (Rhino 8) / H4 (Rhino 9) | PASS (generic) | Owner: "Rhino SAM `.rhp`: PASS", "Grasshopper + SAM: PASS". Owner's report does not separately break these out by Rhino version for this closeout (unlike the run-210 table, which recorded exact Rhino 8/9 build numbers) |
-| H5 / H6 / H7 (TAS Grasshopper assemblies / UserObjects / representative TAS workflow) | **NOT EXERCISED THIS CLOSEOUT** | The owner's acceptance pass exercised Part O Iteration 1a/2 workflows instead of a TAS workflow; no TAS-specific evidence was recorded against run 214. Not explicitly waived by the owner either — flagged here rather than assumed |
-| H8 | OWNER-SKIPPED | See waiver table above |
-| H9 | PASS | Owner: "Revit 2026 + Rhino.Inside.Revit + Grasshopper + SAM: PASS" |
-| H10 | OWNER-SKIPPED | See waiver table above |
-| H11 | PASS (uninstall); upgrade-over-previous-version not separately itemized | Owner: "Uninstall: PASS" with a documented location-by-location inspection (matches H11's "do not hide residual files" rule). A clean install was also confirmed (H2); an in-place upgrade over a prior SAM version was not separately called out in the owner's report for this closeout |
-| H12 | PASS | See candidate identity above |
+| H1 | **PASS** (formal) | See candidate identity above |
+| H2 | **PASS** (formal) | Owner: "Clean installation: PASS" |
+| H3 (Rhino 8) / H4 (Rhino 9) | **NOT SEPARATELY RECORDED** (formal gate) — owner smoke acceptance only | Owner: "Rhino SAM `.rhp`: PASS", "Grasshopper + SAM: PASS". This is owner smoke acceptance of the Rhino plugin + Grasshopper generically, not a per-version H3/H4 pass: the owner's report does not identify which Rhino version(s) were used, does not split Rhino 8 from Rhino 9, and does not record the explicit H3/H4 criteria (duplicate assembly/component GUID checks). Do not read this as "H3 PASS" and "H4 PASS" individually — the formal, version-specific gates were not separately evidenced this closeout (contrast the run-210 table, which recorded exact Rhino 8/9 build numbers per gate) |
+| H5 / H6 / H7 (TAS Grasshopper assemblies / UserObjects / representative TAS workflow) | **NOT EXERCISED THIS CLOSEOUT** | The owner's acceptance pass exercised Part O Iteration 1a/2 workflows and SAM_UI, not a TAS workflow. Part O / SAM_UI smoke acceptance must **not** be inferred as TAS-specific H5–H7 evidence — no TAS Grasshopper assembly, UserObject or workflow evidence was recorded against run 214. Not explicitly waived by the owner either — flagged here rather than assumed |
+| H8 | **OWNER-SKIPPED** (waived, not PASS) | See waiver table above |
+| H9 | **PASS** (formal) | Owner: "Revit 2026 + Rhino.Inside.Revit + Grasshopper + SAM: PASS" |
+| H10 | **OWNER-SKIPPED** (waived, not PASS) | See waiver table above |
+| H11 | **PARTIAL** — uninstall portion PASS; upgrade-over-previous-version portion NOT EXERCISED | Uninstall: PASS — owner performed a documented location-by-location inspection (AppData / Autodesk / SAM / McNeel / Grasshopper), no remaining SAM installation files (matches H11's "do not hide residual files" rule). A clean install onto a bare profile was also confirmed (H2), but that is not an upgrade test. Installing this artifact **over an existing previous SAM version** was not separately reported by the owner for this closeout, so the upgrade portion of H11 is not evidenced and must not be read as PASS. The formal H11 gate is therefore PARTIAL, not PASS |
+| H12 | **PASS** (formal) | See candidate identity above |
 
-**2026-Q3 CANDIDATE ACCEPTED — H1 PASS, H12 PASS, full owner manual acceptance
-PASS on all items exercised; H8 and the dedicated H10 runtime-path test are
-OWNER-SKIPPED (waived), not PASS. `SAM_Install_v20260917.214.exe` (SHA-256
-above) is the frozen, accepted 2026-Q3 release artifact. No installer rebuild,
-GitHub Release, or tag was created as part of recording this acceptance.**
+**2026-Q3 CANDIDATE ACCEPTED BY THE OWNER, with the formal H1–H12 matrix only
+partially re-evidenced this closeout — do not read this as "H1–H12 all PASS".**
+Status by category:
+
+- **Formal PASS:** H1, H2, H9, H12.
+- **Formal PARTIAL:** H11 (uninstall PASS; upgrade-over-previous-version not
+  exercised).
+- **Formal NOT SEPARATELY RECORDED / NOT EXERCISED THIS CLOSEOUT:** H3, H4
+  (owner smoke acceptance only — no Rhino-version split), H5, H6, H7 (no
+  TAS-specific evidence — Part O/SAM_UI smoke acceptance is not a substitute).
+- **OWNER-SKIPPED (waived, not PASS):** H8, the dedicated H10 runtime-path test.
+- **Additional owner smoke-test PASS (outside the formal H1–H12 matrix, see
+  "Owner manual acceptance" table above):** SAM_UI standalone, Part O
+  Iteration 1a, Part O Iteration 2, Rhino `.rhp`, Grasshopper + SAM,
+  Grasshopper + OCCT with no OCCT SDK installed, Revit add-in, Revit
+  2026/2027 + Rhino.Inside.Revit (general load/integration), SAM_UI launched
+  from the Revit/Rhino host, uninstall.
+
+`SAM_Install_v20260917.214.exe` (SHA-256 above) is the frozen, owner-accepted
+2026-Q3 release artifact on this basis. No installer rebuild, GitHub Release,
+or tag was created as part of recording this acceptance.

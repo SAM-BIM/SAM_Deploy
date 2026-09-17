@@ -12,9 +12,16 @@
 (installer.yml [run 214](https://github.com/SAM-BIM/SAM_Deploy/actions/runs/35194487176),
 SAM_Deploy `cbd05b655076b859c709052d006b6edbb88dd113`, SAMVersion `2026.3.214.0`,
 SHA-256 `EFB0BDAB28FDDD9915ED9845EAA4CAD271F2DA4774BF8BB7A5942EE16EF091DB`) has
-H1 PASS, H12 PASS, and full owner manual acceptance PASS on every item exercised;
-H8 (Revit 2025) and the dedicated H10 runtime-path test are OWNER-SKIPPED
-(waived) for Q3, not PASS. Full table:
+the formal matrix only partially re-evidenced: **formal PASS** on H1, H2, H9,
+H12; **formal PARTIAL** on H11 (uninstall PASS, upgrade-over-previous-version
+not exercised); H3/H4 and H5–H7 **not separately recorded / not exercised**
+this closeout (owner ran Part O + Rhino/Grasshopper smoke acceptance, not the
+version-split Rhino gates or a TAS workflow); H8 and the dedicated H10
+runtime-path test are **OWNER-SKIPPED** (waived), not PASS; plus a full
+**additional owner smoke-test PASS** on every non-matrix item exercised
+(SAM_UI, Part O ×2, Rhino `.rhp`, Grasshopper+SAM, Grasshopper+OCCT with no
+OCCT SDK installed, Revit add-in, Revit 2026/2027+RiR, SAM_UI from host,
+uninstall). Do not read this as "H1–H12 all PASS". Full table:
 `RELEASE_VALIDATION.md` → "Results — 2026-Q3 release candidate (run 214, FINAL
 ACCEPTED)". This supersedes the run-213 draft record that was carried only in
 the never-merged PR #41 (run 213 itself is retired — see H12 provenance
@@ -215,10 +222,18 @@ instruction.
 - installer.yml run 214 on `cbd05b6`: H1 PASS, H12 PASS (full-payload provenance
   audit, PR #42, ran clean).
 - Owner manual acceptance (2026-09-17) against `SAM_Install_v20260917.214.exe`:
-  PASS on every item exercised. H8 (Revit 2025) and the dedicated H10
+  PASS on every item the owner's own checklist exercised (clean install,
+  SAM_UI, Part O x2, Rhino `.rhp`, Grasshopper+SAM, Grasshopper+OCCT with no
+  OCCT SDK installed, Revit add-in, Revit 2026/2027+RiR, SAM_UI from host,
+  uninstall). That checklist does not 1:1 map onto the formal H1–H12 matrix:
+  H9 formally PASS; H11 formally PARTIAL (uninstall PASS, upgrade-over-previous
+  not exercised); H3/H4 and H5–H7 formally not separately recorded/not
+  exercised (owner smoke acceptance is not a substitute for the version-split
+  Rhino gates or a TAS workflow). H8 (Revit 2025) and the dedicated H10
   (`ToSAM_AnalyticalModel`/`TogbXML`) runtime-path test are OWNER-SKIPPED
-  (waived), not PASS. Full detail in `RELEASE_VALIDATION.md` → "Results —
-  2026-Q3 release candidate (run 214, FINAL ACCEPTED)".
+  (waived), not PASS. Full detail and per-gate evidence in
+  `RELEASE_VALIDATION.md` → "Results — 2026-Q3 release candidate (run 214,
+  FINAL ACCEPTED)".
 
 ## Issues / blockers
 - H8 (Revit 2025) and the dedicated H10 runtime-path test remain
