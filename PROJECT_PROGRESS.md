@@ -4,14 +4,155 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-17 — 2026-Q3 release closeout, candidate freeze (SAM-BIM-AI / Claude).
+2026-09-17 — H12 provenance fix follow-up, branch `feat/h12-payload-audit`
+(SAM-BIM-AI / Claude).
 
 ## Current status
-2026-Q3 release candidate FROZEN, not yet released. This commit pins every
-installer submodule to the exact `sow/2026-Q3` tip below and reconciles the one
-master-only commit (#28). Next gates: installer build from this commit →
-fresh H1–H12 on that artifact → quarter-close `sow/2026-Q3 → master` →
-publish → website (`sam-bim.github.io#3`, on hold until the installer is public).
+2026-Q3 release candidate FROZEN at `2ce3d87` (run 213), superseded by this
+work (see "H12 provenance follow-up" below — not yet merged). Next gates after
+this branch merges: rebuild the installer from the new `sow/2026-Q3` tip →
+fresh H1 + H12 (automated, enforced) on that artifact → owner-run H2–H11 →
+quarter-close `sow/2026-Q3 → master` → publish → website
+(`sam-bim.github.io#3`, on hold until the installer is public).
+
+## H12 provenance follow-up (2026-09-17, branch `feat/h12-payload-audit`)
+
+Implements the approved H12 fix/erratum after SAM_OCCT PR #70 (merged into its
+own `sow/2026-Q3`, head `e9b453b`) fixed the underlying defect: 8 SAM_OCCT
+managed assemblies + `SAM.Occt.Native.dll` were shipping without real release
+FileVersion/InformationalVersion provenance, and the old H12 wording
+("every DLL = SAMVersion") was itself wrong for third-party binaries.
+
+- Bumped the `SAM_OCCT` gitlink: `2afaf029` → `e9b453bd` (only pinned repo
+  changed — no other submodule touched).
+- New `.github/scripts/audit-payload-versions.ps1`: classifies every
+  `.dll`/`.gha`/`.rhp` in a staged payload as SAM-owned managed, SAM-owned
+  native (`SAM.Occt.Native.dll`), or third-party. Enforces
+  `FileVersion == SAMVersion` / `ProductVersion == InformationalVersion` on
+  the first two classes only; reports third-party metadata without comparing
+  it to `SAMVersion`; enforces OpenCASCADE's `TK*.dll` runtime against the
+  pinned OCCT SDK version; flags any test-only binary found in the payload as
+  a hard violation; **fails if any of the 9 approved SAM_OCCT release
+  binaries is absent from the payload**, regardless of what else is present.
+  `-Enforce` exits 1 on a real violation; without it, the script only reports.
+- `.github/workflows/installer.yml`: added an "Audit payload versions (H12)"
+  step (enforce mode) immediately after "Stage payload for installer" and
+  before "Install Inno Setup", plus an "Upload H12 audit report" artifact step.
+  No other installer behaviour changed.
+- `RELEASE_VALIDATION.md`: replaced the H12 pass-criteria wording with the
+  managed/native/third-party classification above, and added a dated erratum
+  explaining why run 210's H12 (representative sampling) did not catch the
+  SAM_OCCT gap and why third-party binaries were never meant to equal
+  `SAMVersion`. Run 210's historical result row is **unchanged** (it accurately
+  reflects what was actually checked at the time).
+
+### v2 fixes (2026-09-17, same day, same branch) — independent review found 4 gaps
+
+An independent review of the first version of this PR found 4 correctness gaps
+in the audit script (not in the SAM_OCCT fix itself). All 4 fixed in place,
+plus one bug found while testing fix #1:
+
+1. **Required-presence gate (most important).** The original script only
+   checked files it found — an absent file (failed native build, or the known
+   `SAM.Core.Grasshopper.OCCT` `OutputPath` quirk combined with that project's
+   live-deployment copy being `IgnoreExitCode="true"`, i.e. best-effort) would
+   never be scanned and so could never fail. Inspected the real staging
+   pipeline rather than guessing: each SAM_OCCT Grasshopper project's own
+   PostBuild target ("Local packaging: must succeed") copies its
+   `$(TargetPath)` to a sibling `.gha`, and `installer.yml`'s own
+   "Root Grasshopper DLLs -> GHA" step independently ensures the same for
+   anything matching `^SAM\..*Grasshopper.*\.dll$` at the payload root — so
+   both `.dll` and `.gha` are genuinely expected for the 3 Grasshopper OCCT
+   projects. Added an explicit 12-name required list (5 single-file + 3
+   dll/gha pairs + the native DLL) checked for presence after the scan,
+   independent of whether anything was actually found.
+2. **OCCT toolkit classification.** The old case-sensitive `^TK[A-Z]` match
+   missed `TKernel.dll` (OCCT's own historical naming: lowercase after `TK`).
+   Replaced the regex entirely: the toolkit set and its expected version are
+   now resolved from the real OCCT SDK at `C:\OCCT` (same path
+   `installer.yml`'s own native-engine step uses) — every `TK*.dll` actually
+   present next to `TKernel.dll` there is the toolkit allowlist, and
+   `TKernel.dll`'s own embedded `FileVersion` is the expected version. A
+   static 74-name fallback list (enumerated from the same SDK) covers a local
+   dry run without the SDK downloaded.
+3. **SAM-owned classification vs. H12 wording.** H12 says "produced by a
+   non-test project in a pinned submodule", not "filename starts with
+   `SAM.`". The ownership map is now built by reading each pinned repo's own
+   non-test `*.csproj` files' `<AssemblyName>` (falling back to the csproj's
+   base name), registering a `.gha` sibling for anything under a
+   `Grasshopper\` folder and a `<TargetExt>` sibling (e.g. `.rhp`) when a
+   project overrides it — the project's own declared output identity, not a
+   naming guess. A payload file matching the `SAM.*` convention is still
+   always treated as SAM-owned even if the map missed it (fail-safe net,
+   flagged `UNATTRIBUTED`). Confirmed against a real, previously-undetected
+   case: `SAM_Tas/benchmark/SAM.Analytical.Tas.Benchmark.Cli` sets
+   `<AssemblyName>benchmark-tas</AssemblyName>` — its output `benchmark-tas.dll`
+   does not match `^SAM\.` at all, and is now correctly classified SAM-owned
+   managed (owner: `SAM_Tas`) instead of silently falling to third-party.
+   Side benefit: because ownership is now per-project rather than "any repo
+   whose build folder happens to contain a copy", the previous known
+   limitation (widely-shared files like `SAM.Core.dll` listing 22 "owner"
+   repos) is resolved — `SAM.Core.dll` now attributes to exactly `SAM`.
+4. **OCCT SDK version drift.** The script no longer hard-codes `8.0.0`
+   independently of `installer.yml`'s own `OCCT_SDK_TAG` resolution. It reads
+   `TKernel.dll`'s own embedded `FileVersion` from `-OcctSdkRoot` (default
+   `C:\OCCT`, the same path `installer.yml` downloads/caches the SDK to) — the
+   literal same physical files the native build links against. `-OcctSdkVersion`
+   (default `8.0.0`) is now only a fallback for when that path has no SDK to
+   read (e.g. an offline dry run).
+5. **Bug found while testing fix #1** (not one of the 4 requested, found
+   while writing the negative test for it): `$violations = $rows |
+   Where-Object {...}` — in Windows PowerShell 5.1, a `Where-Object` match of
+   **exactly one** item unwraps to a bare object instead of a one-element
+   array, so `.Count` silently returns `$null`, and `$null -gt 0` is `$false`
+   — a single real violation (e.g. exactly one missing required binary) would
+   have passed enforcement silently. First reproduced live: removing only
+   `SAM.Occt.Native.dll` from an otherwise-clean payload reported "No H12
+   violations found" / exit 0 despite the violation correctly appearing in the
+   written report. Fixed by forcing array semantics: `$violations = @($rows |
+   Where-Object {...})`. Applied the same defensive fix to `$submoduleNames`.
+
+### Validation performed (before opening the PR, and re-run for v2)
+
+Assembled a complete synthetic payload from real local build output: all 12
+required SAM_OCCT binaries (`SAMVersion=2026.3.214.0`, per SAM_OCCT PR #70's
+own validation, including real `.gha` copies this time), 3 real `TK*.dll`
+(`TKernel.dll`, `TKBRep.dll`, `TKMath.dll`) + `tk86.dll` + `freetype.dll` from
+the real local OCCT SDK / build output.
+
+- **(e) clean payload passes**: `-Enforce` → exit 0, zero violations. 11
+  SAM-owned managed / 1 SAM-owned native / 3 third-party (OCCT SDK) / 2
+  third-party.
+- **(b) TKernel 8.0.0 passes**: report shows
+  `TKernel.dll | 8.0.0 | 8.0.0 | 8.0.0 | OK` (and `TKBRep.dll`, `TKMath.dll`
+  likewise) — OCCT SDK identity resolved as `version=8.0.0 (resolved from
+  C:\OCCT\...\win64\vc14\bin (74 TK*.dll, TKernel.dll FileVersion))`.
+- **(c) wrong TKernel version fails**: forced the fallback path
+  (`-OcctSdkRoot` pointed at a nonexistent folder, `-OcctSdkVersion 9.9.9`)
+  against the same real `TKernel.dll` (embedded `8.0.0`) → exit 1,
+  `TKernel.dll`/`TKBRep.dll`/`TKMath.dll` all `MISMATCH`, expected `9.9.9`.
+- **(d) tk86 stays generic third-party**: `tk86.dll | 8.6.15 | ... |
+  <not enforced - third-party> | REPORTED` — never compared to the OCCT SDK
+  version.
+- **(a) removing a required binary fails H12**: tested twice — removing
+  `SAM.Occt.Native.dll` alone (exit 1, `MISSING_REQUIRED_BINARY`, and the
+  exact case that first caught the PowerShell array-unwrapping bug above), and
+  separately removing only `SAM.Core.Grasshopper.OCCT.gha` (the real-world
+  OutputPath-quirk scenario) — exit 1, `MISSING_REQUIRED_BINARY`, class
+  `SAM-owned managed`, owner `SAM_OCCT`.
+- Regression: re-ran the original synthetic payload (unstamped `SAM.Core.dll`,
+  a planted `SAM.OCCT.UnitTests.dll`) — both still correctly flagged
+  (`MISMATCH`, `TEST_BINARY_IN_PAYLOAD`), plus now also correctly flags the 3
+  missing `.gha` files that payload never had (required-presence gate working
+  as intended, catching a gap the first version's own dry run had missed).
+
+No new SAM-owned provenance violation outside the 9 already approved (the 8
+SAM_OCCT managed assemblies + `SAM.Occt.Native.dll`) was found in this local
+validation. **A full real installer.yml run has NOT been executed yet** — that
+happens after this branch merges, per the approved plan (section 20).
+
+**PR #42 has NOT been merged** — holding for explicit human review per
+instruction.
 
 ## Completed
 - Reconciled master-only `dbf2b14` (#28, OCCT cache warmer) into sow via a merge
@@ -32,7 +173,7 @@ publish → website (`sam-bim.github.io#3`, on hold until the installer is publi
 | SAM_LadybugTools | `d52d7b0cda8b951c8df2074409c802ede60ab3e1` |
 | SAM_Mollier | `5c336cdc924f619cdded1a0fd5d6d70466017ff8` |
 | SAM_Multitasker | `e8d09c1415f031b7b26e821dea057fc354f09716` |
-| SAM_OCCT | `2afaf029b4708c0a1988effcfb32fa41c60ff479` |
+| SAM_OCCT | `e9b453bd127490913eda0d5f1f8e47373f511db0` (was `2afaf029b4708c0a1988effcfb32fa41c60ff479` — H12 provenance fix, PR #70) |
 | SAM_OpenStudio | `269359eb7dd64549748b5250dac7bb47011501f8` |
 | SAM_Psychrometrics | `5addfa77eaaaa3dacc647784ae8f1314dc03a01b` |
 | SAM_Revit | `1f0a0324fef497294b5e1dfc5995a0d53b6012b8` |

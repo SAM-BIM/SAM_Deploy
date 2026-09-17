@@ -1303,6 +1303,41 @@ jobs:
             }
           }
 
+      # -----------------------------------------------------------------------
+      # H12 AUDIT: full-payload release-provenance check (not sampling).
+      #
+      # SAM-owned managed (.dll/.gha/.rhp from a pinned submodule) and SAM-owned
+      # native (SAM.Occt.Native.dll) must carry FileVersion=SAMVersion,
+      # ProductVersion=InformationalVersion. Third-party binaries keep their own
+      # upstream version and are reported, not enforced - except OpenCASCADE's own
+      # TK*.dll runtime, which must match the pinned OCCT SDK version. See
+      # .github/scripts/audit-payload-versions.ps1 and RELEASE_VALIDATION.md.
+      # -----------------------------------------------------------------------
+      - name: Audit payload versions (H12)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & (Join-Path (Get-Location) '.github\scripts\audit-payload-versions.ps1') `
+            -PayloadRoot (Join-Path (Get-Location) 'SAM_Installer\build\SAM') `
+            -RepoRoot (Get-Location) `
+            -SAMVersion $env:SAMVersion `
+            -InformationalVersion $env:InformationalVersion `
+            -OcctSdkRoot 'C:\OCCT' `
+            -Enforce `
+            -ReportPath 'h12-audit-report.md' `
+            -CsvPath 'h12-audit-report.csv'
+          if ($LASTEXITCODE -ne 0) { throw "H12 payload audit failed - see h12-audit-report.md." }
+
+      - name: Upload H12 audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: h12-audit-report
+          path: |
+            h12-audit-report.md
+            h12-audit-report.csv
+          if-no-files-found: warn
+
       - name: Install Inno Setup
         shell: pwsh
         run: choco install innosetup -y

@@ -172,10 +172,58 @@ and create a specific follow-up issue. Do not hide residual files.
 
 Audit the installed payload against the workflow artifact.
 
-Pass criteria:
+**Provenance criterion (corrected 2026-09-17 — see the run-210 erratum below).**
+"Installed DLL FileVersion values match the workflow run identity" does **not**
+mean every packaged binary equals `SAMVersion`. It means each binary is held to
+the provenance rule for what it actually is:
+
+### SAM-owned managed assemblies
+
+Every `.dll`/`.gha`/`.rhp` produced by a non-test SAM project in a pinned
+SAM_Deploy submodule must have:
+
+- `FileVersion` = `SAMVersion`
+- `ProductVersion` = `InformationalVersion`
+
+`AssemblyVersion` is **not** part of this criterion. It remains a
+repository/runtime binding identity, governed independently by each project
+(some SAM_OCCT assemblies intentionally stage `0.0.0.0` or a build-clock-derived
+`1.0.x.y` — that is correct and is not a provenance defect).
+
+### SAM-owned native binaries
+
+SAM-owned native SHARED targets must carry reproducible SAM provenance.
+Currently this is exactly one binary, `SAM.Occt.Native.dll`, which must expose:
+
+- `FileVersion` = `SAMVersion`
+- `ProductVersion` = `InformationalVersion`
+
+Its ABI compatibility identity remains `sam_occt_abi_version()` — a native
+function that all callers already probe — and is unaffected by this metadata.
+
+### Third-party binaries
+
+Third-party binaries retain their own upstream/vendor version metadata. They
+are **not** required to match `SAMVersion`. OpenCASCADE's `TK*.dll` toolkit
+runtime must match the pinned OCCT SDK version (currently `8.0.0`). Every other
+third-party binary (ffmpeg, FreeImage, freetype, jemalloc, openvr, tbb, the
+MSVC/.NET runtimes, Xbim, HelixToolkit, `Interop.TAS*`, ...) is provenance-checked
+by source/package identity, not rewritten, and is reported (not compared to
+`SAMVersion`) by the audit below.
+
+### Evidence rule
+
+This criterion must be evidenced by the automated full-payload audit
+(`.github/scripts/audit-payload-versions.ps1`, run in enforce mode as the
+"Audit payload versions (H12)" installer.yml step) — not by sampling a handful
+of DLLs by hand. The audit classifies every packaged binary as SAM-owned
+managed, SAM-owned native, or third-party, and fails the build on a real
+provenance violation in the first two classes (or on the OCCT SDK version rule).
+
+Remaining pass criteria (unchanged):
 
 - installer SHA-256 is recorded;
-- installed DLL FileVersion values match the workflow run identity;
+- the automated full-payload provenance audit above passes;
 - Revit 2025, 2026 and 2027 payloads contain the correct framework-specific
   assemblies;
 - Rhino 8 and Rhino 9 package payloads are present;
@@ -202,6 +250,24 @@ Environment (recorded at execution time):
   InformationalVersion `2026.3.210.0+a6a3cde` — matches run number + commit.
 - No tag or GitHub Release was created by either installer run (latest release
   remains `v20260627.2`; no new refs/tags).
+
+**Erratum (added 2026-09-17, does not change the result rows below).** Run
+210's H12 used representative sampling ("installed DLLs sampled carry
+FileVersion `2026.3.210.0`") rather than a full-payload audit, and SAM_OCCT was
+not comprehensively covered by that sample. The Q3 full-payload audit
+(`.github/scripts/audit-payload-versions.ps1`) later exposed a pre-existing gap
+it would have caught: 8 SAM_OCCT managed assemblies and `SAM.Occt.Native.dll`
+were not actually stamped with the release `FileVersion` at that time (5
+managed assemblies shipped the literal, un-expanded string `"1.0.*"`; 3 shipped
+`0.0.0.0`; the native wrapper carried no version resource at all — see
+SAM_OCCT PR #70). Separately, run 210's H12 wording ("installed DLL FileVersion
+values match the workflow run identity") was itself imprecise: third-party
+binaries (`TK*.dll` etc.) were never intended to equal `SAMVersion`, only
+SAM-owned ones. The H12 criterion above replaces that wording with the precise
+managed/native/third-party classification; run 210's historical PASS result is
+left unchanged (it accurately reflects what was actually checked at the time)
+and a new H12 audit against the corrected criterion is required for the next
+candidate.
 
 | Test | Result | Environment | Evidence | Notes |
 |---|---|---|---|---|
