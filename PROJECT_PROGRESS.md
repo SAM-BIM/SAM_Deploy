@@ -40,8 +40,9 @@ SAM_Revit_UI, SAM_Mollier, SAM_OCCT, SAM_Validation.
 **Status of run 214.** This bump moves `sow/2026-Q3` off the exact submodule set that run 214 was
 accepted on. Run 214 stays the formally **accepted** 2026-Q3 candidate (record below). The test installer
 built after this bump (`gh workflow run installer.yml --ref sow/2026-Q3`, `publish_release=false`) is a
-build-health check, **not** a new accepted candidate. Its run number and result are recorded in a follow-up
-docs commit. Re-running the release matrix on it is a separate owner decision.
+build-health check, **not** a new accepted candidate. Re-running the release matrix on it is a separate owner decision.
+
+**Test installer result - run 215: SUCCESS.** [installer.yml run 215](https://github.com/SAM-BIM/SAM_Deploy/actions/runs/35823794153), dispatched on `sow/2026-Q3` at SAM_Deploy `039def99` (merge of #44), `publish_release=false` (release job skipped, no tag, no GitHub Release). SAMVersion `2026.3.215.0` (from branch `sow/2026-Q3`); 15 min. Produced `SAM_Install_v20260923.215.exe`, artifact `SAM_Install` (233 MB, zip SHA-256 `6c783450c92b7b6779002576d69f29b5e811fc3b0121dbe17ffd75c954de2c77`, expires 2026-12-22). H12 payload audit (enforce mode): **no violations**. Not installed or smoke-tested on a workstation; not an accepted release candidate.
 
 **Local-clone note.** Before the bump, the local `SAM_Deploy` clone showed 24 submodules "modified". Their
 working trees were clean but detached at assorted older/unrelated commits (e.g. SAM at `173ababc`), not at
