@@ -4,10 +4,50 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214), branch
-`docs/release-2026-q3-acceptance-run214` (SAM-BIM-AI / Claude).
+2026-09-23 — post-acceptance submodule bump to every `sow/2026-Q3` tip (branch
+`chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
+Previously: 2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
 
-## Current status
+## 2026-09-23 submodule bump (post-acceptance, owner-requested)
+
+`git submodule update --remote` (each submodule follows `branch = sow/2026-Q3`). The
+bump picks up the 2026-09-22/23 cleanup across the family: dead .NET Framework `app.config` files
+(SAM#126 + siblings), redundant bare framework references that caused MSB3243 (SAM_UI#104,
+SAM_Solver#13), the missed SAM_OpenStudio leftover (#21), stray legacy gbXML project folders
+(SAM_gbXML#9), and `PROJECT_PROGRESS.md` updates. No engineering or runtime behaviour change.
+
+| Submodule | Old pin | New pin |
+|---|---|---|
+| SAM | `63dd763c` | `86213eb3` |
+| SAM_BHoM | `a0823b4f` | `9f0af877` |
+| SAM_Excel | `92cdcad7` | `28a26b26` |
+| SAM_GEM | `fbd34ba1` | `5af5d69e` |
+| SAM_IFC | `d9fa8593` | `50c128d8` |
+| SAM_LadybugTools | `d52d7b0c` | `17775e3a` |
+| SAM_Multitasker | `e8d09c14` | `55337969` |
+| SAM_OpenStudio | `269359eb` | `6972b3e7` |
+| SAM_Revit | `1f0a0324` | `c82287af` |
+| SAM_SolarCalculator | `3a36b73c` | `9b833996` |
+| SAM_Solver | `3c6f5d53` | `de79a826` |
+| SAM_Systems | `05ca0c18` | `0e891145` |
+| SAM_Tas_Grasshopper | `01508b8e` | `a4d4f731` |
+| SAM_UI | `9f515c4c` | `5606a82d` |
+| SAM_gbXML | `3b96001f` | `26111c9b` |
+
+Unchanged (already at tip): SAM_Tas, SAM_SQLite, SAM_Psychrometrics, SAM_Windows, SAM_Rhino_UI,
+SAM_Revit_UI, SAM_Mollier, SAM_OCCT, SAM_Validation.
+
+**Status of run 214.** This bump moves `sow/2026-Q3` off the exact submodule set that run 214 was
+accepted on. Run 214 stays the formally **accepted** 2026-Q3 candidate (record below). The test installer
+built after this bump (`gh workflow run installer.yml --ref sow/2026-Q3`, `publish_release=false`) is a
+build-health check, **not** a new accepted candidate. Its run number and result are recorded in a follow-up
+docs commit. Re-running the release matrix on it is a separate owner decision.
+
+**Local-clone note.** Before the bump, the local `SAM_Deploy` clone showed 24 submodules "modified". Their
+working trees were clean but detached at assorted older/unrelated commits (e.g. SAM at `173ababc`), not at
+their pins. That was local state only and nothing committed; `git submodule update --remote` resolved it.
+
+## Current status (as of 2026-09-17; see the 2026-09-23 bump above)
 2026-Q3 release candidate **ACCEPTED**. Installer `SAM_Install_v20260917.214.exe`
 (installer.yml [run 214](https://github.com/SAM-BIM/SAM_Deploy/actions/runs/35194487176),
 SAM_Deploy `cbd05b655076b859c709052d006b6edbb88dd113`, SAMVersion `2026.3.214.0`,
