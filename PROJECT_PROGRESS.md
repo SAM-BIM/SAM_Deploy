@@ -4,9 +4,35 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-23 — post-acceptance submodule bump to every `sow/2026-Q3` tip (branch
+2026-09-24 — minimal pointer bump of SAM, SAM_Systems, SAM_Tas and SAM_UI to the merged Nuaire / Part O
+manufacturer-guidance commits (branch `chore/bump-parto-nuaire-merged-pointers`).
+Previously: 2026-09-23 — post-acceptance submodule bump to every `sow/2026-Q3` tip (branch
 `chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
-Previously: 2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
+2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
+
+## 2026-09-24 pointer bump: Nuaire / Part O manufacturer guidance (SAM#123)
+
+Only the four repos that carry the merged guidance work move (SAM#125/#131, SAM_Systems#25/#28,
+SAM_Tas#63/#64, SAM_UI#105/#106). Every other submodule was already at its `sow/2026-Q3` tip. Each move
+is a fast-forward.
+
+| Submodule | Old pin | New pin |
+|---|---|---|
+| SAM | `86213eb3` | `875655fa` |
+| SAM_Systems | `0e891145` | `df5dd332` |
+| SAM_Tas | `c267f52f` | `f7d39351` |
+| SAM_UI | `5606a82d` | `4460dc3a` |
+
+**Merged-build acceptance on exactly these commits (2026-09-24).**
+- Build: 0 errors in all four solutions (Framework MSBuild, Debug).
+- Tests: SAM.Tests 2218/2218, SAM.Analytical.Systems.Tests 251/251, SAM.Analytical.Tas.TM59.Tests
+  938/938, SAM.Analytical.UI.WPF.Tests 1031/1031.
+- Native `SAM Analytical.exe`: the MG review-only reopen, the 1a reopen with Iteration 3 ready, and a
+  fresh B0 whose TM59 reports equal the baseline apart from the `Source:` line. Details are in SAM's
+  `PROJECT_PROGRESS.md`.
+
+The product values stay PROVISIONAL manufacturer guidance until Nuaire confirms them; this is not a
+certification. Run 214 remains the accepted 2026-Q3 candidate. No installer was built for this bump.
 
 ## 2026-09-23 submodule bump (post-acceptance, owner-requested)
 
