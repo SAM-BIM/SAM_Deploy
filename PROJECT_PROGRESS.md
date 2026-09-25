@@ -4,9 +4,13 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-25 — pointer bump of SAM, SAM_Systems, SAM_Tas and SAM_UI to the merged Nuaire-reply and Part O
+2026-09-25 (later) — SAM_UI pointer bump `6230d7d1` -> `90b42e0e`, the merged Part O Prepare & Run Hub
+presentation pass SAM_UI#111 (branch `chore/bump-sam-ui-hub-presentation-2026-09-25`). A fast-forward; the pass is
+presentation-only in SAM_UI, with no engineering change. SAM, SAM_Systems and SAM_Tas are already at their
+`sow/2026-Q3` tips (PR #47), and no other gitlink moves.
+Previously: 2026-09-25 — pointer bump of SAM, SAM_Systems, SAM_Tas and SAM_UI to the merged Nuaire-reply and Part O
 workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointers`, PR #47).
-Previously: 2026-09-24 — minimal pointer bump to the merged Nuaire / Part O manufacturer-guidance commits
+2026-09-24 — minimal pointer bump to the merged Nuaire / Part O manufacturer-guidance commits
 (branch `chore/bump-parto-nuaire-merged-pointers`, PR #46).
 2026-09-23 — post-acceptance submodule bump to every `sow/2026-Q3` tip (branch
 `chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
