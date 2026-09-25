@@ -4,11 +4,50 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-24 — minimal pointer bump of SAM, SAM_Systems, SAM_Tas and SAM_UI to the merged Nuaire / Part O
-manufacturer-guidance commits (branch `chore/bump-parto-nuaire-merged-pointers`).
-Previously: 2026-09-23 — post-acceptance submodule bump to every `sow/2026-Q3` tip (branch
+2026-09-25 — pointer bump of SAM, SAM_Systems, SAM_Tas and SAM_UI to the merged Nuaire-reply and Part O
+workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointers`, PR #47).
+Previously: 2026-09-24 — minimal pointer bump to the merged Nuaire / Part O manufacturer-guidance commits
+(branch `chore/bump-parto-nuaire-merged-pointers`, PR #46).
+2026-09-23 — post-acceptance submodule bump to every `sow/2026-Q3` tip (branch
 `chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
 2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
+
+## 2026-09-25 pointer bump: Nuaire reply + Part O workflow simplification
+
+Only the four repos that carry the merged Part O work move. Every other submodule was already at its
+`sow/2026-Q3` tip. Each move is a fast-forward to that tip.
+
+| Submodule | Old pin | New pin | Includes |
+|---|---|---|---|
+| SAM | `875655fa` | `80b01052` | Nuaire reply SAM#133, docs SAM#134 |
+| SAM_Systems | `df5dd332` | `22133736` | Nuaire reply SAM_Systems#29, docs SAM_Systems#30 |
+| SAM_Tas | `f7d39351` | `39828c69` | Nuaire reply SAM_Tas#65, docs SAM_Tas#66 |
+| SAM_UI | `4460dc3a` | `6230d7d1` | Nuaire reply SAM_UI#107/#108; workflow simplification SAM_UI#109, docs SAM_UI#110 |
+
+**What moves.**
+- Nuaire reply (A. Nash, 24 Sep): the guidance cooling supply is the exchanger (bypass, or recovery), then the
+  DX drop, never below 13 C; bypass decided by the MVHR independently of the cooling-stat; 80 l/s default
+  cooling airflow. Details in SAM's `PROJECT_PROGRESS.md`.
+- Part O workflow simplification (SAM_UI only, no engineering change): the Part O Simulate dialog folded into
+  a Hub "Simulation case"; one persistent progress window with honest stage-level progress; no success
+  "Time elapsed ... OK" box; an Iteration 3 panel with a pre-flight of units/products before any TAS;
+  Iteration 3 results stored per method (legacy records still read); the "Iteration 3 comparison" window,
+  virtualised for large projects.
+
+**Checks on these commits.**
+- Each code PR (SAM#133, SAM_Systems#29, SAM_Tas#65, SAM_UI#107 and #109) had green CI and a completed Codex
+  review before merge; the docs PRs had green CI.
+- 2026-09-24: all four solutions rebuilt from the merged `sow/2026-Q3` heads (VS 18 MSBuild Release,
+  0 errors).
+- SAM_UI at the final tip: `SAM_UI.sln` 0 errors; `SAM.Analytical.UI.WPF.Tests` 1056/1056.
+- Live smoke tests on the real `SAM Analytical.exe` with TAS (25 Sep): Prepare & Run (Iteration 1a) and an
+  Iteration 3 manufacturer-guidance run, reopened in-session and in a fresh process without TAS. Record in
+  SAM_UI `documentation/evidence/parto-workflow-simplification/LIVE-SMOKE-2026-09-25.md`.
+- Not rerun here: the SAM, SAM_Systems and SAM_Tas test suites on the merged tips (their own PR records
+  hold those results).
+
+Manufacturer-guidance values stay PROVISIONAL until Nuaire confirms them; this is not a certification.
+Run 214 remains the accepted 2026-Q3 candidate. No installer was built for this bump.
 
 ## 2026-09-24 pointer bump: Nuaire / Part O manufacturer guidance (SAM#123)
 
