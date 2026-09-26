@@ -4,9 +4,15 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-26 (latest) — ship the Space Assumptions PDF (reporting Phase 1): SAM `78a57466` -> `22f9c743`, SAM_UI
-`5a0b9bf6` -> `7e7de033`, plus a new installer gate for the reporting/PDF payload. Branch
-`chore/deploy-space-assumptions-pdf-2026-09-26`. See the section below.
+2026-09-26 (closeout) — **SAM Documentation Framework Phase 1: COMPLETE.** SAM_Deploy#51 merged as `8e6740af`:
+- `sow/2026-Q3` pins SAM `22f9c743` and SAM_UI `7e7de033`;
+- installer and payload validation passed;
+- the installed-product smoke test passed.
+
+The deployment gate is complete. See the section below.
+Previously: 2026-09-26 (latest) — ship the Space Assumptions PDF (reporting Phase 1): SAM `78a57466` -> `22f9c743`,
+SAM_UI `5a0b9bf6` -> `7e7de033`, plus a new installer gate for the reporting/PDF payload. Branch
+`chore/deploy-space-assumptions-pdf-2026-09-26`.
 Previously: 2026-09-26 (later) — pointer bump for the Part O 2B per-round `.sam` growth fix: SAM `7dbeb2e4` -> `78a57466`
 (SAM#142, deep clone no longer doubles Guid-less cluster objects; also brings the reporting PRs #136/#139/#140, which
 sit below it on `sow/2026-Q3` and which SAM_UI CI already builds against), SAM_Tas `39828c6` -> `b32c0808` (SAM_Tas#67,
@@ -31,7 +37,19 @@ workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointe
 `chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
 2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
 
-## 2026-09-26 Space Assumptions PDF deployment (SAM_UI#121)
+## 2026-09-26 Space Assumptions PDF deployment (SAM_UI#121) - MERGED as SAM_Deploy#51 (`8e6740af`)
+
+```text
+SAM Documentation Framework — Phase 1
+Status: COMPLETE        deployment gate: COMPLETE (SAM_Deploy#51 merged as 8e6740af)
+```
+
+Pins on `sow/2026-Q3`: SAM `22f9c743`, SAM_UI `7e7de033`. Validate CI was green on the merged head `45568a3e`. The
+Phase 1 completion record is in SAM `documentation/Reporting-PDF.md` › *Phase 1 status*.
+
+Unrelated housekeeping, left untouched: `SAM_Tas-113`, `SAM_Tas-ord` and `SAM_Tas-table` are local scratch worktrees
+beside the repos. Their upstream branches are gone or missing, so `BuildAlls_v4.bat pull` stops on them. They are not
+part of the deployment.
 
 Proves the installed product ships and runs Edit › Reports › **Space Assumptions PDF**:
 `SAM Analytical.exe` -> `SAM.Analytical.Reporting` / `SAM.Core.Reporting` -> `SAM.Core.Reporting.Pdf` -> MigraDoc/PDFsharp.
@@ -116,8 +134,8 @@ The positive artefacts were not modified. The evidence is outside git, in `C:\Ta
 - The "Open it now? › Yes" path was not driven again here (PR3 acceptance step H covers it); the PDF was opened
   directly.
 
-**Next step.** The owner reviews this PR; merge once validate is green. Future release runs get the gate
-automatically.
+**Outcome.** Merged as `8e6740af` on green validate. Future installer runs apply the gate automatically. Next step:
+Phase 2 planning (not started).
 
 ## 2026-09-25 pointer bump: Nuaire reply + Part O workflow simplification
 
