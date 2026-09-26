@@ -4,7 +4,12 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-26 (latest) — pointer bump SAM_UI `7e7de033` -> `4b773f3e`, the merged Part O UX Pass 6 (SAM_UI#122: final
+2026-09-26 (latest) — **B0 Phase-1 correctness deployment:** SAM `22f9c743` -> `00db4b85`, the merge of SAM#147 (PR2A-0,
+issue SAM#146). This fixes the stale Design Heating/Cooling Load read from duplicate `SAM.Analytical` ParameterSets, which
+made the shipped Space Assumptions PDF print e.g. 0 W instead of 1139.87 W. The move is a fast-forward and also brings
+docs-only SAM#144/#145. No other gitlink moves. Branch `chore/bump-sam-b0-stale-design-load-2026-09-26`; see the section
+below.
+Previously: 2026-09-26 (Part O pass 6) — pointer bump SAM_UI `7e7de033` -> `4b773f3e`, the merged Part O UX Pass 6 (SAM_UI#122: final
 consistency fixes and end-to-end acceptance - presentation only; Part O UX ready for closeout/freeze). A fast-forward;
 SAM (`22f9c743`) and SAM_Tas (`b32c0808`) are already what it builds against, and no other gitlink moves. Branch
 `chore/bump-sam-ui-parto-pass6-2026-09-26`.
@@ -40,6 +45,17 @@ workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointe
 2026-09-23 — post-acceptance submodule bump to every `sow/2026-Q3` tip (branch
 `chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
 2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
+
+## 2026-09-26 B0 Phase-1 correctness deployment (SAM#147) - IN VALIDATION
+
+| Submodule | Old pin | New pin | Includes |
+|---|---|---|---|
+| SAM | `22f9c743` | `00db4b85` | SAM#147 one ParameterSet per assembly name (stale design-load read, B0); docs SAM#144/#145 |
+
+SAM_UI (`4b773f3e`) and SAM_Tas (`b32c0808`) are unchanged. The fix is inside SAM.Core, so no SAM_UI or SAM_Tas code
+change is needed.
+
+Validation results: pending (see below once recorded).
 
 ## 2026-09-26 Space Assumptions PDF deployment (SAM_UI#121) - MERGED as SAM_Deploy#51 (`8e6740af`)
 
