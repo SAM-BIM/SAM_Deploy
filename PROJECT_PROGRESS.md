@@ -4,7 +4,11 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-26 (closeout) — **SAM Documentation Framework Phase 1: COMPLETE.** SAM_Deploy#51 merged as `8e6740af`:
+2026-09-26 (latest) — pointer bump SAM_UI `7e7de033` -> `4b773f3e`, the merged Part O UX Pass 6 (SAM_UI#122: final
+consistency fixes and end-to-end acceptance - presentation only; Part O UX ready for closeout/freeze). A fast-forward;
+SAM (`22f9c743`) and SAM_Tas (`b32c0808`) are already what it builds against, and no other gitlink moves. Branch
+`chore/bump-sam-ui-parto-pass6-2026-09-26`.
+Previously: 2026-09-26 (closeout) — **SAM Documentation Framework Phase 1: COMPLETE.** SAM_Deploy#51 merged as `8e6740af`:
 - `sow/2026-Q3` pins SAM `22f9c743` and SAM_UI `7e7de033`;
 - installer and payload validation passed;
 - the installed-product smoke test passed.
