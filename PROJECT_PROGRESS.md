@@ -4,7 +4,14 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-26 — pointer bump SAM_UI `90b42e0e` -> `3b29e41f` (SAM_UI#113-#117: Part O Review iteration, TM59 result
+2026-09-26 (later) — pointer bump for the Part O 2B per-round `.sam` growth fix: SAM `7dbeb2e4` -> `78a57466`
+(SAM#142, deep clone no longer doubles Guid-less cluster objects; also brings the reporting PRs #136/#139/#140, which
+sit below it on `sow/2026-Q3` and which SAM_UI CI already builds against), SAM_Tas `39828c6` -> `b32c0808` (SAM_Tas#67,
+design days and zone results replaced per run instead of appended), SAM_UI `3b29e41f` -> `5a0b9bf6` (SAM_UI#118 Pass 5
+2B journey + #119 growth regression/evidence). All three fast-forwards to their merged tips; no other gitlink moves.
+No engineering change beyond removing accumulated stale records (live TAS: 12/12 TM59 reports identical, `.sam` flat).
+Branch `chore/bump-parto-sam-growth-2026-09-26`.
+Previously: 2026-09-26 — pointer bump SAM_UI `90b42e0e` -> `3b29e41f` (SAM_UI#113-#117: Part O Review iteration, TM59 result
 window, Hub outcome line, reopened-run naming, shared progress window - all presentation/orchestration) and SAM
 `80b01052` -> `7dbeb2e4`, the SAM#137 merge that SAM_UI#114 consumes (per-space TM59 status). Both fast-forwards.
 SAM is deliberately NOT moved to its tip: the later reporting PRs (#136/#139/#140) are not needed by SAM_UI and
