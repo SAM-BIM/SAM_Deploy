@@ -4,11 +4,16 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-25 (later) — SAM_UI pointer bump `6230d7d1` -> `90b42e0e`, the merged Part O Prepare & Run Hub
+2026-09-26 — pointer bump SAM_UI `90b42e0e` -> `3b29e41f` (SAM_UI#113-#117: Part O Review iteration, TM59 result
+window, Hub outcome line, reopened-run naming, shared progress window - all presentation/orchestration) and SAM
+`80b01052` -> `7dbeb2e4`, the SAM#137 merge that SAM_UI#114 consumes (per-space TM59 status). Both fast-forwards.
+SAM is deliberately NOT moved to its tip: the later reporting PRs (#136/#139/#140) are not needed by SAM_UI and
+are left for a separate bump. Branch `chore/bump-sam-ui-parto-pass4-2026-09-26`; no other gitlink moves.
+Previously: 2026-09-25 (later) — SAM_UI pointer bump `6230d7d1` -> `90b42e0e`, the merged Part O Prepare & Run Hub
 presentation pass SAM_UI#111 (branch `chore/bump-sam-ui-hub-presentation-2026-09-25`). A fast-forward; the pass is
 presentation-only in SAM_UI, with no engineering change. SAM, SAM_Systems and SAM_Tas are already at their
 `sow/2026-Q3` tips (PR #47), and no other gitlink moves.
-Previously: 2026-09-25 — pointer bump of SAM, SAM_Systems, SAM_Tas and SAM_UI to the merged Nuaire-reply and Part O
+2026-09-25 — pointer bump of SAM, SAM_Systems, SAM_Tas and SAM_UI to the merged Nuaire-reply and Part O
 workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointers`, PR #47).
 2026-09-24 — minimal pointer bump to the merged Nuaire / Part O manufacturer-guidance commits
 (branch `chore/bump-parto-nuaire-merged-pointers`, PR #46).
