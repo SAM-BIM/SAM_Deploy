@@ -4,7 +4,12 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-26 (latest) — pointer bump SAM_UI `7e7de033` -> `4b773f3e`, the merged Part O UX Pass 6 (SAM_UI#122: final
+2026-09-26 (latest) — **B0 Phase-1 correctness deployment:** SAM `22f9c743` -> `00db4b85`, the merge of SAM#147 (PR2A-0,
+issue SAM#146). This fixes the stale Design Heating/Cooling Load read from duplicate `SAM.Analytical` ParameterSets, which
+made the shipped Space Assumptions PDF print e.g. 0 W instead of 1139.87 W. The move is a fast-forward and also brings
+docs-only SAM#144/#145. No other gitlink moves. Branch `chore/bump-sam-b0-stale-design-load-2026-09-26`; see the section
+below.
+Previously: 2026-09-26 (Part O pass 6) — pointer bump SAM_UI `7e7de033` -> `4b773f3e`, the merged Part O UX Pass 6 (SAM_UI#122: final
 consistency fixes and end-to-end acceptance - presentation only; Part O UX ready for closeout/freeze). A fast-forward;
 SAM (`22f9c743`) and SAM_Tas (`b32c0808`) are already what it builds against, and no other gitlink moves. Branch
 `chore/bump-sam-ui-parto-pass6-2026-09-26`.
@@ -40,6 +45,50 @@ workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointe
 2026-09-23 — post-acceptance submodule bump to every `sow/2026-Q3` tip (branch
 `chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
 2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
+
+## 2026-09-26 B0 Phase-1 correctness deployment (SAM#147) - VALIDATED, PR open (not merged)
+
+| Submodule | Old pin | New pin | Includes |
+|---|---|---|---|
+| SAM | `22f9c743` | `00db4b85` | SAM#147 one ParameterSet per assembly name (stale design-load read, B0); docs SAM#144/#145 |
+
+SAM_UI (`4b773f3e`) and SAM_Tas (`b32c0808`) are unchanged. The fix is inside SAM.Core, so no SAM_UI or SAM_Tas code
+change is needed.
+
+The Phase-1 matrix was deliberately not repeated; this is a narrow correctness deployment.
+
+**Installer build.** installer.yml run [36269327511](https://github.com/SAM-BIM/SAM_Deploy/actions/runs/36269327511) on
+`63bf446` (dispatch, `publish_release=false`): success, release job skipped, nothing published.
+- Artifact `SAM_Install_v20260926.217.exe`, 249,793,720 bytes, SHA-256
+  `3b9f356f4937a855f4e283ae80d2c94e5ed6a9cc0045b4e7f4d4938122f21e0d`. SAMVersion `2026.3.217.0+63bf446`.
+- *Assert reporting/PDF payload*: passed (85 assemblies resolved from the payload, 1 from the runtime).
+- H12 (enforce): **no violations**. SAM.Core, SAM.Analytical and the reporting DLLs are `2026.3.217.0`.
+- Drift: the same 3 unclassified warnings as runs 216 and 214 (System.Text.Json, System.Text.Encodings.Web,
+  System.Threading.Tasks.Extensions). There is nothing new.
+
+**Installed-product regression (26 Sep, this VM).**
+- Silent install (`/VERYSILENT /SUPPRESSMSGBOXES`): exit 0.
+- Because of the MSIX trap, the files the installer wrote to `%APPDATA%\SAM`, taken from its log, were copied to a clean
+  folder. That folder passes `assert-reporting-payload.ps1` (exit 0).
+- Fixture: a copy of `C:\TasOut\final1b\open_out.sam`. The source md5 `d55f2c33…` was unchanged afterwards.
+- UI Automation path: launch `SAM Analytical.exe` with `/Path=<copy>`, then Spaces › **Bathroom_2** › Select, then
+  Edit › Reports › **Space Assumptions PDF**, then save. The app reported "Space Assumptions PDF saved".
+- PDF (`Bathroom_2 - Space Assumptions.pdf`, 55,949 bytes): **1 page, A4**, Noto Sans Regular and Bold embedded,
+  PDFsharp 6.2.0, footer `SAM 2026.3.217.0+63bf446 … Page 1 / 1`.
+  - **Design load 1,140 W (heating) / 0 W (cooling)**, i.e. 1139.87 W at display precision.
+  - Design load per area 45.6 W/m².
+  - Before, with a pre-fix SAM.Core and the same click path, it read **0 W / 0 W**. That run used the local dev build
+    of SAM_UI, not an installer.
+- Loaded modules: SAM.Core, SAM.Analytical, the 3 reporting DLLs, PdfSharp and MigraDoc all came from the clean
+  installed folder (`2026.3.217.0`; PDFsharp/MigraDoc `6.2.0.7443`). There was no missing-dependency or runtime error.
+- Evidence (outside git): `C:\TasOut\deploy-b0-smoke-2026-09-26`. It holds `install.log`, `run.log`, `h12\`,
+  `clean-gate.txt`, `installed-run\` (PDF, `loaded-modules.txt`), `dryrun-dev\` (the before PDF), and `smoke.ps1` /
+  `checkpdf.py`.
+
+**Limitations.** One VM and one Space. No upgrade or uninstall test. No licensed Tas run.
+
+**Next step.** Merge this PR, then SAM#148 (audit doc: B0 fixed). After that, PR2A in SAM_Tas (the result contract,
+B1–B5).
 
 ## 2026-09-26 Space Assumptions PDF deployment (SAM_UI#121) - MERGED as SAM_Deploy#51 (`8e6740af`)
 
