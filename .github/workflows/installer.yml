@@ -1303,6 +1303,18 @@ jobs:
             }
           }
 
+      # Space Assumptions PDF (SAM_UI#121): the reporting assemblies, PDFsharp-MigraDoc 6.2.0
+      # with every assembly they reference, the embedded Noto Sans fonts and both licences
+      # must be in the staged payload, with no second PDFsharp/MigraDoc outside the Revit
+      # year folders. See .github/scripts/assert-reporting-payload.ps1.
+      - name: Assert reporting/PDF payload
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & (Join-Path (Get-Location) '.github\scripts\assert-reporting-payload.ps1') `
+            -PayloadRoot (Join-Path (Get-Location) 'SAM_Installer\build\SAM')
+          if ($LASTEXITCODE -ne 0) { throw "Reporting/PDF payload gate failed - see the log above." }
+
       # -----------------------------------------------------------------------
       # H12 AUDIT: full-payload release-provenance check (not sampling).
       #
