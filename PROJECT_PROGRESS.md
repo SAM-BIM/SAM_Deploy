@@ -70,7 +70,7 @@ The Phase-1 matrix was deliberately not repeated; this is a narrow correctness d
 - Silent install (`/VERYSILENT /SUPPRESSMSGBOXES`): exit 0.
 - Because of the MSIX trap, the files the installer wrote to `%APPDATA%\SAM`, taken from its log, were copied to a clean
   folder. That folder passes `assert-reporting-payload.ps1` (exit 0).
-- Fixture: a copy of `C:\TasOutinal1b\open_out.sam`. The source md5 `d55f2c33…` was unchanged afterwards.
+- Fixture: a copy of `C:\TasOut\final1b\open_out.sam`. The source md5 `d55f2c33…` was unchanged afterwards.
 - UI Automation path: launch `SAM Analytical.exe` with `/Path=<copy>`, then Spaces › **Bathroom_2** › Select, then
   Edit › Reports › **Space Assumptions PDF**, then save. The app reported "Space Assumptions PDF saved".
 - PDF (`Bathroom_2 - Space Assumptions.pdf`, 55,949 bytes): **1 page, A4**, Noto Sans Regular and Bold embedded,
