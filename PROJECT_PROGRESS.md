@@ -4,7 +4,9 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-27 (latest) — **PR2E: ship the Space Design Load Summary PDF (reporting Phase 2).** SAM `00db4b85` -> `6c255ad8`,
+2026-09-27 (closeout) — **SAM Documentation Framework Phase 2: COMPLETE.** SAM_Deploy#55 merged as `1506da5f`;
+`sow/2026-Q3` pins SAM `6c255ad8` (SAM#159), SAM_Tas `fedf34cd`, SAM_UI `cbe1c076` (SAM_UI#127). See the section below.
+Previously: 2026-09-27 — **PR2E: ship the Space Design Load Summary PDF (reporting Phase 2).** SAM `00db4b85` -> `6c255ad8`,
 SAM_Tas `b32c0808` -> `fedf34cd`, SAM_UI `4b773f3e` -> `cbe1c076`; SAM_Systems unchanged. Pointer-only, no workflow or
 gate change. Installer run 218 built, installed and accepted on the installed product (A/A2/B/C/D PASS). Branch
 `chore/deploy-space-design-load-summary-2026-09-27`, SAM_Deploy#55; see the section below.
@@ -50,7 +52,21 @@ workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointe
 `chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
 2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
 
-## 2026-09-27 PR2E Space Design Load Summary deployment (reporting Phase 2) - SAM_Deploy#55
+## 2026-09-27 PR2E Space Design Load Summary deployment (reporting Phase 2) - MERGED as SAM_Deploy#55 (`1506da5f`)
+
+```text
+SAM Documentation Framework — Phase 2 (Space Design Load Summary)
+Status: COMPLETE        deployment gate: COMPLETE (SAM_Deploy#55 merged as 1506da5f)
+```
+
+Gate evidence: SAM#159 merged `6c255ad8`; SAM_UI#127 merged `cbe1c076`; PR2E merged; payload gate PASS (CI and
+installed folder); installed A Bathroom_2, A2 Studio 1_0, B NotSimulated, C Space Assumptions, D UI workflow all PASS;
+HOY on full-year peaks only; "Peak sensible load" headline; no installed dependency/runtime failure. Validate was green
+on the merged head `c71f6047`.
+
+**Next step.** PR2F (owner-led): review representative real-project PDFs (wording, hierarchy, sentinels, Tas
+design-day names, pagination) and scope multi-Space / All-Spaces export. Not started. Out of Phase 2: SAM#138,
+SAM#154, OpenStudio peaks, provenance redesign.
 
 | Submodule | Old pin | New pin | Includes |
 |---|---|---|---|
