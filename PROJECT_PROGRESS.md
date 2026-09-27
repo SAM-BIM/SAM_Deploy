@@ -4,7 +4,11 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-26 (latest) — **B0 Phase-1 correctness deployment:** SAM `22f9c743` -> `00db4b85`, the merge of SAM#147 (PR2A-0,
+2026-09-27 (latest) — **PR2E: ship the Space Design Load Summary PDF (reporting Phase 2).** SAM `00db4b85` -> `6c255ad8`,
+SAM_Tas `b32c0808` -> `fedf34cd`, SAM_UI `4b773f3e` -> `cbe1c076`; SAM_Systems unchanged. Pointer-only, no workflow or
+gate change. Installer run 218 built, installed and accepted on the installed product (A/A2/B/C/D PASS). Branch
+`chore/deploy-space-design-load-summary-2026-09-27`, SAM_Deploy#55; see the section below.
+Previously: 2026-09-26 — **B0 Phase-1 correctness deployment:** SAM `22f9c743` -> `00db4b85`, the merge of SAM#147 (PR2A-0,
 issue SAM#146). This fixes the stale Design Heating/Cooling Load read from duplicate `SAM.Analytical` ParameterSets, which
 made the shipped Space Assumptions PDF print e.g. 0 W instead of 1139.87 W. The move is a fast-forward and also brings
 docs-only SAM#144/#145. No other gitlink moves. Branch `chore/bump-sam-b0-stale-design-load-2026-09-26`; see the section
@@ -46,7 +50,65 @@ workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointe
 `chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
 2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
 
-## 2026-09-26 B0 Phase-1 correctness deployment (SAM#147) - VALIDATED, PR open (not merged)
+## 2026-09-27 PR2E Space Design Load Summary deployment (reporting Phase 2) - SAM_Deploy#55
+
+| Submodule | Old pin | New pin | Includes |
+|---|---|---|---|
+| SAM | `00db4b85` | `6c255ad8` | SAM#153 PR2A-1 peak contract, #156 PR2B data, #158 PR2C PDF, **#159** annual HOY + "Peak sensible load" (merge `6c255ad8`) |
+| SAM_Tas | `b32c0808` | `fedf34cd` | SAM_Tas#69 PR2A-2 Tas typed peaks; docs #68/#70 |
+| SAM_UI | `4b773f3e` | `cbe1c076` | **SAM_UI#127** PR2D Reports command (merge `cbe1c076`) |
+
+All three are fast-forwards to the merged `sow/2026-Q3` tips as of 27 Sep 2026 ~22:00. Unrelated merged work that rides
+along because it sits below those tips: SAM Part O mixed-strategy #149-#152, #157 and docs #148/#155; SAM_UI Part O
+#125/#126/#128 and docs #123/#124. SAM_Systems `22133736` already is its sow tip; no other gitlink moves. Phase 2 needs
+no new third-party payload, so the SAM_Deploy#51 gate (`assert-reporting-payload.ps1`) is unchanged and no check was added.
+
+**Installer build.** installer.yml run [36345583500](https://github.com/SAM-BIM/SAM_Deploy/actions/runs/36345583500) on
+`4325402` (dispatch, `publish_release=false`): success, release job skipped, nothing published.
+- Artifact `SAM_Install_v20260927.218.exe`, 250,138,264 bytes, SHA-256
+  `10785d4dd3ccbe85f4aaa447512ee75aa08ea178d93eb817cf888f12d708237d`. SAMVersion `2026.3.218.0+4325402`.
+- *Assert reporting/PDF payload*: passed (85 assemblies from the payload, 1 from the runtime; NotoSans Regular/Bold
+  embedded; every PdfSharp*/MigraDoc* 6.2.0 (6.2.0.7443); Microsoft.Extensions.Logging.Abstractions 8.0; both licences).
+- H12 (enforce): **no violations**. Drift: the same 3 unclassified warnings as runs 214/216/217.
+- Validate PR: green.
+
+**Installed-product acceptance (27 Sep, this VM).**
+- The dev build in `%APPDATA%\SAM` was moved to `%APPDATA%\SAM.dev-backup-2026-09-27` first (via a WMI-launched `move`,
+  outside the MSIX container), so this was a clean install. Silent install (`/VERYSILENT /SUPPRESSMSGBOXES`, WMI-launched):
+  exit 0, 1,713 files. The gate re-run on the installed `%APPDATA%\SAM`: passed.
+- Every case ran the installed `%APPDATA%\SAM\SAM Analytical.exe` (2026.3.218.0+4325402), confirmed by the process
+  path. Fixtures: copies of `C:\TasOut\pr2d\{open_peaks,bridge_peaks,nores}.sam`; the sources' MD5s were unchanged.
+- **A** Bathroom_2 (`open_peaks`), tree context menu › Save › "Open it now?" Yes (opened in Chrome): 1 page A4, no
+  clipping. Heating **Peak sensible load** 1,140 W design day `23:00–24:00` (no HOY) / 104 W full year
+  `23 Dec 09:00–10:00 (HOY 8554)`. Cooling a genuine **0 W** with the no-demand note, status Available. PASS.
+- **A2** Studio 1_0 (`bridge_peaks`): 2 pages, no clipping. Heating 2,268 W (`15:00–16:00`) / 802 W
+  (`1 Jan 00:00–01:00 (HOY 1)`); cooling 1,973 W (`00:00–01:00`) / 1,972 W (`3 Jul 19:00–20:00 (HOY 4412)`).
+  SENSIBLE LOAD COMPONENTS AT PEAK and LATENT COMPONENTS AT PEAK separate; "No total is derived". PASS.
+- **B** Bathroom_2 (`nores`): 1 page; heating and cooling "Not simulated … This is not a zero load", status Not
+  simulated, no 0 W, normal "saved" box (no error). PASS.
+- **C** Space Assumptions PDF (tree menu, Bathroom_2): 1 page, layout intact. PASS.
+- **D** Edit › Reports holds both commands; tree and view context menus hold both; ribbon with nothing selected →
+  "Select one Space, then choose Space Design Load Summary PDF."; one Space selected in the view → ribbon › Save dialog ›
+  Cancel: no file, no message; ribbon › Save → "saved … Open it now?" (Bathroom_2 PDF); two Spaces (Ctrl+click) →
+  "2 Spaces are selected. … one Space at a time" and both items disabled in the view menu; one Space → both enabled. PASS.
+- Text of the installed PDFs equals the pre-deploy dev-build PDFs (`C:\TasOut\pr2d`) apart from the version/date lines
+  and SAM#159's intended wording (Peak load → Peak sensible load, SENSIBLE COMPONENTS → SENSIBLE LOAD COMPONENTS, HOY
+  legend). Numbers identical.
+- Loaded modules: SAM.Core/Analytical, the 3 reporting DLLs, PdfSharp*/MigraDoc* and Microsoft.Extensions all from
+  `%APPDATA%\SAM` at 2026.3.218.0 / 6.2.0.7443; none from elsewhere. No runtime or dependency error in any case.
+- Evidence (outside git): `C:\TasOut\deploy-pr2e-smoke-2026-09-27` (`installer-run.log`, `install.log`,
+  `installed-gate.txt`, `loaded-modules.txt`, `pdf\` PDFs + page PNGs, `screens\`, `scripts\`).
+
+**Limitations.** One VM; no upgrade-over-previous or uninstall test; no licensed Tas run (typed-peak fixtures from PR2D).
+The UI driver needs the SAM window forced to the foreground (Alt-key + `SetForegroundWindow`, abort if not) - otherwise
+real mouse clicks land on whatever window is in front.
+
+**Carry into PR2F (observed, not changed here).** Thermostat sentinels print as −50 / 150 °C; the zero-row note under
+SENSIBLE LOAD COMPONENTS AT PEAK also lists latent terms (Bathroom_2); footer right shows the legend "— not available"
+even when nothing is missing; the fixtures' SIZING block reads 0 W while the peaks are real (fixture data, not a regression);
+raw Tas design-day names (`Leeds_TRY ANN CLG 0% CONDS DB=>GRad`).
+
+## 2026-09-26 B0 Phase-1 correctness deployment (SAM#147) - MERGED as SAM_Deploy#54 (`e5cfeb14`)
 
 | Submodule | Old pin | New pin | Includes |
 |---|---|---|---|
