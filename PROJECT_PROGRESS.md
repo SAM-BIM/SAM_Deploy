@@ -4,7 +4,11 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-27 (closeout) — **SAM Documentation Framework Phase 2: COMPLETE.** SAM_Deploy#55 merged as `1506da5f`;
+2026-09-28 — **PR2F-3: ship batch Space report export (SAM_UI#133).** SAM `6c255ad8` -> `3d6fa80a`, SAM_Tas
+`fedf34cd` -> `e7cc0ed4`, SAM_Systems `22133736` -> `005c4fe1`, SAM_UI `cbe1c076` -> `8971cfb0`. Pointer-only, no
+workflow or gate change. Installer run 219 built, installed and accepted on the installed product (A-I PASS). Branch
+`chore/deploy-space-report-batch-2026-09-28`, SAM_Deploy#57; see the section below.
+Previously: 2026-09-27 (closeout) — **SAM Documentation Framework Phase 2: COMPLETE.** SAM_Deploy#55 merged as `1506da5f`;
 `sow/2026-Q3` pins SAM `6c255ad8` (SAM#159), SAM_Tas `fedf34cd`, SAM_UI `cbe1c076` (SAM_UI#127). See the section below.
 Previously: 2026-09-27 — **PR2E: ship the Space Design Load Summary PDF (reporting Phase 2).** SAM `00db4b85` -> `6c255ad8`,
 SAM_Tas `b32c0808` -> `fedf34cd`, SAM_UI `4b773f3e` -> `cbe1c076`; SAM_Systems unchanged. Pointer-only, no workflow or
@@ -51,6 +55,85 @@ workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointe
 2026-09-23 — post-acceptance submodule bump to every `sow/2026-Q3` tip (branch
 `chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
 2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
+
+## 2026-09-28 PR2F-3 batch Space report export deployment (SAM_UI#133) - SAM_Deploy#57
+
+```text
+SAM Documentation Framework — PR2F-3 (deploy batch Space report export)
+Status: installer built, installed-product acceptance PASS; PR open (merge when green/clean/current)
+```
+
+| Submodule | Old pin | New pin | Includes |
+|---|---|---|---|
+| SAM_UI | `cbe1c076` | `8971cfb0` | **SAM_UI#133** PR2F-2 batch export (merge `7161d9f8`) + closeout docs; test/docs-only #129-#132 below it |
+| SAM | `6c255ad8` | `3d6fa80a` | **SAM#163** PR2F-1 `DocumentContext.WithNewDiagnostics()` (`afe90e94`, needed by #133); SAM#161 Part O PR3B-1 (`85a13ec3`) sits below it; docs #160/#162/#164/#165 |
+| SAM_Systems | `22133736` | `005c4fe1` | SAM_Systems#31 PR3B-2 |
+| SAM_Tas | `fedf34cd` | `e7cc0ed4` | SAM_Tas#71 PR3B-3 |
+
+**Why four pins, not two.** PR2F-1 (`afe90e94`) is above SAM#161 on SAM's first-parent history, so every SAM pin with
+`WithNewDiagnostics()` also carries PR3B-1 production code. SAM_UI CI builds SAM, SAM_Systems and SAM_Tas at their sow
+tips, so #133 was built and gated only against the full PR3B stack. Shipping SAM#161 without its SAM_Systems#31 /
+SAM_Tas#71 partners would be a combination no CI built. All four moves are fast-forwards to the merged `sow/2026-Q3`
+tips (28 Sep ~11:30). The only project-file change is a SAM_Tas *test* csproj, so there is no new payload and the
+SAM_Deploy#51 gate is unchanged. No report content or SAM_UI behaviour change in this PR.
+
+**Installer build.** installer.yml run [36403829578](https://github.com/SAM-BIM/SAM_Deploy/actions/runs/36403829578) on
+`dc5c9ab` (dispatch, `publish_release=false`): success, release job skipped, nothing published.
+- Artifact `SAM_Install_v20260928.219.exe`, 250,270,205 bytes, SHA-256
+  `5f234575a55ad7091c8d2553292749c18924d3943533bfc3e5c3bc8f9b1cccf1`. SAMVersion `2026.3.219.0+dc5c9ab`.
+- *Assert reporting/PDF payload*: passed (85 assemblies from the payload, 1 from the runtime; NotoSans Regular/Bold
+  embedded; PdfSharp*/MigraDoc* 6.2.0.7443; Microsoft.Extensions.Logging.Abstractions 8.0; both licences).
+- H12 (enforce): **no violations**. Drift: the same 3 unclassified warnings as runs 214/216-218.
+- Validate PR: green on `dc5c9ab`.
+
+**Installed-product acceptance (28 Sep, this VM).**
+- The PR2F-2 dev build in `%APPDATA%\SAM` (1,877 files, version 1.0.0) was moved to
+  `%APPDATA%\SAM.dev-backup-2026-09-28` first (WMI-launched `move`, outside the MSIX container; no shadow copy in the
+  package's `LocalCache\Roaming`). Silent install (`/VERYSILENT /SUPPRESSMSGBOXES /NORESTART`, WMI-launched): 36 s,
+  "Installation process succeeded", 1,711 files. The gate re-run on the installed `%APPDATA%\SAM` (Windows PowerShell;
+  no pwsh on this VM): passed.
+- Every case ran the installed `%APPDATA%\SAM\SAM Analytical.exe` (2026.3.219.0+dc5c9ab), confirmed by the process path.
+  Fixtures: copies of `C:\TasOut\pr2d\{bridge_peaks,open_peaks}.sam` and `C:\TasOut\pr2f2\accept\bridge_x555.sam`
+  (4,995 Spaces, 26 MB); source MD5s unchanged afterwards.
+- **A** `bridge_peaks`, ribbon Edit › Reports › Export Space Reports, nothing selected: window opens in 0.08 s with no
+  report ticked, Export disabled ("Choose at least one report."), All Spaces (9), folder `bridge_peaks Space reports`
+  beside the model. Both reports: **18 PDFs in 1.1 s**, 0 `.tmp`, one log (header, 18 `Created` lines, `Completed`). PASS.
+- **B/C/D** re-run into the same folder: prompt "18 of the 18 PDFs are already in the output folder. Yes/No/Cancel".
+  No → 0 created / 18 skipped, no PDF touched. Yes → 18 rewritten. Cancel → nothing written, no new log, window
+  stays usable. PASS.
+- **E** `Bathroom_2 - Space Design Load Summary.pdf` locked (exclusive handle from another process), overwrite: 17
+  created, 1 `FAILED` with `stage: Output` (`UnauthorizedAccessException`, "close the file if it is open in a PDF
+  viewer"), the documents after it still created, the locked file byte-identical, 0 `.tmp`. PASS.
+- **F** tree Ctrl+click Studio 1_0, Bathroom_2, Kitchen_4 › context menu: *Export Space reports...* enabled, both
+  one-Space items disabled; scope defaults to Selected Spaces (3); Space Design Load Summary only → 3 PDFs (log
+  `Scope: Selected Spaces`, `Spaces: 3`). PASS.
+- **G** single-Space regression (Bathroom_2 only): both one-Space items enabled; each saves via its Save dialog and
+  shows "... PDF saved: <path> Open it now?". Text equals the batch PDF line for line except the "Generated" time. PASS.
+- **H** `open_peaks`, All Spaces (9), both reports: 18 PDFs, 0 `.tmp`. PASS.
+- **I** 4,995 Spaces (`bridge_x555`): model loads in 53.5 s; window opens in 0.17 s showing All Spaces (4,995).
+  - Full run, both reports: **9,990 PDFs in 1:44** (same as the dev build), 0 failed, 0 `.tmp`, 216
+    collision-suffixed names (= the PR2F-2 harness). Progress live ("Space 784 / 4,995 - Space Design Load Summary").
+  - Working set 2.8 GB before; rises to a **3.9-4.0 GB plateau from ~45 s** and stays flat to the end (dev: ~4.05 GB);
+    3.95 GB after (not released within 90 s - GC, not growth). Samples: `5k-full-memory.txt`.
+  - Cancel mid-run (Space 369): summary in **0.12 s**, "Cancelled after 758 of 9,990 documents"; log `CANCELLED`.
+  - Close the window mid-run (Space 412): gone in **0.04 s**, app responsive, log `CANCELLED after 837 of 9990`.
+- PDFs: all 36 from A/H are A4 with no text outside the page; sampled PDFs have 1-2 pages, Noto Sans Regular/Bold
+  embedded, PDFsharp 6.2.0; page renders checked visually (Studio 1_0 2,268/802 W; Bathroom_2 1,140/104 W and a
+  genuine 0 W cooling - identical to PR2E). Versus the PR2F-2 dev-build PDFs: same text apart from the version and
+  "Generated" lines (the longer version string wraps "sizing ·" onto the next footer line).
+- Loaded modules (A, H and the 5k run): all 25 SAM*, PdfSharp*, MigraDoc*, Microsoft.Extensions* modules from
+  `%APPDATA%\SAM` at 2026.3.219.0+dc5c9ab / 6.2.0; none from elsewhere. No runtime or dependency error in any case.
+- Evidence (outside git): `C:\TasOut\deploy-pr2f3-smoke-2026-09-28` (`installer-run.log`, `install.log`,
+  `installed-gate.txt`, `loaded-modules*.txt`, `5k-full-memory.txt`, `log-5k-full.log`, `model\` outputs, `pdf\`
+  PDFs + page PNGs, `screens\`, `scripts\` incl. `lib.ps1`/`run5k.ps1`).
+
+**Limitations.** One VM; no upgrade-over-previous or uninstall test; no licensed Tas run (fixtures from PR2D/PR2F-2).
+UI driver notes: the output-folder box is read-only (Browse only, not exercised here); an existing-files prompt must
+be brought to the foreground before `BM_CLICK`, or the click is lost.
+
+**Next step.** Merge SAM_Deploy#57 when Validate is green, review is clean and the base is current; then record the
+merge SHA here and in SAM_UI `PROJECT_PROGRESS.md` (PR2F-3 complete). The dev build can be restored from
+`%APPDATA%\SAM.dev-backup-2026-09-28` if needed (a SAM_UI rebuild also re-copies it).
 
 ## 2026-09-27 PR2E Space Design Load Summary deployment (reporting Phase 2) - MERGED as SAM_Deploy#55 (`1506da5f`)
 
