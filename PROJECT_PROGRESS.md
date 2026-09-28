@@ -4,7 +4,10 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-28 (closeout) — **PR2F-3 COMPLETE.** SAM_Deploy#57 merged as `3d531508`; `sow/2026-Q3` pins SAM `3d6fa80a`,
+2026-09-28 (closeout) — **Mixed Part O PR4 deploy COMPLETE.** SAM_Deploy#58 merged as `c74122b3`; `sow/2026-Q3` pins
+SAM_UI `0c7b5ec5` (ships PR3C per-dwelling cooling, SAM_UI#134; + #135, #136, #137), SAM_Tas_Grasshopper `9ddf8ff`
+(#7), SAM `bc85ba61`, SAM_Systems `fbef48f`, SAM_Tas `5753ad2`. See the section below.
+Previously: 2026-09-28 (closeout) — **PR2F-3 COMPLETE.** SAM_Deploy#57 merged as `3d531508`; `sow/2026-Q3` pins SAM `3d6fa80a`,
 SAM_Tas `e7cc0ed4`, SAM_Systems `005c4fe1`, SAM_UI `8971cfb0` (SAM_UI#133 batch export). See the section below.
 **Convention from now on (owner, 28 Sep):** code + tests + evidence → final PR CI → merge → update
 `PROJECT_PROGRESS.md` afterwards as a direct docs-only closeout commit on the base branch (not on the PR branch).
@@ -59,6 +62,39 @@ workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointe
 2026-09-23 — post-acceptance submodule bump to every `sow/2026-Q3` tip (branch
 `chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
 2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
+
+## 2026-09-28 Mixed Part O PR4 deployment (ships PR3C) - MERGED as SAM_Deploy#58 (`c74122b3`)
+
+```text
+Mixed Dwelling Strategies - PR4 (large-project acceptance + deploy)
+Status: deploy COMPLETE (SAM_Deploy#58 merged as c74122b3); large-project evidence MERGED (SAM_UI#137 d6f098d2)
+```
+
+- **Why.** `sow/2026-Q3` pinned SAM / SAM_Systems / SAM_Tas at the PR3C build SHAs but SAM_UI at `8971cfb0`, before PR3C
+  (SAM_UI#134 `453ca94`): the shipped app had no per-dwelling active cooling in Mixed Design.
+- **Pins** (all fast-forwards to the merged tips; no new project or assembly, payload gate unchanged):
+
+| Submodule | Old pin | New pin | Includes |
+|---|---|---|---|
+| SAM_UI | `8971cfb0` | `0c7b5ec5` | **SAM_UI#134** PR3C cooling + closeout; #135 progress-dialog pattern; #136 reporting hardening M1/M2; **#137** PR4 tests/evidence (merge `d6f098d2`) + closeout |
+| SAM_Tas_Grasshopper | `a4d4f73` | `9ddf8ff` | #7 mixed-building Part O diagnostic log name |
+| SAM / SAM_Systems / SAM_Tas | `3d6fa80a` / `005c4fe1` / `e7cc0ed4` | `bc85ba61` / `fbef48f` / `5753ad2` | docs only (AGENTS.md) |
+
+- **Gate evidence.** Installer run [36459447134](https://github.com/SAM-BIM/SAM_Deploy/actions/runs/36459447134) on
+  `87d3560` (`publish_release=false`, nothing published): `SAM_Install_v20260928.220.exe`, 250,292,675 bytes, SHA-256
+  `21f54cf1…4430`, SAMVersion `2026.3.220.0+87d3560`; payload assert and H12 pass, **H12 violations: none**. Validate
+  green on `87d3560` and on the merged head `920f641` (docs-only, identical gitlinks). No review (Codex usage limit).
+- **Installed-product smoke (owner's laptop, licensed TAS) PASS.** Dev build moved to `%APPDATA%\SAM.dev-backup-2026-09-28`
+  (WMI-launched move); the Claude app's MSIX shadow `…\LocalCache\Roaming\SAM` moved to `SAM.shadow-2026-09-28`;
+  silent install exit 0, 140 s, 1,711 files. The PR3C case through the installed `SAM Analytical.exe` (process path
+  confirmed): cooling refused on the Natural dwelling; Check names Flat 3 at 80 l/s on the Systems route; Build & Run
+  4.4 min → the PR3C result (FAIL, 1 pass · 2 fail, Systems route, 1 cooled); TM59 window 5 spaces · 2 pass · 3 fail;
+  ribbon Save 121,383 bytes; `PartOMixedCoolingAcceptanceInspection` **INSPECTION PASSED (24 PASS)**. Record:
+  `DEPLOY_PARTO_MIXED_PR4.md`. The installed product stays in `%APPDATA%\SAM`.
+- **Open (not a deploy blocker).** PR4 found that a full-year run at ~5,000 spaces is not practical on current TAS
+  (TSD per-zone read scaling) - SAM_UI `documentation/PartO-MixedDwellingStrategies-PR4.md`; owner decision on a
+  follow-up outside this programme.
+- **Next step.** None for this deployment.
 
 ## 2026-09-28 PR2F-3 batch Space report export deployment (SAM_UI#133) - MERGED as SAM_Deploy#57 (`3d531508`)
 
