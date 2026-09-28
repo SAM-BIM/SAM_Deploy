@@ -4,7 +4,11 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-28 — **PR2F-3: ship batch Space report export (SAM_UI#133).** SAM `6c255ad8` -> `3d6fa80a`, SAM_Tas
+2026-09-28 (closeout) — **PR2F-3 COMPLETE.** SAM_Deploy#57 merged as `3d531508`; `sow/2026-Q3` pins SAM `3d6fa80a`,
+SAM_Tas `e7cc0ed4`, SAM_Systems `005c4fe1`, SAM_UI `8971cfb0` (SAM_UI#133 batch export). See the section below.
+**Convention from now on (owner, 28 Sep):** code + tests + evidence → final PR CI → merge → update
+`PROJECT_PROGRESS.md` afterwards as a direct docs-only closeout commit on the base branch (not on the PR branch).
+Previously: 2026-09-28 — **PR2F-3: ship batch Space report export (SAM_UI#133).** SAM `6c255ad8` -> `3d6fa80a`, SAM_Tas
 `fedf34cd` -> `e7cc0ed4`, SAM_Systems `22133736` -> `005c4fe1`, SAM_UI `cbe1c076` -> `8971cfb0`. Pointer-only, no
 workflow or gate change. Installer run 219 built, installed and accepted on the installed product (A-I PASS). Branch
 `chore/deploy-space-report-batch-2026-09-28`, SAM_Deploy#57; see the section below.
@@ -56,12 +60,16 @@ workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointe
 `chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
 2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
 
-## 2026-09-28 PR2F-3 batch Space report export deployment (SAM_UI#133) - SAM_Deploy#57
+## 2026-09-28 PR2F-3 batch Space report export deployment (SAM_UI#133) - MERGED as SAM_Deploy#57 (`3d531508`)
 
 ```text
 SAM Documentation Framework — PR2F-3 (deploy batch Space report export)
-Status: installer built, installed-product acceptance PASS; PR open (merge when green/clean/current)
+Status: COMPLETE        deployment gate: COMPLETE (SAM_Deploy#57 merged as 3d531508)
 ```
+
+Gate evidence: SAM_UI#133 merged `7161d9f8`; installer run 219 green (payload gate, H12); installed-product acceptance
+A-I PASS; Validate green on the merged head `f186dba` (docs-only over the accepted `dc5c9ab`, identical gitlinks); no
+review comments; base `bc76a31` current at merge.
 
 | Submodule | Old pin | New pin | Includes |
 |---|---|---|---|
@@ -131,9 +139,9 @@ SAM_Deploy#51 gate is unchanged. No report content or SAM_UI behaviour change in
 UI driver notes: the output-folder box is read-only (Browse only, not exercised here); an existing-files prompt must
 be brought to the foreground before `BM_CLICK`, or the click is lost.
 
-**Next step.** Merge SAM_Deploy#57 when Validate is green, review is clean and the base is current; then record the
-merge SHA here and in SAM_UI `PROJECT_PROGRESS.md` (PR2F-3 complete). The dev build can be restored from
-`%APPDATA%\SAM.dev-backup-2026-09-28` if needed (a SAM_UI rebuild also re-copies it).
+**Next step.** None for PR2F-3. Next reporting work is owner-led (remaining PR2F review items). Part O: PR3C only on the
+owner's go-ahead. On this VM `%APPDATA%\SAM` now holds installed build 219; the PR2F-2 dev build is in
+`%APPDATA%\SAM.dev-backup-2026-09-28` (a SAM_UI rebuild also re-copies its output there).
 
 ## 2026-09-27 PR2E Space Design Load Summary deployment (reporting Phase 2) - MERGED as SAM_Deploy#55 (`1506da5f`)
 
