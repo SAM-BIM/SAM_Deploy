@@ -30,7 +30,6 @@
     <SolutionToBuild Include="SAM_Systems\SAM_Systems.sln"><Config>Debug</Config></SolutionToBuild>
     <SolutionToBuild Include="SAM_Windows\SAM_Windows.sln"><Config>Debug</Config></SolutionToBuild>
     <SolutionToBuild Include="SAM_IFC\SAM_IFC.sln"><Config>Debug</Config></SolutionToBuild>
-    <!-- <SolutionToBuild Include="SAM_Topologic\SAM_Topologic.sln"><Config>Debug</Config></SolutionToBuild> -->
     <!-- Optional module: not a SAM_Deploy submodule, so skip when the sibling clone
          is absent (same Exists pattern as BuildAll_Release.csproj). Without this a
          clean clone cannot run BuildAlls_v4. -->
