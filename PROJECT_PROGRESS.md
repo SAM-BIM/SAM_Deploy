@@ -4,7 +4,9 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-09-28 (closeout) — **Mixed Part O PR4 deploy COMPLETE.** SAM_Deploy#58 merged as `c74122b3`; `sow/2026-Q3` pins
+2026-10-01 (closeout) — **Part O final deploy COMPLETE.** SAM_Deploy#59 merged as `a61875a`; `sow/2026-Q3` pins SAM `c3890d5c`, SAM_Systems `09063b4c`, SAM_Tas `057faf37`,
+SAM_UI `bdcc2a54` (SAM_Tas_Grasshopper unchanged at `9ddf8ff`). Ships PR-4 .. PR-6 (SAM_UI#150-#156, SAM#170-#174). See the section below.
+Previously: 2026-09-28 (closeout) — **Mixed Part O PR4 deploy COMPLETE.** SAM_Deploy#58 merged as `c74122b3`; `sow/2026-Q3` pins
 SAM_UI `0c7b5ec5` (ships PR3C per-dwelling cooling, SAM_UI#134; + #135, #136, #137), SAM_Tas_Grasshopper `9ddf8ff`
 (#7), SAM `bc85ba61`, SAM_Systems `fbef48f`, SAM_Tas `5753ad2`. See the section below.
 Previously: 2026-09-28 (closeout) — **PR2F-3 COMPLETE.** SAM_Deploy#57 merged as `3d531508`; `sow/2026-Q3` pins SAM `3d6fa80a`,
@@ -62,6 +64,27 @@ workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointe
 2026-09-23 — post-acceptance submodule bump to every `sow/2026-Q3` tip (branch
 `chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
 2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
+
+## 2026-10-01 Part O final deployment (PR-4 .. PR-6, SAM#174) - MERGED as SAM_Deploy#59 (`a61875a`)
+
+**Status.** [SAM_Deploy#59](https://github.com/SAM-BIM/SAM_Deploy/pull/59) merged into `sow/2026-Q3` (PR head `7244406`, merge `a61875a`). Pointer-only: SAM `bc85ba61` -> `c3890d5c`, SAM_Systems `fbef48ff` -> `09063b4c`,
+SAM_Tas `5753ad2e` -> `057faf37`, SAM_UI `0c7b5ec5` -> `bdcc2a54` (PR-6 SAM_UI#156 merge `84e7ad9`, closeout `bdcc2a5`). All fast-forwards to the merged tips; no workflow, project or assembly change.
+Record: `DEPLOY_PARTO_FINAL.md`.
+
+**Validation.**
+- Validate PR green (`585d380` and the docs-only head `7244406`).
+- Installer run 221 (`585d380`, dispatch, `publish_release=false`): success, nothing published, `SAM_Install_v20261001.221.exe` (250,089,982 bytes), stamp `2026.4.221.0` (a `chore/*` branch takes the UTC quarter).
+- Installer run [36827807872](https://github.com/SAM-BIM/SAM_Deploy/actions/runs/36827807872) #222 on the merged `sow/2026-Q3` (`a61875a`): `build` success, `release` skipped, nothing published,
+  `SAM_Install_v20261001.222.exe` (artifact `SAM_Install`, 250,095,857 bytes), `2026.3.222.0+a61875a`, reporting/PDF payload gate passed, `h12-audit-report` uploaded.
+- Release regression gate, merged tips, Release: `SAM.Tests` 2792/2792; `SAM.Analytical.Systems.Tests` 303/303; `Systems.Mollier.Tests` 123/123; `Tas.TM59.Tests` 1023/1023; `SAM.Analytical.UI.WPF.Tests` 1590/1590.
+- Real model (read-only, no TAS): real `SAM Analytical.exe` from the merged SAM_UI tip on a hash-verified copy of the cleaned model, Check design: "SAM can build this mixed design"; Systems in this assessment
+  2 included (MVHR Flat 2, MVHR Flat 3) / 3 retained (MV 1 naming AHU1, NV 1, UV 1); no SharedSystem or missing-AHU refusal; source hash unchanged.
+
+**Not done.** The installed-product smoke (as in #58) and any licensed TAS run were not repeated; SAM_UI#154 remains the last licensed Mixed acceptance (PASS). Nothing was published to a GitHub Release.
+
+**Risks / separate follow-ups.** Intermittent TPD `Loading TSD data` (`AddTSDData`) stall (SAM_UI#154); general sidecar absolute-path audit; Save As portability of `.partomixed.json`; Prepare & Run / Iteration 3 do not show the PR-6 section.
+
+**Next step.** None for Part O. A release publish, if wanted, is a separate dispatch of `installer.yml` from `sow/2026-Q3` with `publish_release=true`.
 
 ## 2026-09-28 Mixed Part O PR4 deployment (ships PR3C) - MERGED as SAM_Deploy#58 (`c74122b3`)
 
