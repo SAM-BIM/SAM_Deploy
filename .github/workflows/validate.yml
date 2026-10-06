@@ -13,7 +13,7 @@ name: Validate PR
 
 on:
   pull_request:
-    branches: [master, 'sow/2026-Q4']
+    branches: [master, 'sow/**']
 
 permissions:
   contents: read
