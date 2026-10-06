@@ -6,6 +6,20 @@ models, sessions, accounts, and computers.
 Git and committed repository files are the authoritative project state.
 Do not rely on previous conversation memory.
 
+## Branch context (2026-Q4)
+
+- Active development branch: `sow/2026-Q4` (created 2026-10-06 from release tag `v20261006.1` `1bee804f`).
+- `sow/2026-Q3` is frozen. It is the preserved record of the final Q3 release (SAM_Deploy `v20261006.1`,
+  deploy SHA `1bee804f`). Do not commit to, rebase, rename, archive or delete it.
+- `master` is the product line. It does not carry `AGENTS.md` or `PROJECT_PROGRESS.md`; these internal files live on
+  `sow/*` branches only. Never merge or restore them onto `master`.
+- **SAM_Deploy is the special case.** `master` is still the older Q2 line and must NOT be used as a base.
+  `sow/2026-Q4` was cut from the released Q3 tag `v20261006.1` (`1bee804f`), not from `master`.
+  Do not move or rewrite `master`, tag `v20261006.1`, its release asset, or the Q3 release notes.
+- `.gitmodules` on this branch tracks `branch = sow/2026-Q4`. The gitlink SHA pins were deliberately left at the final
+  Q3 product SHAs at bootstrap. Never run a blind `git submodule update --remote`; move gitlinks only as an explicit,
+  reviewed bump when the corresponding Q4 product work is ready to ship.
+
 ## Before starting work
 
 Before making significant changes:

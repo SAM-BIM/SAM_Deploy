@@ -1,9 +1,74 @@
-# Project Progress
+# Project Progress - SAM_Deploy (2026-Q4)
 
 ## Branch
-`sow/2026-Q3`
+
+`sow/2026-Q4` - bootstrapped 2026-10-06 from release tag `v20261006.1` `1bee804f`. Frozen Q3 record: `sow/2026-Q3` @ `1bee804f` (not modified).
 
 ## Last updated
+
+2026-10-06 (Q4 bootstrap).
+
+## Current status
+
+Q4 branch cut from the released Q3 tag `v20261006.1` (`1bee804f`). It has not started producing Q4 content: all 24 gitlinks still pin the final Q3 product SHAs (each equal to that repository's `master` at bootstrap) and `.gitmodules` now tracks `branch = sow/2026-Q4`. No installer, tag or release was created or rebuilt for Q4.
+
+## Q4 priorities
+
+Not yet set by the owner. Record them here at the first Q4 planning pass. Known carry-over work is listed below.
+
+## Known carry-over work
+
+- Branch `chore/deploy-q3-final-baseline-2026-10-06` - Q3 complete: merged (SAM_Deploy#61); all commits in sow/2026-Q3.
+- Branch `docs/grasshopper-component-descriptions-2026-Q3` - owner decision: 2 commits not in Q3 (last 2026-08-06).
+- Branch `release/2026-Q3-acceptance-run213` - owner decision: 1 commit not in Q3 (last 2026-09-17).
+- Q3 gates not exercised, carried from the Q3 record: H8 (Revit 2025) and the dedicated H10 runtime-path test were OWNER-SKIPPED (waived); H5-H7 (TAS-specific Grasshopper tests) were not separately re-exercised; H11 upgrade-over-previous not exercised.
+- `SAM_Deploy:master` is still the older Q2 line. Bringing it up to the shipped state is a separate, explicit decision (not part of bootstrap).
+- Open icon-redesign PRs exist in 18 component repositories, all with base `sow/2026-Q3`; see each repository's own record.
+
+## Repository-specific next steps
+
+- When Q4 product work lands in a submodule, bump that gitlink deliberately (reviewed pointer bump); do not use `git submodule update --remote`.
+- Q3-specific text in `README.md` (quarterly transitions, `branch = sow/2026-Q3` examples) is now stale and needs a later review pass; it was left untouched at bootstrap.
+- Later cleanup tasks (explicitly not started): sync/contribution/docs branch hygiene, access and secrets review.
+- Follow the continuity convention in `AGENTS.md` for every PR and closeout.
+
+## Decisions / assumptions
+
+- Q4 base is release tag `v20261006.1` `1bee804f`; the internal files were recovered from `sow/2026-Q3` into this branch only, never onto `master`.
+- Historical Q2/Q3 content below is kept as evidence; its branch names, SHAs and next steps describe Q3 and are not current instructions.
+- CI: `validate.yml` pull_request filter now covers `master` and `sow/2026-Q4` (was `sow/2026-Q3`). `installer.yml` (tag/dispatch only) already derives the version from any `sow/yyyy-Qx` branch and needed no change.
+
+## Validation
+
+- Bootstrap verified 2026-10-06: `sow/2026-Q4` was created at exactly `1bee804f` and the push was a normal (non-forced) branch creation.
+
+## Issues / blockers
+
+- None at bootstrap.
+
+## Next step
+
+- Owner to set Q4 priorities; then start the first Q4 task from this branch.
+
+## Q3 release closeout (reference)
+
+- Final release: `v20261006.1` in `SAM-BIM/SAM_Deploy`, deploy SHA `1bee804fa0d5a8c4e3b867705dbc579dbecc25a1` (`sow/2026-Q3`). Frozen.
+- Installer `SAM_Install_v20261006.1.exe`, SHA-256 `c9814a3959e6608ae5eebbc545e8906e7e022c344a30a087fdada35469bc03e8`.
+- The exact accepted installer passed manual smoke testing in Rhino, Grasshopper, the Revit add-in and Rhino.Inside.Revit.
+- Do not modify `sow/2026-Q3`, the tag, the release asset or the release notes.
+
+---
+
+# Historical record - 2026-Q3 (frozen)
+
+Source: tip of `sow/2026-Q3` (`1bee804f`). Preserved verbatim except that heading levels are shifted down one. Everything below describes Q3 and is not a current instruction.
+
+## Project Progress
+
+### Branch
+`sow/2026-Q3`
+
+### Last updated
 2026-10-06 (closeout) — **Final 2026-Q3 SAM-BIM master baseline captured in SAM_Deploy.** SAM_Deploy#61 merged as `37933daf` (PR head `c369ebd`); `sow/2026-Q3` now pins **all 24 submodules**
 to their final SAM-BIM `master` commits (e.g. SAM_Solver `d5e59f52`, SAM_Tas_Grasshopper `b4fce7c8`; full table in the section below). `.gitmodules` unchanged. **Next step: create and verify the new installer**
 from the final `sow/2026-Q3` closeout SHA. Q4 has not started; no installer, tag or release has been created for this baseline.
@@ -68,7 +133,7 @@ workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointe
 `chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
 2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
 
-## 2026-10-06 Final Q3 SAM-BIM master baseline deployment - MERGED as SAM_Deploy#61 (`37933daf`)
+### 2026-10-06 Final Q3 SAM-BIM master baseline deployment - MERGED as SAM_Deploy#61 (`37933daf`)
 
 **Current status.** The final 2026-Q3 SAM-BIM repository baseline has been synchronised into SAM_Deploy. [SAM_Deploy#61](https://github.com/SAM-BIM/SAM_Deploy/pull/61) merged into `sow/2026-Q3` as `37933dafaee7e4952da5795511132a0e23093c48` (normal merge commit; PR head `c369ebd921ec92523aeb0fe667644e1857c5810e`; parents `e0a451bf` and `c369ebd`). `sow/2026-Q3` pins all 24 submodules to the final SAM-BIM `master` commit of each repository. Installer creation is the next step. Q4 has not started.
 
@@ -126,7 +191,7 @@ workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointe
 
 **Next step.** Create and verify the new installer from the final `SAM_Deploy:sow/2026-Q3` closeout SHA.
 
-## 2026-10-01 Part O final deployment (PR-4 .. PR-6, SAM#174) - MERGED as SAM_Deploy#59 (`a61875a`)
+### 2026-10-01 Part O final deployment (PR-4 .. PR-6, SAM#174) - MERGED as SAM_Deploy#59 (`a61875a`)
 
 **Status.** [SAM_Deploy#59](https://github.com/SAM-BIM/SAM_Deploy/pull/59) merged into `sow/2026-Q3` (PR head `7244406`, merge `a61875a`). Pointer-only: SAM `bc85ba61` -> `c3890d5c`, SAM_Systems `fbef48ff` -> `09063b4c`,
 SAM_Tas `5753ad2e` -> `057faf37`, SAM_UI `0c7b5ec5` -> `bdcc2a54` (PR-6 SAM_UI#156 merge `84e7ad9`, closeout `bdcc2a5`). All fast-forwards to the merged tips; no workflow, project or assembly change.
@@ -147,7 +212,7 @@ Record: `DEPLOY_PARTO_FINAL.md`.
 
 **Next step.** None for Part O. A release publish, if wanted, is a separate dispatch of `installer.yml` from `sow/2026-Q3` with `publish_release=true`.
 
-## 2026-09-28 Mixed Part O PR4 deployment (ships PR3C) - MERGED as SAM_Deploy#58 (`c74122b3`)
+### 2026-09-28 Mixed Part O PR4 deployment (ships PR3C) - MERGED as SAM_Deploy#58 (`c74122b3`)
 
 ```text
 Mixed Dwelling Strategies - PR4 (large-project acceptance + deploy)
@@ -180,7 +245,7 @@ Status: deploy COMPLETE (SAM_Deploy#58 merged as c74122b3); large-project eviden
   follow-up outside this programme.
 - **Next step.** None for this deployment.
 
-## 2026-09-28 PR2F-3 batch Space report export deployment (SAM_UI#133) - MERGED as SAM_Deploy#57 (`3d531508`)
+### 2026-09-28 PR2F-3 batch Space report export deployment (SAM_UI#133) - MERGED as SAM_Deploy#57 (`3d531508`)
 
 ```text
 SAM Documentation Framework — PR2F-3 (deploy batch Space report export)
@@ -263,7 +328,7 @@ be brought to the foreground before `BM_CLICK`, or the click is lost.
 owner's go-ahead. On this VM `%APPDATA%\SAM` now holds installed build 219; the PR2F-2 dev build is in
 `%APPDATA%\SAM.dev-backup-2026-09-28` (a SAM_UI rebuild also re-copies its output there).
 
-## 2026-09-27 PR2E Space Design Load Summary deployment (reporting Phase 2) - MERGED as SAM_Deploy#55 (`1506da5f`)
+### 2026-09-27 PR2E Space Design Load Summary deployment (reporting Phase 2) - MERGED as SAM_Deploy#55 (`1506da5f`)
 
 ```text
 SAM Documentation Framework — Phase 2 (Space Design Load Summary)
@@ -335,7 +400,7 @@ SENSIBLE LOAD COMPONENTS AT PEAK also lists latent terms (Bathroom_2); footer ri
 even when nothing is missing; the fixtures' SIZING block reads 0 W while the peaks are real (fixture data, not a regression);
 raw Tas design-day names (`Leeds_TRY ANN CLG 0% CONDS DB=>GRad`).
 
-## 2026-09-26 B0 Phase-1 correctness deployment (SAM#147) - MERGED as SAM_Deploy#54 (`e5cfeb14`)
+### 2026-09-26 B0 Phase-1 correctness deployment (SAM#147) - MERGED as SAM_Deploy#54 (`e5cfeb14`)
 
 | Submodule | Old pin | New pin | Includes |
 |---|---|---|---|
@@ -379,7 +444,7 @@ The Phase-1 matrix was deliberately not repeated; this is a narrow correctness d
 **Next step.** Merge this PR, then SAM#148 (audit doc: B0 fixed). After that, PR2A in SAM_Tas (the result contract,
 B1–B5).
 
-## 2026-09-26 Space Assumptions PDF deployment (SAM_UI#121) - MERGED as SAM_Deploy#51 (`8e6740af`)
+### 2026-09-26 Space Assumptions PDF deployment (SAM_UI#121) - MERGED as SAM_Deploy#51 (`8e6740af`)
 
 ```text
 SAM Documentation Framework — Phase 1
@@ -479,7 +544,7 @@ The positive artefacts were not modified. The evidence is outside git, in `C:\Ta
 **Outcome.** Merged as `8e6740af` on green validate. Future installer runs apply the gate automatically. Next step:
 Phase 2 planning (not started).
 
-## 2026-09-25 pointer bump: Nuaire reply + Part O workflow simplification
+### 2026-09-25 pointer bump: Nuaire reply + Part O workflow simplification
 
 Only the four repos that carry the merged Part O work move. Every other submodule was already at its
 `sow/2026-Q3` tip. Each move is a fast-forward to that tip.
@@ -516,7 +581,7 @@ Only the four repos that carry the merged Part O work move. Every other submodul
 Manufacturer-guidance values stay PROVISIONAL until Nuaire confirms them; this is not a certification.
 Run 214 remains the accepted 2026-Q3 candidate. No installer was built for this bump.
 
-## 2026-09-24 pointer bump: Nuaire / Part O manufacturer guidance (SAM#123)
+### 2026-09-24 pointer bump: Nuaire / Part O manufacturer guidance (SAM#123)
 
 Only the four repos that carry the merged guidance work move (SAM#125/#131, SAM_Systems#25/#28,
 SAM_Tas#63/#64, SAM_UI#105/#106). Every other submodule was already at its `sow/2026-Q3` tip. Each move
@@ -540,7 +605,7 @@ is a fast-forward.
 The product values stay PROVISIONAL manufacturer guidance until Nuaire confirms them; this is not a
 certification. Run 214 remains the accepted 2026-Q3 candidate. No installer was built for this bump.
 
-## 2026-09-23 submodule bump (post-acceptance, owner-requested)
+### 2026-09-23 submodule bump (post-acceptance, owner-requested)
 
 `git submodule update --remote` (each submodule follows `branch = sow/2026-Q3`). The
 bump picks up the 2026-09-22/23 cleanup across the family: dead .NET Framework `app.config` files
@@ -580,7 +645,7 @@ build-health check, **not** a new accepted candidate. Re-running the release mat
 working trees were clean but detached at assorted older/unrelated commits (e.g. SAM at `173ababc`), not at
 their pins. That was local state only and nothing committed; `git submodule update --remote` resolved it.
 
-## Current status (as of 2026-09-17; see the 2026-09-23 bump above)
+### Current status (as of 2026-09-17; see the 2026-09-23 bump above)
 2026-Q3 release candidate **ACCEPTED**. Installer `SAM_Install_v20260917.214.exe`
 (installer.yml [run 214](https://github.com/SAM-BIM/SAM_Deploy/actions/runs/35194487176),
 SAM_Deploy `cbd05b655076b859c709052d006b6edbb88dd113`, SAMVersion `2026.3.214.0`,
@@ -604,7 +669,7 @@ publishes a GitHub Release, tags a commit, or promotes `sow/2026-Q3` to master
 — quarter-close promotion (per-repo `sow/2026-Q3 → master` PRs, then publish,
 then `sam-bim.github.io#3`) remains a separate, not-yet-started next step.
 
-## H12 provenance follow-up (2026-09-17, branch `feat/h12-payload-audit`)
+### H12 provenance follow-up (2026-09-17, branch `feat/h12-payload-audit`)
 
 Implements the approved H12 fix/erratum after SAM_OCCT PR #70 (merged into its
 own `sow/2026-Q3`, head `e9b453b`) fixed the underlying defect: 8 SAM_OCCT
@@ -635,7 +700,7 @@ FileVersion/InformationalVersion provenance, and the old H12 wording
   `SAMVersion`. Run 210's historical result row is **unchanged** (it accurately
   reflects what was actually checked at the time).
 
-### v2 fixes (2026-09-17, same day, same branch) — independent review found 4 gaps
+#### v2 fixes (2026-09-17, same day, same branch) — independent review found 4 gaps
 
 An independent review of the first version of this PR found 4 correctness gaps
 in the audit script (not in the SAM_OCCT fix itself). All 4 fixed in place,
@@ -701,7 +766,7 @@ plus one bug found while testing fix #1:
    written report. Fixed by forcing array semantics: `$violations = @($rows |
    Where-Object {...})`. Applied the same defensive fix to `$submoduleNames`.
 
-### Validation performed (before opening the PR, and re-run for v2)
+#### Validation performed (before opening the PR, and re-run for v2)
 
 Assembled a complete synthetic payload from real local build output: all 12
 required SAM_OCCT binaries (`SAMVersion=2026.3.214.0`, per SAM_OCCT PR #70's
@@ -743,7 +808,7 @@ happens after this branch merges, per the approved plan (section 20).
 **PR #42 has NOT been merged** — holding for explicit human review per
 instruction.
 
-## Completed
+### Completed
 - Reconciled master-only `dbf2b14` (#28, OCCT cache warmer) into sow via a merge
   commit: kept master's `occt-cache-warm.yml`; kept sow's `installer.yml`
   (supersedes #28's key-only stopgap; cache key already identical).
@@ -751,7 +816,7 @@ instruction.
   No pinned repo has nested submodules. All 24 tips CI-green (build; SAM also test).
   No open PRs in any pinned repo.
 
-## Freeze manifest (sow/2026-Q3 tips pinned here)
+### Freeze manifest (sow/2026-Q3 tips pinned here)
 | Repo | SHA |
 |---|---|
 | SAM | `63dd763cb039ee32dde9f041354a676f9d304171` |
@@ -779,7 +844,7 @@ instruction.
 | SAM_Windows | `b5bb64e4f1be03b649d12f037a9d53e48deb7da4` |
 | SAM_gbXML | `3b96001f6075f1eb6aea341eafab6762528aeaed` |
 
-## Decisions / assumptions
+### Decisions / assumptions
 - Quarter-close convention (from Q2): per-repo PR `sow/2026-Qx → master` titled
   "Sync master with sow/2026-Qx (Qx promotion)", merge commit (no squash).
 - master is protected ("Protect Master v1": PR + 1 approving review, no bypass)
@@ -788,10 +853,10 @@ instruction.
   `publish_release=false`, then release those exact bytes), not a rebuild.
 - SAM #123 (manufacturer ventilation) is post-Q3 and not a release item.
 
-## Files changed
+### Files changed
 - 24 submodule gitlinks; `.github/workflows/occt-cache-warm.yml` (from master); this file.
 
-## Validation
+### Validation
 - installer.yml run 214 on `cbd05b6`: H1 PASS, H12 PASS (full-payload provenance
   audit, PR #42, ran clean).
 - Owner manual acceptance (2026-09-17) against `SAM_Install_v20260917.214.exe`:
@@ -808,7 +873,7 @@ instruction.
   `RELEASE_VALIDATION.md` → "Results — 2026-Q3 release candidate (run 214,
   FINAL ACCEPTED)".
 
-## Issues / blockers
+### Issues / blockers
 - H8 (Revit 2025) and the dedicated H10 runtime-path test remain
   OWNER-SKIPPED for Q3 — no Revit 2025 environment was available and the
   owner waived the dedicated H10 acceptance for this closeout.
@@ -816,7 +881,7 @@ instruction.
   separately re-exercised against run 214; the owner's acceptance pass used
   Part O workflows instead. Not explicitly waived — flagged for awareness only.
 
-## Next step
+### Next step
 - Quarter-close promotion (per-repo `sow/2026-Q3 → master` PRs, merge commit,
   human-approved per "Protect Master v1"; then publish the run-214 bytes as
   `v20260917.214`; then `sam-bim.github.io#3`) is the natural next step but is
