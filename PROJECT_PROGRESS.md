@@ -6,7 +6,7 @@
 
 ## Last updated
 
-2026-10-06 (Q4 icon-redesign migration: pilot + straightforward batch).
+2026-10-06 (Q4 icon-redesign migration: pilot + straightforward batch + SAM/SAM_UI high-scrutiny pass).
 
 ## Current status
 
@@ -23,7 +23,7 @@ Not yet set by the owner. Record them here at the first Q4 planning pass. Known 
 - Branch `release/2026-Q3-acceptance-run213` - owner decision: 1 commit not in Q3 (last 2026-09-17).
 - Q3 gates not exercised, carried from the Q3 record: H8 (Revit 2025) and the dedicated H10 runtime-path test were OWNER-SKIPPED (waived); H5-H7 (TAS-specific Grasshopper tests) were not separately re-exercised; H11 upgrade-over-previous not exercised.
 - `SAM_Deploy:master` is still the older Q2 line. Bringing it up to the shipped state is a separate, explicit decision (not part of bootstrap).
-- 18 icon-redesign PRs: SAM_Tas_Grasshopper #8 retargeted to `sow/2026-Q4`; the other 17 still base `sow/2026-Q3` and need a rebase-onto migration (plan in the Q4 operational cleanup section). **Update:** 4 pilot repos + 11 straightforward repos now have Q4 replacement PRs (see the two migration sections); SAM#166 and SAM_UI#138 are the remaining two, deliberately not started.
+- 18 icon-redesign PRs: SAM_Tas_Grasshopper #8 retargeted to `sow/2026-Q4`; the other 17 still base `sow/2026-Q3` and need a rebase-onto migration (plan in the Q4 operational cleanup section). **Update:** 4 pilot repos + 11 straightforward repos now have Q4 replacement PRs (see the two migration sections); SAM#166 and SAM_UI#138 are the remaining two, deliberately not started. **Update 2:** SAM#166 -> SAM#179 and SAM_UI#138 -> SAM_UI#203 migrated in a separate high-scrutiny pass; all 17 divergent PRs now have green, mergeable Q4 replacements (plus SAM_Tas_Grasshopper#8 retargeted). Old Q3 PRs still open; closing them is a separate controlled task.
 
 ## Repository-specific next steps
 
@@ -166,6 +166,24 @@ Verification, distinguished explicitly:
 - **Local builds/tests** (APPDATA redirected to a throwaway directory; sibling outputs via temporary junctions): all 11 build with 0 errors (SAM_Excel, SAM_OpenStudio and SAM_Revit with Visual Studio MSBuild, Revit in Debug2025/2026/2027; SAM_OCCT with the native build skipped as in CI); `check_assemblies.py` OK everywhere; SAM_SolarCalculator tests run in full (fast 519 passed + 1 `[Skip]`; long-running 45/45); SAM_Systems conformance 305/305 and Mollier 123/123; SAM_OCCT unit 631/631 and integration 31 passed/232 skipped (no native library); others as listed in each PR body.
 - **Special-repo notes:** SAM_Mollier's tooling-sync commit (`80da188`), SAM_Systems' two (`028cca0`, `0a15f74`), SAM_Revit's (`9b4d3f1`) and SAM_SolarCalculator's (`14636ce`) are all listed in the old PRs by GitHub and touch only `design/grasshopper-icons/{tools,tests}` (Systems `028cca0`: kit md + `classify.py`); no file in any old PR overlaps files changed on the Q4 line since the merge base (SAM_OCCT included).
 - Not done here: SAM#166, SAM_UI#138, any merge/close of icon PRs, HoareLea runtime-URL cleanup, installer rebuild.
+
+## Q4 icon-redesign migration - SAM + SAM_UI high-scrutiny pass (2026-10-06)
+
+The two PRs reserved for a deeper review (large divergent Q3 histories: a plain retarget would list 495 / 335 commits) were migrated with the same method after a read-only preflight: fresh `feature/sam-gh-icon-redesign-q4` from the freshly fetched `origin/sow/2026-Q4`, exactly the old PR's GitHub-listed commits replayed with `cherry-pick -x`, equivalence gate at the replay-only tip, one docs commit naming the new PR, new PR against `sow/2026-Q4`. SAM first (SAM_UI CI resolves the same-named SAM branch). Both replays were conflict-free. Old Q3 PRs and branches open and untouched; nothing merged, closed, retargeted, force-pushed or deleted.
+
+| Repo | Old PR (head) | Q4 base | Replay-only tip | Final head | New PR | Commits / files | Status |
+|---|---|---|---|---|---|---|---|
+| SAM | #166 (`cf4d924a`) | `5f57055d` | `cbf392f8` | `1646852b` | #179 | 6+1 / 1849 files | CI `build`/`test`/`spdx` green, mergeable, not merged |
+| SAM_UI | #138 (`51de3fc7`) | `9bef0158` | `017b65d9` | `a114cd54` | #203 | 5+1 / 120 files | CI `build`/`spdx` green, mergeable, not merged |
+
+- **Why replay is safe:** in both repos the `Grasshopper/` subtree is byte-identical at the old Q3 base, the frozen Q3 tip and Q4 (SAM `fe6cdeb4`, SAM_UI `b0f66384`) and `design/` exists in none of them, so no PR-touched file changed after the PRs were cut and no newer Q3/Q4 work is overwritten. Q3/Q4 work since then is confined to SAM `SAM/SAM.Analytical`, `SAM/SAM.Tests`, docs and SAM_UI `WPF/*`, `SAM_UI/SAM.Analytical.UI`, docs.
+- **SAM's 1849 files, fully accounted for:** 521 one-token `Icon` swaps (457 components + 64 params), additions-only `.resx` (+1062) and `Resources.Designer.cs` (+3540) in 6 projects, 354 resource PNGs (byte copies of the 337 kit PNGs), the `design/grasshopper-icons` kit (337 SVG, 337 PNG, 271 review, 9 tools, manifests) and the PR record. The one non-swap line is the documented `Icon` override added to `A_SAMAnalytical` (the only flag raised by the SAM_UI-kit `check_source.py`, which postdates SAM#166). No formatting/EOL/BOM, namespace, GUID, solution, project, package, workflow or `.gitmodules` change.
+- **Replay-only tip:** tree identical to the net-diff merge (SAM `c40b597c`, SAM_UI `a9a3300b`); same aggregate and per-commit `git patch-id`; same file set, status, numstat and per-path blobs (PNG, resx, designer) as the old PR; ComponentGuid lines unchanged (533 / 33); `git diff --check` identical to the old PR; resx/designer/PNG/token cross-check consistent (354/354, 19/19).
+- **Final PR head:** replay tip + one docs commit (`documentation/GH-IconRedesign-PR1.md` / `documentation/GH-IconRedesign.md`), so intentionally not tree-identical to the old feature; changed-file set equals the old PR's.
+- **Local validation** (`APPDATA` and `USERPROFILE` redirected - the post-build also writes `Documents\SAM`; sibling outputs via temporary junctions, removed non-recursively): Release `msbuild` of `SAM.sln` and `SAM_UI.sln` with the CI flags, 0 errors; `check_assemblies.py` OK (6 + 3 GH assemblies); SAM_UI `check_source.py` OK. Real `%APPDATA%\SAM`, Grasshopper libraries and `Documents\SAM` verified unchanged. Not run: Rhino-hosted GH tests (Rhino does not start under the redirected profile; not in CI).
+- **Q4 records:** per-repo migration records on `SAM:sow/2026-Q4` (`9b11dd26`) and `SAM_UI:sow/2026-Q4` (`70c86f3`); this entry. SAM_UI#203 CI built against SAM and the siblings' `feature/sam-gh-icon-redesign-q4` branches (the combined post-merge state). Gitlinks and `.gitmodules` unchanged.
+- **All 18 icon PRs (audited 2026-10-06):** 17 Q4 replacement PRs open, CI green, mergeable (SAM_GEM#11, SAM_BHoM#11, SAM_IFC#10, SAM_Psychrometrics#9, SAM_Excel#9, SAM_gbXML#12, SAM_LadybugTools#13, SAM_Mollier#10, SAM_Multitasker#10, SAM_OCCT#73, SAM_OpenStudio#24, SAM_Revit#22, SAM_SolarCalculator#30, SAM_Solver#16, SAM_Systems#37, SAM#179, SAM_UI#203) plus SAM_Tas_Grasshopper#8 (retargeted, green, mergeable); every old Q3 PR still open at its original head.
+- Next: owner-controlled closure of the 17 old Q3 PRs (link to each replacement; no branch deletion), then review/merge of the Q4 PRs by the maintainer. Separate, not started: HoareLea runtime-URL cleanup.
 
 ## Q3 release closeout (reference)
 
