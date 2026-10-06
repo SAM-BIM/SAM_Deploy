@@ -4,7 +4,10 @@
 `sow/2026-Q3`
 
 ## Last updated
-2026-10-01 (closeout) — **Part O final deploy COMPLETE.** SAM_Deploy#59 merged as `a61875a`; `sow/2026-Q3` pins SAM `c3890d5c`, SAM_Systems `09063b4c`, SAM_Tas `057faf37`,
+2026-10-06 (closeout) — **Final 2026-Q3 SAM-BIM master baseline captured in SAM_Deploy.** SAM_Deploy#61 merged as `37933daf` (PR head `c369ebd`); `sow/2026-Q3` now pins **all 24 submodules**
+to their final SAM-BIM `master` commits (e.g. SAM_Solver `d5e59f52`, SAM_Tas_Grasshopper `b4fce7c8`; full table in the section below). `.gitmodules` unchanged. **Next step: create and verify the new installer**
+from the final `sow/2026-Q3` closeout SHA. Q4 has not started; no installer, tag or release has been created for this baseline.
+Previously: 2026-10-01 (closeout) — **Part O final deploy COMPLETE.** SAM_Deploy#59 merged as `a61875a`; `sow/2026-Q3` pins SAM `c3890d5c`, SAM_Systems `09063b4c`, SAM_Tas `057faf37`,
 SAM_UI `bdcc2a54` (SAM_Tas_Grasshopper unchanged at `9ddf8ff`). Ships PR-4 .. PR-6 (SAM_UI#150-#156, SAM#170-#174). See the section below.
 Previously: 2026-09-28 (closeout) — **Mixed Part O PR4 deploy COMPLETE.** SAM_Deploy#58 merged as `c74122b3`; `sow/2026-Q3` pins
 SAM_UI `0c7b5ec5` (ships PR3C per-dwelling cooling, SAM_UI#134; + #135, #136, #137), SAM_Tas_Grasshopper `9ddf8ff`
@@ -64,6 +67,64 @@ workflow-simplification commits (branch `chore/bump-parto-workflow-merged-pointe
 2026-09-23 — post-acceptance submodule bump to every `sow/2026-Q3` tip (branch
 `chore/bump-submodules-2026-09-23`), followed by a non-publishing test installer build.
 2026-09-17 — 2026-Q3 release candidate ACCEPTED (run 214).
+
+## 2026-10-06 Final Q3 SAM-BIM master baseline deployment - MERGED as SAM_Deploy#61 (`37933daf`)
+
+**Current status.** The final 2026-Q3 SAM-BIM repository baseline has been synchronised into SAM_Deploy. [SAM_Deploy#61](https://github.com/SAM-BIM/SAM_Deploy/pull/61) merged into `sow/2026-Q3` as `37933dafaee7e4952da5795511132a0e23093c48` (normal merge commit; PR head `c369ebd921ec92523aeb0fe667644e1857c5810e`; parents `e0a451bf` and `c369ebd`). `sow/2026-Q3` pins all 24 submodules to the final SAM-BIM `master` commit of each repository. Installer creation is the next step. Q4 has not started.
+
+**Work completed.** 24 gitlinks were moved from the preserved `sow/2026-Q3` branch-tip pins to the verified final SAM-BIM `master` SHAs (each checked against the live remote when the PR was made and again immediately before and after the merge):
+
+| Submodule | Old (`sow/2026-Q3` pin) | New (final SAM-BIM `master`) |
+|---|---|---|
+| SAM | `c3890d5c` | `56a7059269e2aa77bec87415430957f3421a36c4` |
+| SAM_BHoM | `9f0af877` | `c734297b831866a6af2968ef8bd4a4fb93005a6a` |
+| SAM_Excel | `28a26b26` | `befb1acdc84358520de98b5be014efa81f208bb9` |
+| SAM_gbXML | `26111c9b` | `4228e6ef828c870f4794d85c3c5f782e5c1fddb5` |
+| SAM_GEM | `5af5d69e` | `96719c9943a0a3520ea64f0348010fff3dd9c7a9` |
+| SAM_IFC | `50c128d8` | `14ae71abfb9cdf0031ec5cc754fae0582ce3b999` |
+| SAM_LadybugTools | `17775e3a` | `abf0d215f6d0b999ff935f39ce831af6e05f96f6` |
+| SAM_Mollier | `5c336cdc` | `fc73fd6902528145405c9d920e98eb9bfcdbffda` |
+| SAM_Multitasker | `55337969` | `45f6854dcefd832b5c9828522056313c7ed454a7` |
+| SAM_OCCT | `e9b453bd` | `25801568f687537c47c91abe6ac3961415c8226a` |
+| SAM_OpenStudio | `6972b3e7` | `5522dd80613aec4c72f785751475d5697d3a075f` |
+| SAM_Psychrometrics | `5addfa77` | `e8b204989bde8351516b1c1b449a99100203cd64` |
+| SAM_Revit | `c82287af` | `192efab49cf34aeffec0aa5d4ec3900d66685044` |
+| SAM_Revit_UI | `05fa2e7f` | `64d6d9fc74cd5d4508c666fbca2b60f66427bbdb` |
+| SAM_Rhino_UI | `296875ef` | `6e4f0643884d92d2e50155b75ead637aad9f4c71` |
+| SAM_SolarCalculator | `9b833996` | `9f50c91f14fa1c116358baad59233ebf2dc1244d` |
+| SAM_Solver | `de79a826` | `d5e59f52f26e0b258ad0473035221d83f19d008b` |
+| SAM_SQLite | `7bc76f28` | `80ab3b68234a0392cf63c8065b1037a52311b005` |
+| SAM_Systems | `09063b4c` | `d5f239e4344ca6ed9234dd72f6bb1d903fe11bb5` |
+| SAM_Tas | `057faf37` | `28ac11a786a80639509963e2fc1d31b131e33c50` |
+| SAM_Tas_Grasshopper | `9ddf8ff6` | `b4fce7c878b27407fff53b1d83ee31c4d6af2c90` |
+| SAM_UI | `bdcc2a54` | `ab08013458b29e2768ec93fbce4513f8844f97a1` |
+| SAM_Validation | `002ff0ee` | `662d72553b27bbb361ba7f9af22f67ac3860ce19` |
+| SAM_Windows | `b5bb64e4` | `b6e251d90202e50338d510c8ab994a486dc9d65a` |
+
+- `SAM_Solver`: old `de79a826` -> new `d5e59f52f26e0b258ad0473035221d83f19d008b`.
+- `SAM_Tas_Grasshopper`: old `9ddf8ff6` -> new `b4fce7c878b27407fff53b1d83ee31c4d6af2c90`.
+
+**Decisions and assumptions.**
+- `.gitmodules` keeps `branch = sow/2026-Q3` for every submodule, deliberately. The reproducible deploy baseline is defined by the recorded gitlink SHAs, not by that setting.
+- `git submodule update --remote` must not be used to recreate this exact final baseline (see risks).
+- `SAM_Topologic` is not part of the final Q3 deploy set (it is not a submodule on `sow/2026-Q3`).
+- `SAM_Deploy:master` remains the older Q2 baseline and was intentionally not changed.
+- A suggestion to rewrite the `.gitmodules` branch tracking as part of this repin was considered and deliberately not adopted for this closeout.
+
+**Files changed.** PR #61 changed 24 gitlinks only (no other file; `.gitmodules` was not changed). This closeout commit changes only `PROJECT_PROGRESS.md`.
+
+**Validation.**
+- PR #61 `Validate PR` (`build`: Release restore + rebuild of `BuildAll_Release.csproj`, non-publishing) passed before the merge; merge SHA `37933daf`.
+- All 24 recorded gitlinks on the merged tip equal the verified final SAM-BIM `master` SHAs and are identical to the PR head. All 24 submodule URLs remain under `https://github.com/SAM-BIM/`. No submodule was dirty.
+- 23 of 24 `master` trees matched the preserved Q3 product trees, excluding `AGENTS.md` and `PROJECT_PROGRESS.md`. The only additional `SAM_Tas_Grasshopper` difference was the intentional one-line `.github/workflows/cleanup.yml` change.
+- No HoareLea lineage or `SAM_Solver_Upstream` dependency is present. No `sow/2026-Q4` branch exists in SAM_Deploy or any submodule repository.
+- No installer was built, and no tag or release was created, for this baseline.
+
+**Unresolved items / risks.** These are known repository-state facts, not blockers for creating the Q3 installer from the exact pinned branch SHA.
+- `git submodule update --remote` on this Q3 branch follows `sow/2026-Q3` and could move the checked-out submodules away from the final `master` gitlinks.
+- `SAM_Deploy:master` is still the Q2 baseline.
+
+**Next step.** Create and verify the new installer from the final `SAM_Deploy:sow/2026-Q3` closeout SHA.
 
 ## 2026-10-01 Part O final deployment (PR-4 .. PR-6, SAM#174) - MERGED as SAM_Deploy#59 (`a61875a`)
 
