@@ -6,7 +6,7 @@
 
 ## Last updated
 
-2026-10-06 (Q4 bootstrap).
+2026-10-06 (Q4 operational cleanup).
 
 ## Current status
 
@@ -23,12 +23,12 @@ Not yet set by the owner. Record them here at the first Q4 planning pass. Known 
 - Branch `release/2026-Q3-acceptance-run213` - owner decision: 1 commit not in Q3 (last 2026-09-17).
 - Q3 gates not exercised, carried from the Q3 record: H8 (Revit 2025) and the dedicated H10 runtime-path test were OWNER-SKIPPED (waived); H5-H7 (TAS-specific Grasshopper tests) were not separately re-exercised; H11 upgrade-over-previous not exercised.
 - `SAM_Deploy:master` is still the older Q2 line. Bringing it up to the shipped state is a separate, explicit decision (not part of bootstrap).
-- Open icon-redesign PRs exist in 18 component repositories, all with base `sow/2026-Q3`; see each repository's own record.
+- 18 icon-redesign PRs: SAM_Tas_Grasshopper #8 retargeted to `sow/2026-Q4`; the other 17 still base `sow/2026-Q3` and need a rebase-onto migration (plan in the Q4 operational cleanup section).
 
 ## Repository-specific next steps
 
 - When Q4 product work lands in a submodule, bump that gitlink deliberately (reviewed pointer bump); do not use `git submodule update --remote`.
-- Q3-specific text in `README.md` (quarterly transitions, `branch = sow/2026-Q3` examples) is now stale and needs a later review pass; it was left untouched at bootstrap.
+- `README.md` Q3 text updated for Q4 on 2026-10-06 (frozen Q3 release called out); see the Q4 operational cleanup section.
 - Later cleanup tasks (explicitly not started): sync/contribution/docs branch hygiene, access and secrets review.
 - Follow the continuity convention in `AGENTS.md` for every PR and closeout.
 
@@ -49,6 +49,84 @@ Not yet set by the owner. Record them here at the first Q4 planning pass. Known 
 ## Next step
 
 - Owner to set Q4 priorities; then start the first Q4 task from this branch.
+
+## Q4 operational cleanup (2026-10-06)
+
+Observe-first pass over all 25 repositories. Frozen Q3 (`sow/2026-Q3` branches, tag `v20261006.1`, release asset, `contrib/sow-2026-Q3`) was not touched. No branch was deleted or force-pushed; no installer was built; no gitlink pin moved.
+
+### Estate verification
+
+- All 25 repositories have `sow/2026-Q4` and `sow/2026-Q3`. Every component Q4 tip was `master` + the bootstrap docs commit (+ the narrow CI commit for SAM_OCCT, SAM_Revit, SAM_Tas_Grasshopper, SAM_UI): no unexpected Q4 work had landed. Local checkouts were clean (SAM_UI only has the untracked local `PROJECT_PROGRESS.md`) and were not touched.
+- `SAM_Deploy:sow/2026-Q4`: 24 gitlinks identical to the Q3 release, `.gitmodules` tracks `branch = sow/2026-Q4` (24/24), tag `v20261006.1` -> `1bee804f`.
+
+### Dependency-branch policy (component `build.yml`)
+
+- Finding: 17 `build.yml` files (plus SAM_SolarCalculator `long-running-tests.yml`) ended the candidate list with a hard-coded `sow/2026-Q2`. No repository has a `sow/2026-Q2` branch, so it was dead: non-sow builds already fell through to the default branch.
+- Policy chosen: no quarter-specific literal in resolution logic. Order stays PR head ref -> current sow ref (PR base / push ref) -> canonical quarter derived from the refs -> default branch. For the three repos that already had an explicit quarterly fallback (SAM_UI, SAM_Revit, SAM_Tas_Grasshopper), SAM_SolarCalculator (documented quarterly fallback, not on default-branch builds) and SAM_OCCT, that fallback is now "the newest `sow/YYYY-Qn` branch the dependency has" instead of a quarter list. The other 17 simply drop the dead entry (behaviour-neutral).
+- Why not `Q2 -> Q4`: it would have made master builds and PRs to master resolve Q4 dependencies, and would still need another edit every quarter. Why not delete everywhere: the B-style repos document that falling back to the default branch misses in-quarter API changes.
+- Open owner option (not done): extend the same newest-quarter fallback (guarded to non-default-branch builds, as in SAM_SolarCalculator) to the 17 other repos so feature-branch pushes with no sow ref follow the active quarter instead of `master`. Today they resolve `master`, as they already did in Q3.
+- `SAM_Deploy` `validate.yml` pull_request filter is now `[master, 'sow/**']` (was the literal `sow/2026-Q4`); README updated for Q4 with the frozen Q3 release called out (`346a002`).
+- Left as correct history (class A): `occt-cache-warm.yml` comment ("every run so far has been on sow/2026-Q3"), `RELEASE_VALIDATION.md` Q3 results, `DEPLOY_PARTO_*`, `HANDOVER.md`, `PLAN_SAM_TAS_SPLIT.md`, Part O/feature documentation records, internal `AGENTS.md` Q3 mentions, this file's frozen Q3 section.
+
+### HoareLea separation review
+
+- Active dependency needing an owner decision (product runtime, not CI): `SAM/SAM.Core/Query/LatestVersion.cs` queries `https://api.github.com/repos/HoareLea/SAM_Deploy/releases/latest` (update check), so it reports HoareLea's release channel rather than SAM-BIM's. Not changed (product source).
+- Product-runtime links that open HoareLea URLs, also left for an owner decision: Revit UI commands (`OpenViewers.cs` -> hoarelea.github.io/sam-viewer; `PostOnGithub.cs` -> HoareLea/SAM issues; `Wiki.cs` -> HoareLea/SAM wiki), `SAM_Windows` MaterialLibraryForm wiki link, `SAM_UI` MollierForm wiki link, "open repository" links in SAM Core/Analytical Grasshopper components, the default model description `Delivered by SAM https://github.com/HoareLea/SAM`, and `ExportHydra.cs` cloning `HoareLea/ScriptsHydra`.
+- Intentional guard: `if: github.repository_owner == 'SAM-BIM'` in every build workflow (comment mentions HoareLea upstream merge). Keep.
+- Historical / provenance only: `AssemblyInfo.cs` company/copyright/contact strings, `SAM.Core` `AboutInfoType` "HoareLea Info" text, gbXML `ProgramInfo` company name, `.ghx` sample text, `SAM_Deploy` `installer.yml` comment ("mirrors the older Hoare Lea pipeline"), `AGENTS.md` lineage rules.
+- None found: HoareLea package feeds, badges, signing paths, HoareLea-named secrets. Secrets in use: `ORG_REPO_TOKEN`, `SUBMODULES_PAT`, `OCCT_SDK_URL`, `GITHUB_TOKEN`. CODEOWNERS (every repo except SAM_Tas_Grasshopper) lists `@michaldengusiak @ZiolkowskiJakub` only; SAM_Validation's lists stale paths (`SAM_Topologic`, `SAM_Template`) - harmless; SAM_Tas_Grasshopper has no CODEOWNERS or issue templates (separate lineage, unchanged).
+- Local-only: every checkout keeps its HoareLea `upstream` remote (SAM_Solver also a `fork`); preserved.
+
+### Carry-over: icon-redesign PRs (18 open on 2026-10-06)
+
+All 18 are on `feature/sam-gh-icon-redesign` and were `sow/2026-Q3`-based. Q3 history is not an ancestor of `master`/`sow/2026-Q4` (the promoted `master` has the same tree as Q3 but different history), except SAM_Tas_Grasshopper. Each PR has only 4-8 own commits, all icon-redesign work (icons, generator tooling under `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, GH component/resource wiring, SPDX headers) - no unrelated Q3 product commits - and none of the files touched by Q3 after the PR branched overlap the PR. Replaying the own commits onto the current Q4 tips is conflict-free for all 18 (commit-by-commit `git merge-tree`, result tree identical to the net-diff merge).
+
+| Repo | PR | Head | Base | Intended changes | Already in Q4? | History risk | Recommended Q4 action |
+|---|---|---|---|---|---|---|---|
+| SAM | #166 | `cf4d924a` | `sow/2026-Q3` | icon design system wired into the GH objects (1849 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 495 commits (489 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `f57b54a`, `a7d65b0`, `55745b8`, `7300a7d`, `be024ba`, `cf4d924` onto merge-base `bc85ba61` |
+| SAM_BHoM | #9 | `98edb268` | `sow/2026-Q3` | icon design system wired into the GH objects (39 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 10 commits (6 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `41423ff`, `8619739`, `067ac63`, `98edb26` onto merge-base `9f0af877` |
+| SAM_Excel | #7 | `bdd514c2` | `sow/2026-Q3` | icon design system wired into the GH objects (59 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 10 commits (6 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `9079ef0`, `7f30b39`, `ef6e7bc`, `bdd514c` onto merge-base `28a26b26` |
+| SAM_GEM | #9 | `6751d26a` | `sow/2026-Q3` | icon design system wired into the GH objects (31 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 10 commits (6 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `58b07e7`, `a04a8fa`, `d520d63`, `6751d26` onto merge-base `5af5d69e` |
+| SAM_IFC | #8 | `b44e1d30` | `sow/2026-Q3` | icon design system wired into the GH objects (45 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 9 commits (5 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `9e71cd8`, `af929d6`, `09e4e50`, `b44e1d3` onto merge-base `50c128d8` |
+| SAM_LadybugTools | #11 | `aa9d835c` | `sow/2026-Q3` | icon design system wired into the GH objects (57 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 11 commits (7 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `9ac7ea0`, `b79afa6`, `cc3eb07`, `aa9d835` onto merge-base `17775e3a` |
+| SAM_Mollier | #8 | `4eefde10` | `sow/2026-Q3` | icon design system wired into the GH objects (129 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 8 commits (3 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `698b42e`, `7af01a1`, `0340ed1`, `80da188`, `4eefde1` onto merge-base `5c336cdc` |
+| SAM_Multitasker | #8 | `670b41b1` | `sow/2026-Q3` | icon design system wired into the GH objects (63 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 9 commits (5 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `03c2df7`, `36b483a`, `44e2f56`, `670b41b` onto merge-base `55337969` |
+| SAM_OCCT | #71 | `5f2f9ab6` | `sow/2026-Q3` | icon design system wired into the GH objects (156 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 30 commits (26 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `d319a93`, `2e980be`, `0ca4851`, `5f2f9ab` onto merge-base `e9b453bd` |
+| SAM_OpenStudio | #22 | `a99a4338` | `sow/2026-Q3` | icon design system wired into the GH objects (51 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 88 commits (84 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `3a5bf51`, `421f988`, `ff591db`, `a99a433` onto merge-base `6972b3e7` |
+| SAM_Psychrometrics | #7 | `e837f0c7` | `sow/2026-Q3` | icon design system wired into the GH objects (39 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 6 commits (2 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `0cc4162`, `733e12c`, `3bec63a`, `e837f0c` onto merge-base `5addfa77` |
+| SAM_Revit | #20 | `fabe18af` | `sow/2026-Q3` | icon design system wired into the GH objects (237 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 36 commits (31 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `3820939`, `1d036db`, `b7a3568`, `9b4d3f1`, `fabe18a` onto merge-base `c82287af` |
+| SAM_SolarCalculator | #28 | `ba81df8b` | `sow/2026-Q3` | icon design system wired into the GH objects (122 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 134 commits (129 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `455dfb4`, `78818b1`, `dea5b36`, `14636ce`, `ba81df8` onto merge-base `9b833996` |
+| SAM_Solver | #14 | `2c1e366f` | `sow/2026-Q3` | icon design system wired into the GH objects (49 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 9 commits (5 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `115cbc3`, `e336b65`, `2bb35eb`, `2c1e366` onto merge-base `de79a826` |
+| SAM_Systems | #32 | `4c32610d` | `sow/2026-Q3` | icon design system wired into the GH objects (175 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 91 commits (85 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `bad9d31`, `5822f5e`, `ca0cc8d`, `028cca0`, `0a15f74`, `4c32610` onto merge-base `fbef48ff` |
+| SAM_Tas_Grasshopper | #8 | `f12a6af2` | ~~`sow/2026-Q3`~~ -> `sow/2026-Q4` | icon design system wired into the GH objects (517 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | none (Q3 tip is an ancestor of Q4) | **Retargeted to `sow/2026-Q4` (done)** - 8 commits, mergeable; own commits `9f0c10f`, `3357f65`, `c7c7775`, `bb023b8`, `0cf5d2b`, `670fb08`, `110d459`, `f12a6af` onto merge-base `9ddf8ff6` |
+| SAM_UI | #138 | `51de3fc7` | `sow/2026-Q3` | icon design system wired into the GH objects (120 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 335 commits (330 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `1ac7af2`, `da7c037`, `20e800a`, `6d4becb`, `51de3fc` onto merge-base `05800789` |
+| SAM_gbXML | #10 | `e4e968d8` | `sow/2026-Q3` | icon design system wired into the GH objects (35 files; `design/grasshopper-icons`, `docs/GH-IconRedesign.md`, icons, SPDX headers) | no | retarget as-is would show 12 commits (8 unrelated Q3-line); none when rebased | Rebase-onto Q4: new branch + PR with the own commits only; then close the old PR; own commits `e7a9e5b`, `72404a0`, `e924f12`, `e4e968d` onto merge-base `26111c9b` |
+
+Migration plan (next controlled task, not executed): for each of the 17 divergent repos, create `feature/sam-gh-icon-redesign-q4` from `origin/sow/2026-Q4` and apply the listed own commits in order (`git rebase --onto origin/sow/2026-Q4 <merge-base> feature/sam-gh-icon-redesign` on a temporary branch, or `git cherry-pick <first>^..<last>`); never merge or cherry-pick Q3 product history. Update the "record PR number" commit and `docs/GH-IconRedesign.md` for the new PR number; open the PR against `sow/2026-Q4`; wait for CI; leave the old PR open until the owner confirms, then close it with a link (no branch deletion). SAM #166 (1849 files) and SAM_UI #138 deserve a closer review of the generated `.cs`/resource changes before merge; SAM_Tas_Grasshopper #8 needs only a review.
+
+### Other branches (nothing deleted)
+
+| Repo | Branch | Class | Evidence |
+|---|---|---|---|
+| SAM, SAM_Systems, SAM_Tas | `codex/part-o-cooling-control-room` | Q3 complete | tip is an ancestor of `sow/2026-Q3` |
+| SAM_Tas | `codex/part-o-pr2-diagnostics` | Q3 complete | ancestor of `sow/2026-Q3` |
+| SAM_Tas_Grasshopper | `fix/parto-mixed-diagnostic-filename-2026-09-28` | Q3 complete | ancestor of `sow/2026-Q3`, `master` and Q4 |
+| SAM_Deploy | `chore/deploy-q3-final-baseline-2026-10-06` | Q3 complete | merged as SAM_Deploy#61; ancestor of Q3 and Q4 |
+| 23 repos | `sync/hoarelea-2026-Q3` (SAM_Solver `-final`, SAM_Tas_Grasshopper `sync/q3-final`) | Q3 complete | ancestor of `master` and Q4 |
+| SAM | `docs/parto-regression-run-2026-09-23` | owner decision | 2 docs commits (PROJECT_PROGRESS only, Part O regression + Nuaire Stage 11 record) not in Q3; no PR |
+| SAM_OCCT | `fix/input-changes` | owner decision | 1 commit (Aug 2026, external contributor) bumps a component version and flips the `sew_` default to false, contradicting its own description; no PR |
+| SAM_OCCT | `archive/pr61-phase2` | historical preserve | 31-commit archive of PR #61 phase 2 evidence |
+| SAM_Tas | `codex/pr5b-generic-table-roundtrip` | owner decision | 6 commits not in Q3: a TPD generic-table round-trip fix (code + fakes) plus evidence docs; no PR |
+| SAM_Deploy | `docs/grasshopper-component-descriptions-2026-Q3` | obsolete candidate | 2 submodule-pointer bumps (Aug); PR #39 closed; superseded by later pins |
+| SAM_Deploy | `release/2026-Q3-acceptance-run213` | obsolete candidate | 1 docs commit for run 213; PR #41 closed; Q3 records run 214 as final |
+| SAM_Tas_Grasshopper | `contrib/sow-2026-Q3` | historical preserve | separate HoareLea-compatible lineage (6 own commits, unrelated history); never merged into SAM-BIM Q4 |
+
+### Owner decisions outstanding
+
+1. Approve the icon-PR migration (rebase-onto new Q4 branches/PRs) and the order; decide whether to retain the old PRs until the new ones merge.
+2. HoareLea runtime links and the `LatestVersion` update-check URL (see above): repoint to SAM-BIM, keep, or make configurable.
+3. Extend the newest-quarter fallback to the 17 repos that now just fall through to the default branch (optional).
+4. Disposition of `docs/parto-regression-run-2026-09-23`, `fix/input-changes`, `codex/pr5b-generic-table-roundtrip`, and the two obsolete-candidate SAM_Deploy branches.
 
 ## Q3 release closeout (reference)
 
