@@ -6,7 +6,7 @@
 
 ## Last updated
 
-2026-10-06 (Q4 operational cleanup).
+2026-10-06 (Q4 icon-redesign pilot migration).
 
 ## Current status
 
@@ -127,6 +127,19 @@ Migration plan (next controlled task, not executed): for each of the 17 divergen
 2. HoareLea runtime links and the `LatestVersion` update-check URL (see above): repoint to SAM-BIM, keep, or make configurable.
 3. Extend the newest-quarter fallback to the 17 repos that now just fall through to the default branch (optional).
 4. Disposition of `docs/parto-regression-run-2026-09-23`, `fix/input-changes`, `codex/pr5b-generic-table-roundtrip`, and the two obsolete-candidate SAM_Deploy branches.
+
+## Q4 icon-redesign pilot migration (2026-10-06)
+
+Pilot of the agreed method (fresh branch from current `sow/2026-Q4`, replay only the PR's own commits with `cherry-pick -x`, add one docs commit naming the new PR, new PR against Q4, old PR preserved). All four verified equal to the old PR's feature diff (same tree as the net merge, same patch-id, file set and blobs), kit validators OK, local builds 0 errors, PR CI green. Old PRs stay open; nothing merged or closed; `SAM_Tas_Grasshopper#8` untouched.
+
+| Repo | Old PR | Q4 base | New branch | New PR | Status |
+|---|---|---|---|---|---|
+| SAM_GEM | #9 (`6751d26a`) | `6ed56fdf` | `feature/sam-gh-icon-redesign-q4` @ `c039fd5d` | #11 | open, not merged; CI green |
+| SAM_BHoM | #9 (`98edb268`) | `00cb6c4f` | `feature/sam-gh-icon-redesign-q4` @ `9e727156` | #11 | open, not merged; CI green |
+| SAM_IFC | #8 (`b44e1d30`) | `780b2f03` | `feature/sam-gh-icon-redesign-q4` @ `ac3e9b23` | #10 | open, not merged; CI green |
+| SAM_Psychrometrics | #7 (`e837f0c7`) | `9c771758` | `feature/sam-gh-icon-redesign-q4` @ `4811bca7` | #9 | open, not merged; CI green |
+
+Method notes for the remaining 13: the worktree is CRLF under `core.autocrlf=true` (edit docs preserving it); the GH project post-build step copies DLLs into `%APPDATA%\SAM`, so local builds must override `APPDATA`; `tools/check_source.py` needs the explicit base `origin/sow/2026-Q4` (its default is the Q3 branch). SAM#166 and SAM_UI#138 still need the extra diff/history review before migration.
 
 ## Q3 release closeout (reference)
 
