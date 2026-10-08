@@ -1315,6 +1315,20 @@ jobs:
             -PayloadRoot (Join-Path (Get-Location) 'SAM_Installer\build\SAM')
           if ($LASTEXITCODE -ne 0) { throw "Reporting/PDF payload gate failed - see the log above." }
 
+      # SAM-native optimisation (SAM_UI Simulate > Optimisation, RunNative): the current
+      # SAM.Analytical.Tas.GenOpt.dll must sit at the payload root, every staged SAM.Math.dll
+      # (root, Revit years, SAMdependencies, Rhino package) must be the SAM build's one, and the
+      # retired GenOpt.bat must not be staged. Reports only, never overwrites. See
+      # .github/scripts/assert-native-optimisation-payload.ps1.
+      - name: Assert native optimisation payload
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & (Join-Path (Get-Location) '.github\scripts\assert-native-optimisation-payload.ps1') `
+            -StageRoot (Join-Path (Get-Location) 'SAM_Installer\build') `
+            -RepoRoot (Get-Location)
+          if ($LASTEXITCODE -ne 0) { throw "Native optimisation payload gate failed - see the log above." }
+
       # -----------------------------------------------------------------------
       # H12 AUDIT: full-payload release-provenance check (not sampling).
       #

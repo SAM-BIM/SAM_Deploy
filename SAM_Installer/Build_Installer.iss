@@ -78,6 +78,15 @@ Source: "build\Rhino.Inside\Revit 2026\RhinoInside.Revit.GH.dll"; DestDir: "{use
 Source: "build\Rhino.Inside\Revit 2027\*";               Excludes: "RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2027\RhinoInside.Revit"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "build\Rhino.Inside\Revit 2027\RhinoInside.Revit.GH.dll"; DestDir: "{userappdata}\Autodesk\Revit\Addins\2027\RhinoInside.Revit"; DestName: "RhinoInside.Revit.GH.gha"; Flags: ignoreversion skipifsourcedoesntexist
 
+[InstallDelete]
+; Retired Java GenOpt route (SAM_Tas f4daf33): the SAM-native optimiser no longer reads these.
+; Earlier installers shipped them and Inno never removes files that left the payload, so an
+; upgrade deletes exactly these two installer-managed copies. Exact paths only: the other
+; GenOpt sample resources stay, no other config.txt is touched, and the Documents\SAM mirror
+; (user data) is deliberately left alone.
+Type: files; Name: "{userappdata}\SAM\resources\Analytical\Tas\GenOpt\GenOpt.bat"
+Type: files; Name: "{userappdata}\SAM\resources\Analytical\Tas\GenOpt\config.txt"
+
 [Run]
 Filename: "{userappdata}\SAM\SAMdependencies\install.bat"; WorkingDir: "{userappdata}\SAM\SAMdependencies"; Flags: runascurrentuser runhidden; Check: FileExists(ExpandConstant('{userappdata}\SAM\SAMdependencies\install.bat'))
 
