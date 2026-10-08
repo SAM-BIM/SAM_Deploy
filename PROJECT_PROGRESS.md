@@ -6,11 +6,11 @@
 
 ## Last updated
 
-2026-10-06 (Q4 icon-redesign migration: pilot + straightforward batch + SAM/SAM_UI high-scrutiny pass).
+2026-10-08 (SAM-native optimisation deployment, SAM_Deploy#62 merged).
 
 ## Current status
 
-Q4 branch cut from the released Q3 tag `v20261006.1` (`1bee804f`). It has not started producing Q4 content: all 24 gitlinks still pin the final Q3 product SHAs (each equal to that repository's `master` at bootstrap) and `.gitmodules` now tracks `branch = sow/2026-Q4`. No installer, tag or release was created or rebuilt for Q4.
+Q4 branch cut from the released Q3 tag `v20261006.1` (`1bee804f`). It has not started producing Q4 content: all 24 gitlinks still pin the final Q3 product SHAs (each equal to that repository's `master` at bootstrap) and `.gitmodules` now tracks `branch = sow/2026-Q4`. No installer, tag or release was created or rebuilt for Q4. **Update 2026-10-08:** SAM_Deploy#62 moved four gitlinks to Q4 tips (SAM `b081065e`, SAM_Tas `7f2043ac`, SAM_Tas_Grasshopper `a852a6ec`, SAM_UI `245045fc`); the other 20 still pin the Q3 baseline. No Q4 release/tag exists yet.
 
 ## Q4 priorities
 
@@ -184,6 +184,33 @@ The two PRs reserved for a deeper review (large divergent Q3 histories: a plain 
 - **Q4 records:** per-repo migration records on `SAM:sow/2026-Q4` (`9b11dd26`) and `SAM_UI:sow/2026-Q4` (`70c86f3`); this entry. SAM_UI#203 CI built against SAM and the siblings' `feature/sam-gh-icon-redesign-q4` branches (the combined post-merge state). Gitlinks and `.gitmodules` unchanged.
 - **All 18 icon PRs (audited 2026-10-06):** 17 Q4 replacement PRs open, CI green, mergeable (SAM_GEM#11, SAM_BHoM#11, SAM_IFC#10, SAM_Psychrometrics#9, SAM_Excel#9, SAM_gbXML#12, SAM_LadybugTools#13, SAM_Mollier#10, SAM_Multitasker#10, SAM_OCCT#73, SAM_OpenStudio#24, SAM_Revit#22, SAM_SolarCalculator#30, SAM_Solver#16, SAM_Systems#37, SAM#179, SAM_UI#203) plus SAM_Tas_Grasshopper#8 (retargeted, green, mergeable); every old Q3 PR still open at its original head.
 - Next: owner-controlled closure of the 17 old Q3 PRs (link to each replacement; no branch deletion), then review/merge of the Q4 PRs by the maintainer. Separate, not started: HoareLea runtime-URL cleanup.
+
+## 2026-10-08 SAM-native optimisation deployment - MERGED as SAM_Deploy#62 (`fe2d1e17`)
+
+**Status:** merged into `sow/2026-Q4` as merge commit `fe2d1e17666d51c79bea3d333c1208e5b5ed8392` (parents `2d8ee486` and reviewed PR head `2d333927`; merged tree equals the reviewed head tree `9ea2101b`). Real-install upgrade acceptance is still OPEN (owner sign-off, below).
+
+**Work completed**
+- Pinned SAM `b081065e`, SAM_Tas `7f2043ac`, SAM_Tas_Grasshopper `a852a6ec`, SAM_UI `245045fc` (explicit, no `--remote`; separate commit `bc215d2`).
+- `Build_Installer.iss`: new `[InstallDelete]` with exactly two installer-managed files, `GenOpt.bat` and `config.txt` under the SAM `resources/Analytical/Tas/GenOpt` folder in `{userappdata}`. Documents mirror and other GenOpt resources untouched.
+- New `.github/scripts/assert-native-optimisation-payload.ps1` + installer.yml step (H12 audit unchanged): every staged `SAM.Math.dll` must equal the SAM build, root `SAM.Analytical.Tas.GenOpt.dll` required and equal to the SAM_Tas build, no staged `GenOpt.bat`. Reports only, never overwrites.
+- `RELEASE_VALIDATION.md` H13; PR record `DEPLOY_NATIVE_OPTIMISATION.md` (kept on the branch history, now on Q4).
+
+**Decisions / assumptions**
+- Documents mirror left alone (owner option A). Deletion by exact path only: the native writer creates its own `config.txt` per run workspace.
+- Payload is the runner's `%APPDATA%/SAM` filled flat by project post-builds; Rhino package, SAMdependencies and Revit years carry copy-local copies, which H12 does not scan - hence the separate gate.
+
+**Files changed:** 4 gitlinks, `SAM_Installer/Build_Installer.iss`, `.github/workflows/installer.yml`, `.github/scripts/assert-native-optimisation-payload.ps1`, `RELEASE_VALIDATION.md`, `DEPLOY_NATIVE_OPTIMISATION.md`.
+
+**Validation (CI evidence)**
+- Installer run `37746250880` (workflow_dispatch, `publish_release=false`, no tag/release) on `bec3cc3`: success. Gate passed: `SAM.Math.dll` `04EB9092DDAD`, 6 staged copies equal (SAM root, SAMdependencies, Revit 2025/2026/2027, Rhino package); `SAM.Analytical.Tas.GenOpt.dll` `5FA6E1FFF0CD`, 5 copies equal (root, three Revit years, Rhino package); no `GenOpt.bat`. H12 no violations (1394 files); Inno compile OK.
+- Validate PR green on `bec3cc3` and on final head `2d333927`. Earlier failed runs (`37746095355`, `37746074349`) were an invalid-YAML defect (control characters) fixed before the validated head; Codex P1 on `55d7fd1` fixed and resolved.
+- Post-merge CI: none exists for pushes to `sow/2026-Q4` (workflows trigger only on PR, manual dispatch and `v*` tags), so no run fired for the merge commit; the merged tree is byte-identical to the validated PR head.
+
+**Open / risks**
+- `[InstallDelete]` runtime behaviour on an existing installation is not covered by CI.
+- Python/shell edits in this environment converted backslash-letter sequences into control characters twice; check changed files for control characters when editing paths.
+
+**Next step:** owner real-install upgrade acceptance (H13 manual list): upgrade over an existing install; all deployed `SAM.Math.dll` copies (SAM folder, Rhino 8/9 packages) match the installer's; `GenOpt.bat` and `config.txt` gone from the installer-managed folder while other GenOpt files remain; Documents mirror untouched; SAM_UI Optimisation opens; Rhino loads the current assemblies with no stale-copy problem. Then any remaining Q4 gitlink bumps as separate reviewed PRs.
 
 ## Q3 release closeout (reference)
 
