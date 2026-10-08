@@ -232,6 +232,29 @@ Remaining pass criteria (unchanged):
 - no unexpected duplicate DLL names with different hashes are present;
 - the complete result table links to screenshots, logs and workflow evidence.
 
+## H13 — SAM-native optimisation payload and upgrade
+
+Added with the Q4 native-optimisation deployment (SAM_UI Simulate > Optimisation runs
+`GenOptDocument.RunNative` over SAM.Math; no Java, `GenOpt.bat` or `config.txt`).
+
+Automated (installer.yml, step "Assert native optimisation payload",
+`.github/scripts/assert-native-optimisation-payload.ps1`, by SHA-256 over the staged tree):
+
+- `SAM.Analytical.Tas.GenOpt.dll` and `SAM.Math.dll` are at the SAM payload root;
+- every staged `SAM.Math.dll` (root, Revit years, SAMdependencies, Rhino package) is the
+  SAM build's one, and every staged `SAM.Analytical.Tas.GenOpt.dll` is the SAM_Tas build's;
+- no `GenOpt.bat` is staged anywhere.
+
+Manual, on a real installed SAM (upgrade over an existing installation):
+
+- every deployed `SAM.Math.dll` under `%APPDATA%\SAM` and the Rhino 8/9 package folders has
+  the same hash as the installer's;
+- `%APPDATA%\SAM\resources\Analytical\Tas\GenOpt\GenOpt.bat` and `config.txt` are gone;
+  the other files in that folder remain;
+- `Documents\SAM\resources\Analytical\Tas\GenOpt\` is untouched;
+- SAM_UI Simulate > Optimisation opens (no stale-assembly message);
+- Rhino loads the current SAM assemblies with no stale-copy problem.
+
 ## Results — `hardening-rc1` (run 210)
 
 These results cover the `hardening-rc1` artifact only. They do **not** cover the
