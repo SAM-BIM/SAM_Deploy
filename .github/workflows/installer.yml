@@ -1324,8 +1324,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          & (Join-Path (Get-Location) '.github\scriptsssert-native-optimisation-payload.ps1') `
-            -StageRoot (Join-Path (Get-Location) 'SAM_Installeruild') `
+          & (Join-Path (Get-Location) '.github\scripts\assert-native-optimisation-payload.ps1') `
+            -StageRoot (Join-Path (Get-Location) 'SAM_Installer\build') `
             -RepoRoot (Get-Location)
           if ($LASTEXITCODE -ne 0) { throw "Native optimisation payload gate failed - see the log above." }
 
