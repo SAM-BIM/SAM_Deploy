@@ -6,13 +6,18 @@
 #   - the current SAM.Math.dll (SAM build). Every other place that ships SAM.Math.dll (the
 #     per-Revit-year folders, SAMdependencies, the Rhino 8/9 package) must carry the SAME
 #     assembly: SAM_UI detects a stale copy at run time, and a second, older SAM.Math.dll loaded
-#     by Rhino or Grasshopper is the same defect.
+#     by Rhino or Grasshopper is the same defect;
+#   - the current SAM.Core.Optimisation.dll (SAM build; the portable Optimisation Definition,
+#     schema sam.optimisation/1, that the SAM_UI Design Optimisation form edits and SAM_Tas
+#     runs). The same rule applies to every other staged copy.
 # Every one of those is a copy-local side effect of a different project's build, and the H12
 # audit does not look at the Rhino package or SAMdependencies, so this checks the whole STAGED
 # installer tree (SAM_Installer\build), by content hash:
-#   1. SAM\build\SAM.Math.dll and SAM_Tas\build\SAM.Analytical.Tas.GenOpt.dll (this job's own
-#      build output) exist; they are the intended Q4 sources;
-#   2. SAM.Math.dll and SAM.Analytical.Tas.GenOpt.dll exist at the SAM payload root;
+#   1. SAM\build\SAM.Math.dll, SAM\build\SAM.Core.Optimisation.dll and
+#      SAM_Tas\build\SAM.Analytical.Tas.GenOpt.dll (this job's own build output) exist; they are
+#      the intended Q4 sources;
+#   2. SAM.Math.dll, SAM.Core.Optimisation.dll and SAM.Analytical.Tas.GenOpt.dll exist at the SAM
+#      payload root;
 #   3. every staged copy of each, anywhere under the stage root, has the source's hash;
 #   4. no GenOpt.bat (the retired Java launcher) is staged anywhere.
 # It reports; it never overwrites a mismatching copy. Exit code 1 on any failure.
@@ -44,6 +49,7 @@ function Rel([string]$path) { $path.Substring($StageRoot.Length).TrimStart('\', 
 
 $assemblies = @(
     [pscustomobject]@{ Name = 'SAM.Math.dll'; Source = (Join-Path $RepoRoot 'SAM\build\SAM.Math.dll') },
+    [pscustomobject]@{ Name = 'SAM.Core.Optimisation.dll'; Source = (Join-Path $RepoRoot 'SAM\build\SAM.Core.Optimisation.dll') },
     [pscustomobject]@{ Name = 'SAM.Analytical.Tas.GenOpt.dll'; Source = (Join-Path $RepoRoot 'SAM_Tas\build\SAM.Analytical.Tas.GenOpt.dll') }
 )
 
