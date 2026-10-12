@@ -240,15 +240,17 @@ Added with the Q4 native-optimisation deployment (SAM_UI Simulate > Optimisation
 Automated (installer.yml, step "Assert native optimisation payload",
 `.github/scripts/assert-native-optimisation-payload.ps1`, by SHA-256 over the staged tree):
 
-- `SAM.Analytical.Tas.GenOpt.dll` and `SAM.Math.dll` are at the SAM payload root;
-- every staged `SAM.Math.dll` (root, Revit years, SAMdependencies, Rhino package) is the
-  SAM build's one, and every staged `SAM.Analytical.Tas.GenOpt.dll` is the SAM_Tas build's;
+- `SAM.Analytical.Tas.GenOpt.dll`, `SAM.Math.dll` and `SAM.Core.Optimisation.dll` (the portable
+  Optimisation Definition, new in the final GenOpt deployment) are at the SAM payload root;
+- every staged `SAM.Math.dll` and `SAM.Core.Optimisation.dll` (root, Revit years,
+  SAMdependencies, Rhino package) is the SAM build's one, and every staged
+  `SAM.Analytical.Tas.GenOpt.dll` is the SAM_Tas build's;
 - no `GenOpt.bat` is staged anywhere.
 
 Manual, on a real installed SAM (upgrade over an existing installation):
 
-- every deployed `SAM.Math.dll` under `%APPDATA%\SAM` and the Rhino 8/9 package folders has
-  the same hash as the installer's;
+- every deployed `SAM.Math.dll` and `SAM.Core.Optimisation.dll` under `%APPDATA%\SAM` and the
+  Rhino 8/9 package folders has the same hash as the installer's;
 - `%APPDATA%\SAM\resources\Analytical\Tas\GenOpt\GenOpt.bat` and `config.txt` are gone;
   the other files in that folder remain;
 - `Documents\SAM\resources\Analytical\Tas\GenOpt\` is untouched;
