@@ -63,3 +63,7 @@ Q3 carried gaps (H5-H7 TAS Grasshopper tests, H8, dedicated H10, H11 upgrade-ove
 
 ## Next step
 Owner runs the manual list above on a real machine (the installer artifact of run `38292747933` is available for the artifact retention period, or rerun the installer). Then the release decision, separately.
+
+## Manual acceptance evidence (2026-10-13) — PARTIAL
+
+PR #64 merged into `sow/2026-Q4` as `520161d13a3bd19b4abdac47211774d58c37b264` (final-head Validate run 38295393294 success). The candidate (installer run 226, `2026.4.226.0+d245611`) was installed on the owner workstation and the installed assemblies were compared with the CI payload; the full evidence table, hashes and the H1-H13 results are in `RELEASE_VALIDATION.md` section "Results — Q4 final GenOpt candidate (SAM_Deploy#64, installer run 226)". The NOT TESTED list above is **retained**: items 1, 2, 4 (licensed journey), 5 (Rhino 8 and Rhino 9 WIP showed the Grasshopper SAM toolbars; the load report, workflow and the Tas kWh/kW check are still open), 6 (Revit, not installed: SKIP) and 7 are still open, and item 3 is demonstrated only for the four assemblies hashed there. The old icons seen in the Grasshopper toolbar are explained by the intentionally unchanged gitlinks (15 of the 19 unchanged repositories carry unshipped icon migrations). This is not a release approval and does not show that all Q4 modules are shipped.

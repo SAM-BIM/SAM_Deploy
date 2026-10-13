@@ -454,3 +454,62 @@ Status by category:
 `SAM_Install_v20260917.214.exe` (SHA-256 above) is the frozen, owner-accepted
 2026-Q3 release artifact on this basis. No installer rebuild, GitHub Release,
 or tag was created as part of recording this acceptance.
+
+## Results — Q4 final GenOpt candidate (SAM_Deploy#64, installer run 226) — PARTIAL, NOT RELEASE-ACCEPTED
+
+Evidence record for the candidate packaged by SAM_Deploy PR [#64](https://github.com/SAM-BIM/SAM_Deploy/pull/64), merged into `sow/2026-Q4` as `520161d13a3bd19b4abdac47211774d58c37b264` (verified live 2026-10-13; the merge tree equals PR head `1ad0429056d5c7debed8ab16216bfd039e714d1a`). Evidence date 2026-10-13. This is an incomplete matrix: it is **not** a release acceptance, no tag/release/installer publication is authorised by it, and it does **not** show that all Q4 modules are shipped (19 of 24 gitlinks still carry their Q3 pins; see "Pin scope" below).
+
+Candidate identity:
+
+- installer.yml run: https://github.com/SAM-BIM/SAM_Deploy/actions/runs/38292747933 (run number 226, `workflow_dispatch`, `publish_release=false`, version input `v20261012.genopt-final`), head `d24561185e6a831249dab72545b1936fe2d7fa94`, conclusion success. Stamps: SAMVersion `2026.4.226.0`, InformationalVersion `2026.4.226.0+d245611`.
+- Final-head Validate PR run 38295393294 (run number 46) at `1ad0429`: success.
+- CI artifact `SAM_Install` (zip, 253,403,517 bytes), GitHub digest `sha256:0d08e3536ec6e61bf969e9d7d8eb004371bc84939cc2b1e844db090d3becce70` (local `Get-FileHash` of `Downloads\SAM_Install.zip` is identical); second artifact `h12-audit-report`.
+- Installer inside the zip: `SAM_Install_v20261012.genopt-final.exe`, 253,834,253 bytes, SHA-256 `266C08D8418B25096006E2209D9B2BD8CC2158079C7131E65DC569A0E747EC19`, Authenticode status `NotSigned` (recorded as observed; not assessed against any policy).
+- No tag or Release created: latest release is still `v20261006.1` (checked 2026-10-13).
+
+Environment (owner workstation `LEGION5MD`, read-only collection by `SAM_Deploy_Acceptance_ReadOnly_Checks.ps1`, machine-local, not committed): Windows 11 Pro 10.0.26200; Rhino 8 `8.35.26251.13001` and **Rhino 9 WIP** `9.0.26279.06303` (a work-in-progress build, not a Rhino 9 release) installed; **no Autodesk/Revit installed**. TAS version, licence and Rhino.Inside.Revit not captured.
+
+### Which build is installed (determined, not assumed)
+
+The screenshot is not the evidence. These are: Inno uninstall registration `SAM version v20261012.genopt-final` (InstallDate 20261013, `%APPDATA%\SAM`, `unins000.exe` written 14:42); `%APPDATA%\SAM\*.dll` FileVersion `2026.4.226.0` / ProductVersion `2026.4.226.0+d245611` (all 47 top-level `.gha` carry `2026.4.226.0`); the installer EXE on the Desktop has the same SHA-256 as the EXE read from `Downloads\SAM_Install.zip`, and that zip's SHA-256 equals the CI artifact digest above. Residual limit: the registry and hashes prove the installed payload is this candidate's; they cannot prove which on-disk EXE file was double-clicked, though the version, install date and stamps are consistent only with run 226.
+
+### Installed-assembly hashes vs the CI payload evidence (all copies equal)
+
+| Assembly | CI-recorded (12 hex) | Installed full SHA-256 | Copies | Result |
+|---|---|---|---|---|
+| `SAM.Math.dll` | `AD1FECC79999` | `AD1FECC79999CED28617EB5319F8D1569267D0927028AB9F1EB5A9F8E0BC7211` | 7 (SAM root, SAMdependencies, Revit 2025/2026/2027, Rhino 8.0, Rhino 9.0) | match |
+| `SAM.Core.Optimisation.dll` | `8384F8879C23` | `8384F8879C23766B5B0950882376E7668F5A7288D0563D0A41D9D612D952D988` | 6 (as above, no SAMdependencies) | match |
+| `SAM.Analytical.Tas.GenOpt.dll` | `D5F96C7DED4C` | `D5F96C7DED4C8E93A1B06008FB073BD415DC9BA3B650BE6366C9B73F31A17F07` | 6 | match |
+| `SAM.Core.dll` (extra) | not CI-recorded | `C74B16BD98609FD6A12699DDD249654E94DAE63165E208D4007A627059C20E8F` | 7 | single hash, version `2026.4.226.0` |
+
+The CI log only recorded 12-hex prefixes, so equality with the CI payload is shown to 48 bits, plus FileVersion/ProductVersion equality; it is not a full-hash comparison against the CI payload. The six Tas `.gha`, the two `.ghuser` files and `SAM.ghlink` are present with `2026.4.226.0` stamps and build-time timestamps (2026-10-12 18:4x–18:5x, matching run 226).
+
+### H1–H13 results (demonstrated evidence only)
+
+| Test | Result | Evidence / reason | Gap |
+|---|---|---|---|
+| H1 | **PASS** | Run 226 success; one installer artifact; filename carries `v20261012.genopt-final`; no tag/release; run URL, number, commit and SHA-256 recorded above | — |
+| H2 | **NOT TESTED** | Candidate is installed on the owner workstation (registry + hashes), but no clean-profile/clean-machine install was performed. The prior contents of `%APPDATA%\SAM` were not recorded, so whether this was a first install or an install over earlier files is **not demonstrated** | Clean-profile install not performed; no before-state |
+| H3 | **PARTIAL** | Owner (2026-10-13), Rhino 8 `8.35.26251.13001`: Grasshopper launched and the SAM component toolbars were displayed. `packages\8.0\SAM` payload present with hash-matched assemblies | Grasshopper load report (missing-assembly, duplicate assembly/GUID) not captured; no component solved. UI/component loading observed only; not full functional acceptance |
+| H4 | **PARTIAL** | Owner (2026-10-13), **Rhino 9 WIP** `9.0.26279.06303` (work-in-progress build): Grasshopper launched and the SAM component toolbars were displayed. `packages\9.0\SAM` payload present with hash-matched assemblies | Same gaps as H3. WIP status recorded: this is not evidence for a Rhino 9 release build |
+| H5 | **PARTIAL (files only)** | All six expected `.gha` are in `%APPDATA%\SAM`, FileVersion `2026.4.226.0`, listed in `SAM.ghlink`, no other Tas `.gha` names present | Load-from-installer-destination in a Grasshopper load report not captured |
+| H6 | **PARTIAL (files only)** | `Tas Workflow v7.ghuser` and `Validation.ghuser` present in `Grasshopper\UserObjects\SAM\SAM_Tas` | Not placed on a canvas |
+| H7 | **NOT TESTED** | No TAS workflow run | — |
+| H8 | **SKIP** | Revit not installed (Q3: OWNER-SKIPPED for 2025) | Not PASS |
+| H9 | **SKIP** | Revit not installed | Not PASS. Q3 H9 PASS does not carry over to this candidate |
+| H10 | **SKIP** | Revit not installed | Not PASS |
+| H11 | **NOT TESTED** | Upgrade-over-previous not demonstrated (no before-state) and uninstall not performed | Both parts open |
+| H12 | **PARTIAL** | CI automated audit (enforced, run 226): "No H12 violations found", 1398 files; installer SHA-256 recorded; four installed assemblies verified above | Full installed-payload vs artifact comparison and the other H12 criteria were not repeated locally |
+| H13 | **PARTIAL** | Automated CI gate PASS. Manual: deployed hashes for the three assemblies equal across every copy (PASS); current state observed: `GenOpt.bat` and `config.txt` absent from `%APPDATA%\SAM\resources\Analytical\Tas\GenOpt` (eight other files present); both files still in `Documents\SAM\...\GenOpt` (file dates 2026-10-09); owner: SAM Design Optimisation opens; Grasshopper toolbars display in Rhino 8 and Rhino 9 WIP | **Upgrade cleanup NOT demonstrated**: the previous contents of `%APPDATA%\SAM` were never recorded, so the absence of the two files cannot be attributed to `[InstallDelete]` (they may never have been there). "Documents untouched" has no before-state either. No stale-assembly check recorded; no Grasshopper load report |
+
+### Other owner observations (outside the matrix, not PASS evidence)
+
+TAS project and model recognised; Tas optimisation engine reports Installed (setup UI state, observation only). Optimisation Setup shows incomplete because no variable/objective is configured: this is a not-yet-started test, **not** a failure. **Licensed optimisation journey (Run, Apply best design, Energy Simulation): NOT TESTED.**
+
+### Pin scope and the old toolbar icons
+
+Intentional, not a defect of #64. Five gitlinks moved (SAM, SAM_Tas, SAM_Tas_Grasshopper, SAM_UI, SAM_OpenStudio) and 19 stayed at the Q3 pins. Compared with each repository's live `sow/2026-Q4` (explicit SAM-BIM API, 2026-10-13): **15 of the 19 unchanged repositories have unshipped icon-migration commits** (SAM_BHoM, SAM_Excel, SAM_GEM, SAM_IFC, SAM_LadybugTools, SAM_Mollier, SAM_Multitasker, SAM_OCCT, SAM_Psychrometrics, SAM_Revit, SAM_Revit_UI, SAM_SolarCalculator, SAM_Solver, SAM_Systems, SAM_gbXML); the other four (SAM_Rhino_UI, SAM_SQLite, SAM_Validation, SAM_Windows) are ahead by non-icon commits only. Components and ribbon items implemented in those repositories therefore still show their Q3 icons in this candidate. The owner saw the old icons in the **Grasshopper toolbar**, which is where components from those repositories appear. Mapping each old-icon component to its repository was not done; icons for the five bumped repositories (e.g. SAM_Tas_Grasshopper, SAM_OpenStudio) are expected to be new and were not individually verified. No repin was made.
+
+### Status
+
+The candidate is installed and its core optimisation assemblies match the CI payload (12-hex prefix, plus identical version stamps), but the acceptance matrix above remains incomplete. **Open:** clean install (H2), upgrade and uninstall (H11, and H13 upgrade cleanup), H7 and the licensed optimisation journey (not started: no variable/objective configured), Grasshopper load reports for H3/H4/H5, Revit H8-H10 (SKIP, not installed), regression smoke. Release approval is a separate owner decision and is **not** given by this record.
