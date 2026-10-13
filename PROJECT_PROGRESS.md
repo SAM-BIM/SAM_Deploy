@@ -1,5 +1,28 @@
 # Project Progress - SAM_Deploy (2026-Q4)
 
+## Final GenOpt deployment closeout (SAM_Deploy#64 + evidence record #65) - 2026-10-13
+
+**Status:** SAM-BIM/SAM_Deploy#64 merged into `sow/2026-Q4` as `520161d13a3bd19b4abdac47211774d58c37b264` (parents `b56a367f` and approved head `1ad04290`; tested content head `d24561185e6a831249dab72545b1936fe2d7fa94`; final-head Validate PR run 38295393294 success). Its manual acceptance evidence record, SAM-BIM/SAM_Deploy#65 (docs only: `RELEASE_VALIDATION.md`, `DEPLOY_GENOPT_FINAL.md`), merged as `c459e4f6ce7cefd5a12197961d61679ec5d7d4f0` (approved head `bf3e8a105ac6013c5233a6c0c10277be0aa0f248`, hosted `build` run 38402407798 success). **The installer is NOT release-accepted and not all Q4 modules are shipped.** Documentation baseline closed by owner decision (2026-10-13) with the exceptions below.
+
+**Work completed**
+- #64: five gitlinks moved to Q4 tips (SAM `69f999cf`, SAM_Tas `4cb3094c`, SAM_Tas_Grasshopper `d827409a`, SAM_UI `ebe5e09b`, SAM_OpenStudio `fb21e03f`); payload gate extended to `SAM.Core.Optimisation.dll`; H13 updated. The other 19 gitlinks deliberately keep their Q3 pins (15 of them have unshipped icon migrations, which is why the Grasshopper toolbar still shows old icons; 4 are ahead by non-icon commits only).
+- #65: evidence record for installer run 226 (`38292747933`, `2026.4.226.0+d245611`; zip SHA-256 `0D08E353...CCE70` equals the CI digest; EXE SHA-256 `266C08D8418B25096006E2209D9B2BD8CC2158079C7131E65DC569A0E747EC19`). On the owner workstation the installed `SAM.Math.dll`, `SAM.Core.Optimisation.dll`, `SAM.Analytical.Tas.GenOpt.dll` and `SAM.Core.dll` are one hash per assembly across all copies, matching the CI-recorded 12-hex prefixes. Evidence is machine-local (read-only collector script in the untracked parent directory); the committed record is `RELEASE_VALIDATION.md` section "Results - Q4 final GenOpt candidate".
+- Not changed: no gitlink, code, workflow, tag, release, installer publication or deployment in #65 or this closeout.
+
+**Acceptance results (demonstrated evidence only; none of the open items is PASS)**
+- PASS: H1.
+- PARTIAL: H3 (Rhino 8 `8.35.26251.13001`) and H4 (Rhino 9 WIP `9.0.26279.06303`): Grasshopper launched and SAM toolbars displayed, no Grasshopper load report, no component solved; H5/H6 files only; H12 (CI audit only); H13 (deployed hashes equal; upgrade cleanup NOT demonstrated because the earlier contents of `%APPDATA%\SAM` were never recorded).
+- NOT TESTED: H2 (clean install), H7, H11 (upgrade over a previous build and uninstall), regression smoke, licensed optimisation journey.
+- SKIP: H8, H9, H10 (Revit not installed).
+
+**Outstanding (not PASS)**
+- SAM_UI optimisation: Simulate > Optimisation opens and the Tas engine reports Installed, but Optimisation Setup was left incomplete (no variable/objective configured), so Run, Apply best design and Energy Simulation on a licensed TBD copy are untested. The owner also referred to a SAM_UI optimisation issue at closeout; no further detail was supplied to this session, so none is recorded beyond this; a defect, if any, must be filed with its evidence. Known accepted limits from #64 still apply (D1 option (a); multi-plant-room TPD, internal glazing, large glazing pools unexercised).
+- Tas results units (kWh/kW) and external scripts that divided by 1000 not re-verified in Rhino.
+- No release, tag or installer publication exists for this candidate (latest release `v20261006.1`). Release is a separate owner decision.
+
+**Cleanup:** remote `feature/genopt-final-deploy-q4` was already absent; remote `docs/genopt-final-acceptance-evidence-q4` deleted with an expected-SHA lease on `bf3e8a105ac6013c5233a6c0c10277be0aa0f248` after confirming it is contained in `sow/2026-Q4` and no open PR used it; both local branches deleted (fully merged, no worktree used them). The `docs/agent-instructions-rollout-q4` worktree and all other branches were not touched.
+
+**Exact next step:** owner completes the open acceptance list (clean install, upgrade with a recorded before-state, uninstall, Grasshopper load reports, H7, configured licensed optimisation journey, regression smoke) on a real machine, then decides on release; any further Q4 gitlink bump is a separate reviewed PR. Remember to commit and push before switching computers; the local evidence and the parent-directory roadmap are not in Git.
 ## Q4 agent instructions rollout closeout - 2026-10-12
 
 - SAM-BIM/SAM_Deploy#63 merged as `d97061a77fb028353bd7d1158c55020592bf8607` (merge commit pinned to approved head `76473b09cf931639942b19265a207a2ab6090ba9`; base `sow/2026-Q4` `0cbdaca77c86799922ea26fc47a774a756999290`; validated content `c80875c820e368cb555639973a3aa938eef6acb1`). Owner-authorized 2026-10-12 after an independent review (`AGENT_ROLLOUT_REVIEW_2026-10-12.md`, local to the owner's workspace, not committed).
