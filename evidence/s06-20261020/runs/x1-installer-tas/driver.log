@@ -1,0 +1,35 @@
+2026-10-20T08:31:55.4641842Z Entry RunSimulationTas; app C:\TasOut\s06\installer-exe\Profile\AppData\Roaming\SAM\SAM Analytical.exe; model C:\TasOut\s06\runs\x1-installer-tas\box-aperture.json; output C:\TasOut\s06\runs\x1-installer-tas\out\box; BlockTsd=False
+2026-10-20T08:31:55.5817428Z pid 33444
+2026-10-20T08:32:03.5054670Z Main window: SAM Analytical [000000_SAM_AnalyticalModel]
+2026-10-20T08:32:05.2365144Z Run Simulation > Tas > Run
+2026-10-20T08:32:07.1275935Z Full Year Simulation ticked
+2026-10-20T08:32:07.6542338Z   checkBox_Simulate = On
+2026-10-20T08:32:07.6745272Z   checkBox_FullYearSimulation = On
+2026-10-20T08:32:07.7152808Z   checkBox_Sizing = On
+2026-10-20T08:32:07.7352798Z   checkBox_UnmetHours = Off
+2026-10-20T08:32:07.7532827Z   checkBox_CreateTPD = Off
+2026-10-20T08:32:07.7807999Z   checkBox_CreateSAP = Off
+2026-10-20T08:32:07.7928746Z   checkBox_CreatePartL = Off
+2026-10-20T08:32:07.8028752Z   checkBox_RoomDataSheets = Off
+2026-10-20T08:32:07.8209208Z   checkBox_UseWidths = Off
+2026-10-20T08:32:07.8342156Z   checkBox_UpdateConstructionLayersByPanelType = On
+2026-10-20T08:32:07.8440706Z   textBox_ProjectName = box
+2026-10-20T08:32:07.8510739Z   textBox_OutputDirectory = C:\TasOut\s06\runs\x1-installer-tas\out
+2026-10-20T08:32:07.8721076Z   textBox_FullYearSimulation_From = 1
+2026-10-20T08:32:07.8931102Z   textBox_FullYearSimulation_To = 365
+2026-10-20T08:32:07.9121562Z OK
+2026-10-20T08:32:34.7337528Z Message box after 27 s, title: ''
+2026-10-20T08:32:34.7617664Z   text: Model successfuly converted. |  Time elapsed: 0min25sec
+2026-10-20T08:32:34.7709394Z   buttons: OK
+2026-10-20T08:32:36.8211855Z Main window after: SAM Analytical [000000_SAM_AnalyticalModel] (before: SAM Analytical [000000_SAM_AnalyticalModel])
+2026-10-20T08:32:36.9337609Z   output: box.json 3632864 2026-10-20T08:32:32.5813253Z
+2026-10-20T08:32:36.9367598Z   output: box.t3d 8810 2026-10-20T08:32:22.9534988Z
+2026-10-20T08:32:36.9387609Z   output: box.tas-run.json 19604 2026-10-20T08:32:33.1557231Z
+2026-10-20T08:32:36.9407620Z   output: box.tbd 272148 2026-10-20T08:32:30.8378222Z
+2026-10-20T08:32:36.9427613Z   output: box.timing.csv 758 2026-10-20T08:32:32.5823273Z
+2026-10-20T08:32:36.9447609Z   output: box.tsd 2629328 2026-10-20T08:32:30.7398010Z
+2026-10-20T08:32:36.9467609Z   output: box.xml 55144 2026-10-20T08:32:08.0994458Z
+2026-10-20T08:32:36.9487613Z   output: box_HDDCDD.tbd 271847 2026-10-20T08:32:29.5886509Z
+2026-10-20T08:32:36.9507619Z   output: box_Uncapped.tbd 271462 2026-10-20T08:32:28.8775179Z
+2026-10-20T08:32:57.1193170Z App exited (0)
+2026-10-20T08:32:57.1223772Z Done

@@ -1,0 +1,6 @@
+lines=1766
+apphost-invocations=1
+references to <SAM-BIM>\SAM* developer folders=0
+--- Invoked apphost [version: 8.0.31 @Commit: 1219a42122cf5190c7f512850557e38c422430dc] main = {
+App path: [C:\TasOut\s06\installer-exe\Profile\AppData\Roaming\SAM\SAM Analytical.dll]
+Using dotnet root path [C:\TasOut\s06\installer-exe\Profile\AppData\Roaming\SAM\]

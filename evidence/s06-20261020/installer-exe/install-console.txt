@@ -1,0 +1,16 @@
+SHGetFolderPath in the isolated environment: APPDATA=C:\TasOut\s06\installer-exe\Profile\AppData\Roaming PERSONAL=C:\TasOut\s06\installer-exe\Profile\Documents
+Install exit code: 0
+owner's real folders: 2518 entries before, 2518 after, 0 differences
+HKCU uninstall key absent
+1760 files, 908.3 MB in {userappdata}\SAM
+  {userappdata}\Autodesk: 29 files
+  {userappdata}\Grasshopper: 32 files
+  {userappdata}\McNeel: 252 files
+  {userappdata}\Microsoft: 0 files
+  {userappdata}\SAM: 1760 files
+
+# Note (added after the run): this install run checked the key name with a single "}" before "_is1", so its
+# "absent" lines are not evidence. The .iss AppId "{{...}}" gives the literal key "...B3D3AC3CFD3C}}_is1", which the
+# install did create (install-log-excerpt.txt, "Creating new uninstall key"); it pointed only into the isolated profile.
+# No key of either spelling existed before (the owner's real %APPDATA%\SAM holds no unins000.*). The harness was then
+# corrected; the uninstall run checked the correct key and found it removed.

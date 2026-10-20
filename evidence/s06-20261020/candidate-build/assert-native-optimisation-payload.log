@@ -1,0 +1,28 @@
+--- SAM.Math.dll ---
+source   29F738AE7915  C:\TasOut\s06\candidate-build\SAM_Deploy\SAM\build\SAM.Math.dll
+OK       29F738AE7915  SAM\SAM.Math.dll
+OK       29F738AE7915  SAM\Revit 2025\SAM.Math.dll
+OK       29F738AE7915  SAM\Revit 2026\SAM.Math.dll
+OK       29F738AE7915  SAM\Revit 2027\SAM.Math.dll
+OK       29F738AE7915  SAMdependencies\SAM.Math.dll
+OK       29F738AE7915  SAM_Rhino_UI\1.0.0\SAM.Math.dll
+6 staged copies
+--- SAM.Core.Optimisation.dll ---
+source   99A1E6BEF588  C:\TasOut\s06\candidate-build\SAM_Deploy\SAM\build\SAM.Core.Optimisation.dll
+OK       99A1E6BEF588  SAM\SAM.Core.Optimisation.dll
+OK       99A1E6BEF588  SAM\Revit 2025\SAM.Core.Optimisation.dll
+OK       99A1E6BEF588  SAM\Revit 2026\SAM.Core.Optimisation.dll
+OK       99A1E6BEF588  SAM\Revit 2027\SAM.Core.Optimisation.dll
+OK       99A1E6BEF588  SAM_Rhino_UI\1.0.0\SAM.Core.Optimisation.dll
+5 staged copies
+--- SAM.Analytical.Tas.GenOpt.dll ---
+source   BB23117D6B2E  C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Tas\build\SAM.Analytical.Tas.GenOpt.dll
+OK       BB23117D6B2E  SAM\SAM.Analytical.Tas.GenOpt.dll
+OK       BB23117D6B2E  SAM\Revit 2025\SAM.Analytical.Tas.GenOpt.dll
+OK       BB23117D6B2E  SAM\Revit 2026\SAM.Analytical.Tas.GenOpt.dll
+OK       BB23117D6B2E  SAM\Revit 2027\SAM.Analytical.Tas.GenOpt.dll
+OK       BB23117D6B2E  SAM_Rhino_UI\1.0.0\SAM.Analytical.Tas.GenOpt.dll
+5 staged copies
+--- Retired Java GenOpt launcher ---
+No GenOpt.bat staged.
+Native optimisation payload gate passed.

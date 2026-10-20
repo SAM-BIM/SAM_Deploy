@@ -1,0 +1,50 @@
+--- Required reporting/PDF files ---
+OK   SAM.Core.Reporting.dll                                  32256 bytes  2026.4.0.0
+OK   SAM.Analytical.Reporting.dll                            83968 bytes  2026.4.0.0
+OK   SAM.Core.Reporting.Pdf.dll                            1290240 bytes  2026.4.0.0
+OK   PdfSharp.dll                                           791552 bytes  6.2.0.7443
+OK   PdfSharp.System.dll                                      8192 bytes  6.2.0.7443
+OK   PdfSharp.Shared.dll                                     23040 bytes  6.2.0.7443
+OK   PdfSharp.Charting.dll                                   88064 bytes  6.2.0.7443
+OK   MigraDoc.DocumentObjectModel.dll                       334336 bytes  6.2.0.7443
+OK   MigraDoc.Rendering.dll                                 135680 bytes  6.2.0.7443
+OK   Microsoft.Extensions.Logging.Abstractions.dll           65320 bytes  8.0.1024.46610
+OK   licenses\NotoSans\OFL.txt                                4489 bytes
+OK   licenses\PDFsharp-MigraDoc\LICENSE.txt                   1315 bytes
+--- Transitive references of the reporting assemblies ---
+85 assemblies resolved from the payload, 1 from the .NET 8 shared runtime.
+--- Embedded fonts ---
+OK   SAM.Core.Reporting.Pdf.Fonts.NotoSans-Regular.ttf
+OK   SAM.Core.Reporting.Pdf.Fonts.NotoSans-Bold.ttf
+--- PDFsharp / MigraDoc versions ---
+OK   MigraDoc.DocumentObjectModel.dll       6.2.0  (6.2.0.7443)
+OK   MigraDoc.Rendering.dll                 6.2.0  (6.2.0.7443)
+OK   MigraDoc.RtfRendering.dll              6.2.0  (6.2.0.7443)
+OK   PdfSharp.BarCodes.dll                  6.2.0  (6.2.0.7443)
+OK   PdfSharp.Charting.dll                  6.2.0  (6.2.0.7443)
+OK   PdfSharp.Cryptography.dll              6.2.0  (6.2.0.7443)
+OK   PdfSharp.dll                           6.2.0  (6.2.0.7443)
+OK   PdfSharp.Quality.dll                   6.2.0  (6.2.0.7443)
+OK   PdfSharp.Shared.dll                    6.2.0  (6.2.0.7443)
+OK   PdfSharp.Snippets.dll                  6.2.0  (6.2.0.7443)
+OK   PdfSharp.System.dll                    6.2.0  (6.2.0.7443)
+OK   PdfSharp.WPFonts.dll                   6.2.0  (6.2.0.7443)
+INFO Revit 2025\MigraDoc.DocumentObjectModel.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2025\MigraDoc.Rendering.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2025\PdfSharp.Charting.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2025\PdfSharp.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2025\PdfSharp.Shared.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2025\PdfSharp.System.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2026\MigraDoc.DocumentObjectModel.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2026\MigraDoc.Rendering.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2026\PdfSharp.Charting.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2026\PdfSharp.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2026\PdfSharp.Shared.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2026\PdfSharp.System.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2027\MigraDoc.DocumentObjectModel.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2027\MigraDoc.Rendering.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2027\PdfSharp.Charting.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2027\PdfSharp.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2027\PdfSharp.Shared.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+INFO Revit 2027\PdfSharp.System.dll 6.2.0 (SAM_Revit deployment, separate from SAM Analytical)
+Reporting payload gate passed.

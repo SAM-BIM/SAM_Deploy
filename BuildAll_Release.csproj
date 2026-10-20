@@ -11,15 +11,6 @@
     <Solution Include="SAM\SAM.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
-    <!-- OCCT engine: managed assemblies + Grasshopper components. References SAM\build\*.dll
-         so it must build after SAM. The native SAM.Occt.Native.dll + OpenCASCADE runtime are
-         produced separately (see installer.yml "OCCT native" steps), not by this .sln.
-         SAM_OCCT_SKIP_NATIVE_BUILD=true is set on this entry so EVERY caller of this project
-         (installer.yml, local dev) skips the OCCT Grasshopper project's
-         pre-build native step, which needs the OCCT SDK/vcpkg and otherwise fails. -->
-    <Solution Include="SAM_OCCT\SAM_OCCT.sln" Condition="Exists('SAM_OCCT\SAM_OCCT.sln')">
-      <Properties>Configuration=Release;Platform=Any CPU;SAM_OCCT_SKIP_NATIVE_BUILD=true</Properties>
-    </Solution>
     <Solution Include="SAM_Psychrometrics\SAM_Psychrometrics.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
@@ -55,6 +46,16 @@
     </Solution>
     <Solution Include="SAM_Solver\SAM_Solver.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
+    </Solution>
+    <!-- OCCT engine: managed assemblies + Grasshopper components. References SAM\build\*.dll and,
+         since the Q4 panel solver, SAM_Solver\build\SAM.Geometry.Solver*.dll, so it must build after SAM and
+         SAM_Solver (its only other consumer, SAM_Revit_UI, is built later by installer.yml). The native SAM.Occt.Native.dll + OpenCASCADE runtime are
+         produced separately (see installer.yml "OCCT native" steps), not by this .sln.
+         SAM_OCCT_SKIP_NATIVE_BUILD=true is set on this entry so EVERY caller of this project
+         (installer.yml, local dev) skips the OCCT Grasshopper project's
+         pre-build native step, which needs the OCCT SDK/vcpkg and otherwise fails. -->
+    <Solution Include="SAM_OCCT\SAM_OCCT.sln" Condition="Exists('SAM_OCCT\SAM_OCCT.sln')">
+      <Properties>Configuration=Release;Platform=Any CPU;SAM_OCCT_SKIP_NATIVE_BUILD=true</Properties>
     </Solution>
     <Solution Include="SAM_SolarCalculator\SAM_SolarCalculator.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
@@ -143,8 +144,17 @@
     </CommonCIProps>
   </PropertyGroup>
 
+  <!-- The Condition on %(Solution.Identity) batches the MSBuild task per solution entry, so the entries are
+       built one at a time in the order listed above. Batching on %(Solution.Properties) alone grouped them by
+       that value: every Release|Any CPU solution, SAM_UI included, was built before SAM_OpenStudio
+       (Release|x64), whose x64 native output SAM_UI's build requires (SAM_UI#229).
+       Each batch still passes the item itself, so its Properties metadata is what the MSBuild task applies,
+       exactly as before; note that item Properties metadata takes precedence over the task's Properties
+       parameter, so CommonCIProps does not reach the solutions (CI stamping comes from the SAMVersion /
+       InformationalVersion / SAMSourceRevision environment variables). Changing that is out of S06's scope. -->
   <Target Name="Clean">
     <MSBuild Projects="@(Solution)"
+             Condition="'%(Solution.Identity)' != ''"
              BuildInParallel="false"
              Targets="Clean"
              Properties="%(Solution.Properties);$(CommonCIProps)" />
@@ -152,6 +162,7 @@
 
   <Target Name="Build">
     <MSBuild Projects="@(Solution)"
+             Condition="'%(Solution.Identity)' != ''"
              BuildInParallel="false"
              Targets="Build"
              Properties="%(Solution.Properties);$(CommonCIProps)" />
@@ -159,6 +170,7 @@
 
   <Target Name="Rebuild">
     <MSBuild Projects="@(Solution)"
+             Condition="'%(Solution.Identity)' != ''"
              BuildInParallel="false"
              Targets="Rebuild"
              Properties="%(Solution.Properties);$(CommonCIProps)" />
@@ -166,6 +178,7 @@
 
   <Target Name="Restore">
     <MSBuild Projects="@(Solution)"
+             Condition="'%(Solution.Identity)' != ''"
              BuildInParallel="false"
              Targets="Restore"
              Properties="%(Solution.Properties);$(CommonCIProps)" />

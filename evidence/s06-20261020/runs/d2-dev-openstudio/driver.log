@@ -1,0 +1,24 @@
+2026-10-20T06:58:45.9707842Z Scenario OpenStudio; app C:\TasOut\s06\sandbox\AppData\SAM\SAM Analytical.exe; model C:\TasOut\s06\runs\d2-dev-openstudio\box-aperture.json; EPW 'C:\TasOut\s06\inputs\Budapest.epw'
+2026-10-20T06:58:45.9918279Z SAM_BENCHMARK_TAS=<SAM-BIM>\SAM_Tas\build\benchmark-tas.exe SAM_BENCHMARK_OPENSTUDIO=<SAM-BIM>\SAM_OpenStudio\benchmark\SAM.Analytical.OpenStudio.Benchmark\bin\x64\Debug\net8.0\benchmark-openstudio.exe SAM_COMMIT=
+2026-10-20T06:58:46.0163510Z   before: evidence
+2026-10-20T06:58:46.0204890Z   before: box-aperture.json
+2026-10-20T06:58:46.0224992Z   before: driver-console.txt
+2026-10-20T06:58:46.0245083Z   before: environment.txt
+2026-10-20T06:58:46.0956145Z pid 43296
+2026-10-20T06:58:53.9872120Z Main window: SAM Analytical [000000_SAM_AnalyticalModel]
+2026-10-20T06:58:55.9163698Z Run Simulation > OpenStudio > Run
+2026-10-20T06:58:56.5295545Z Folder dialog: accepting the preset folder (the model folder)
+2026-10-20T06:58:56.7696953Z Weather: No, EPW C:\TasOut\s06\inputs\Budapest.epw
+2026-10-20T06:58:58.3745407Z EPW set: C:\TasOut\s06\inputs\Budapest.epw
+2026-10-20T06:58:58.8157894Z Progress window up
+2026-10-20T06:59:07.7889753Z   dialog 'OpenStudio Simulation': The OpenStudio/EnergyPlus simulation finished. The open model was not changed. |  | Run folder: C:\TasOut\s06\runs\d2-dev-openstudio\000000_SAM_AnalyticalModel_OpenStudio_20261020-065858_a6ae2f5b | Result model: 000000_SAM_AnalyticalModel_OpenStudio.json (13 results) | Weather: File | EnergyPlus: exit code 0, 10 warnings, 0 severe, 0 fatal |  | Diagnostics: | - Warning SAM-OS-IC-001: Pollutant generation is not converted (EnergyPlus generic contaminant modelling is out of scope) |  | Open the run folder?
+2026-10-20T06:59:07.7939017Z   buttons: No, Yes
+2026-10-20T06:59:09.8507074Z Summary after 11 s
+2026-10-20T06:59:09.8721860Z Main window after: SAM Analytical [000000_SAM_AnalyticalModel] (before: SAM Analytical [000000_SAM_AnalyticalModel])
+2026-10-20T06:59:09.9721971Z   after: 000000_SAM_AnalyticalModel_OpenStudio_20261020-065858_a6ae2f5b <dir>
+2026-10-20T06:59:09.9759990Z   after: evidence <dir>
+2026-10-20T06:59:09.9810030Z   after: box-aperture.json 507507
+2026-10-20T06:59:09.9839583Z   after: driver-console.txt 0
+2026-10-20T06:59:09.9859691Z   after: environment.txt 1189
+2026-10-20T06:59:25.0740484Z App exited (0)
+2026-10-20T06:59:25.0775848Z Done (driver status 0)

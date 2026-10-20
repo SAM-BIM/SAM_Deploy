@@ -1,0 +1,231 @@
+{
+  "schema": "sam-ui.engine-comparison-run/1",
+  "id": "986de3a4",
+  "status": "Compared",
+  "startedUtc": "2026-10-20T07:56:00.0579085Z",
+  "finishedUtc": "2026-10-20T07:56:29.0321473Z",
+  "sourcePath": "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\box-aperture.json",
+  "modelName": "000000_SAM_AnalyticalModel",
+  "snapshot": {
+    "path": "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\snapshot.json",
+    "sha256": "sha256:0c30db14a9b10f5e651248e70c942bf875ca93dcee9436998b9960e47c0a6d05"
+  },
+  "weather": {
+    "source": "Embedded",
+    "path": "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\weather.epw",
+    "sha256": "sha256:5afbeb329bea4ce807f402f095fbc695f7fce8a2a29aa6c7b0d93a31a0063082"
+  },
+  "producers": [
+    {
+      "engine": "Tas",
+      "executable": "C:\\TasOut\\s06\\candidate\\AppData\\SAM\\benchmark-tas.exe",
+      "arguments": [
+        "--model",
+        "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\snapshot.json",
+        "--weather",
+        "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\weather.epw",
+        "--tbd",
+        "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\tas\\000000_SAM_AnalyticalModel.tbd",
+        "--out",
+        "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\benchmark-TAS.json"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 21.215,
+      "log": "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\benchmark-tas.log",
+      "benchmark": "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\benchmark-TAS.json",
+      "error": null,
+      "succeeded": true
+    },
+    {
+      "engine": "OpenStudio",
+      "executable": "C:\\TasOut\\s06\\candidate\\AppData\\SAM\\benchmark-openstudio.exe",
+      "arguments": [
+        "--model",
+        "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\snapshot.json",
+        "--weather",
+        "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\weather.epw",
+        "--out",
+        "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\benchmark-OpenStudio.json",
+        "--work",
+        "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\openstudio"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 7.084,
+      "log": "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\benchmark-openstudio.log",
+      "benchmark": "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\benchmark-OpenStudio.json",
+      "error": null,
+      "succeeded": true
+    }
+  ],
+  "gate": "Fail",
+  "reports": [
+    "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\comparison.md",
+    "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\comparison.csv",
+    "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\comparison-summary.json"
+  ],
+  "diagnostics": [],
+  "error": null,
+  "provenance": {
+    "schema": "sam-ui.run-provenance/1",
+    "route": "Both",
+    "application": {
+      "entryAssembly": {
+        "name": "SAM Analytical",
+        "version": "2026.4.0.0",
+        "informationalVersion": "2026.4.0.0\u002B717533c",
+        "path": "C:\\TasOut\\s06\\candidate\\AppData\\SAM\\SAM Analytical.dll",
+        "sha256": "sha256:e4bf47d35c6dfc559dc50ea10f4c7f1d41a98097df4c14d2d34c56dc1a2c571f"
+      },
+      "sourceRevision": "717533c",
+      "sourceRevisionOf": "the \u002Bbuild metadata of SAM.Analytical.UI.WPF\u0027s InformationalVersion; SAM_Deploy installers stamp their SAM_Deploy commit, which pins every repository",
+      "components": [
+        {
+          "name": "SAM.Core",
+          "version": "2026.4.0.0",
+          "informationalVersion": "2026.4.0.0\u002B717533c",
+          "path": "C:\\TasOut\\s06\\candidate\\AppData\\SAM\\SAM.Core.dll",
+          "sha256": "sha256:e303c96c335725dfdca524cd7bbde39a8315b86e02fccea1da1619d4a1306291"
+        },
+        {
+          "name": "SAM.Analytical",
+          "version": "2026.4.0.0",
+          "informationalVersion": "2026.4.0.0\u002B717533c",
+          "path": "C:\\TasOut\\s06\\candidate\\AppData\\SAM\\SAM.Analytical.dll",
+          "sha256": "sha256:e552bceb2be15a7b92dbf9148ee4575d85a2db92c353b230271fde8e5ccdd370"
+        },
+        {
+          "name": "SAM.Analytical.UI.WPF",
+          "version": "2026.4.0.0",
+          "informationalVersion": "2026.4.0.0\u002B717533c",
+          "path": "C:\\TasOut\\s06\\candidate\\AppData\\SAM\\SAM.Analytical.UI.WPF.dll",
+          "sha256": "sha256:3662964f9100d23c4a81afeffa4c32db712281715efab010ec84d6bd42cea6c9"
+        },
+        {
+          "name": "SAM.Analytical.Benchmark",
+          "version": "2026.4.0.0",
+          "informationalVersion": "2026.4.0.0\u002B717533c",
+          "path": "C:\\TasOut\\s06\\candidate\\AppData\\SAM\\SAM.Analytical.Benchmark.dll",
+          "sha256": "sha256:bb7affdcb325390426aaee4ac11067ce7a33e8b328d3e2b853c369ed08c6c3ce"
+        },
+        {
+          "name": "SAM.Analytical.Benchmark.Compare",
+          "version": "2026.4.0.0",
+          "informationalVersion": "2026.4.0.0\u002B717533c",
+          "path": "C:\\TasOut\\s06\\candidate\\AppData\\SAM\\SAM.Analytical.Benchmark.Compare.dll",
+          "sha256": "sha256:0cefa5a7fdcf2610468761b103f593def62075d7c06c1edb07508c944435560e"
+        }
+      ]
+    },
+    "producers": {
+      "Tas": {
+        "executable": {
+          "path": "C:\\TasOut\\s06\\candidate\\AppData\\SAM\\benchmark-tas.exe",
+          "sha256": "sha256:3381339cd02e313905ec19c2e07050039c2da8b6eeb56549e5ced78c606672e8",
+          "fileVersion": "2026.4.0.0",
+          "productVersion": "2026.4.0.0\u002B717533c",
+          "assembly": {
+            "path": "C:\\TasOut\\s06\\candidate\\AppData\\SAM\\benchmark-tas.dll",
+            "sha256": "sha256:51d4d511f65dcac2b16e7887f7a5ea0393892f5c61727d974bfb69c93bf89059",
+            "fileVersion": "2026.4.0.0",
+            "productVersion": "2026.4.0.0\u002B717533c"
+          }
+        },
+        "arguments": [
+          "--model",
+          "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\snapshot.json",
+          "--weather",
+          "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\weather.epw",
+          "--tbd",
+          "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\tas\\000000_SAM_AnalyticalModel.tbd",
+          "--out",
+          "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\benchmark-TAS.json"
+        ],
+        "succeeded": true,
+        "reported": {
+          "samCommit": "717533c",
+          "runnerCommit": "717533c",
+          "engine": {
+            "kind": "TAS",
+            "name": "Tas",
+            "version": "9.5.7.0",
+            "sdkVersion": "unknown"
+          },
+          "route": "Native-TAS",
+          "weather": {
+            "identity": "weather",
+            "hash": "sha256:5afbeb329bea4ce807f402f095fbc695f7fce8a2a29aa6c7b0d93a31a0063082"
+          },
+          "designDaySource": "None",
+          "sourceFileHash": "sha256:0c30db14a9b10f5e651248e70c942bf875ca93dcee9436998b9960e47c0a6d05",
+          "canonicalModelHash": "sha256:05c1e334af00f339d36d5b97828692d3d7d27269d2168a945dfc4a35919c9500",
+          "canonicalizationVersion": "1.0.0",
+          "state": "Success"
+        }
+      },
+      "OpenStudio": {
+        "executable": {
+          "path": "C:\\TasOut\\s06\\candidate\\AppData\\SAM\\benchmark-openstudio.exe",
+          "sha256": "sha256:ead210e7f6d8984fa789d6165a8c15610a227f20ec5dc9855cef84e9d1712d78",
+          "fileVersion": "2026.4.0.0",
+          "productVersion": "2026.4.0.0\u002B717533c",
+          "assembly": {
+            "path": "C:\\TasOut\\s06\\candidate\\AppData\\SAM\\benchmark-openstudio.dll",
+            "sha256": "sha256:8f0234f4d2f0a0f97d64eae4529bdc56db4bbc9666846cb8484c174c00e38edb",
+            "fileVersion": "2026.4.0.0",
+            "productVersion": "2026.4.0.0\u002B717533c"
+          }
+        },
+        "arguments": [
+          "--model",
+          "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\snapshot.json",
+          "--weather",
+          "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\weather.epw",
+          "--out",
+          "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\benchmark-OpenStudio.json",
+          "--work",
+          "C:\\TasOut\\s06\\runs\\i3-installed-both-embedded\\000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4\\openstudio"
+        ],
+        "succeeded": true,
+        "reported": {
+          "samCommit": "717533c",
+          "runnerCommit": "717533c",
+          "engine": {
+            "kind": "OpenStudio",
+            "name": "EnergyPlus",
+            "version": "25.1.0",
+            "sdkVersion": "3.10.0"
+          },
+          "route": "Native-OpenStudio",
+          "weather": {
+            "identity": "weather",
+            "hash": "sha256:5afbeb329bea4ce807f402f095fbc695f7fce8a2a29aa6c7b0d93a31a0063082"
+          },
+          "designDaySource": "None",
+          "sourceFileHash": "sha256:0c30db14a9b10f5e651248e70c942bf875ca93dcee9436998b9960e47c0a6d05",
+          "canonicalModelHash": "sha256:05c1e334af00f339d36d5b97828692d3d7d27269d2168a945dfc4a35919c9500",
+          "canonicalizationVersion": "1.0.0",
+          "state": "Success"
+        }
+      }
+    },
+    "environment": {
+      "SAM_COMMIT": "not set",
+      "RUNNER_COMMIT": "not set"
+    },
+    "weather": {
+      "source": "Embedded",
+      "sha256": "sha256:5afbeb329bea4ce807f402f095fbc695f7fce8a2a29aa6c7b0d93a31a0063082",
+      "originalPath": "unknown"
+    },
+    "designDays": {
+      "source": "chosen by each producer from the snapshot (SAM_UI passes none): see producers.\u003Cengine\u003E.reported.designDaySource"
+    },
+    "settings": {
+      "producers": "each producer\u0027s arguments (producers.\u003Cengine\u003E.arguments) and its built-in workflow settings, which its executable SHA-256 pins"
+    },
+    "unknown": {
+      "weather.originalPath": "the weather is the model\u0027s embedded WeatherData, exported to EPW once for both producers; sha256 identifies the exported file",
+      "producers.Tas.reported.engine.sdkVersion": "the producer reported none (null in its B1a document; its warnings and notes say why)"
+    }
+  }
+}

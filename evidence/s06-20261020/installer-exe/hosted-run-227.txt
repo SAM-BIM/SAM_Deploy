@@ -1,0 +1,82 @@
+# Hosted installer run #227 (SAM-BIM/SAM_Deploy Actions run 39389974089, workflow_dispatch, publish_release=false) at 717533c
+# Excerpt of the step outputs; full log: gh run view 39389974089 --repo SAM-BIM/SAM_Deploy --log
+Compute SAMVersion	2026-10-20T07:58:28.8553592Z SAMVersion = 2026.4.227.0 (from date 2026-10-20 (ref 'feature/s06-installed-smoke-candidate' not sow/yyyy-Qx))
+Compute SAMVersion	2026-10-20T07:58:28.8954305Z InformationalVersion = 2026.4.227.0+717533c
+
+## Stage Benchmark producers
+2026-10-20T08:16:37.3509560Z STAGED   D1D2B4A4B3EF  benchmark-tas.exe
+2026-10-20T08:16:37.3537662Z STAGED   4201183399AC  benchmark-tas.dll
+2026-10-20T08:16:37.3559784Z STAGED   D0EAC8FAC04C  benchmark-tas.runtimeconfig.json
+2026-10-20T08:16:37.3580561Z STAGED   3A8F85F6B1F7  benchmark-tas.deps.json
+2026-10-20T08:16:37.4618740Z ADDED    SAM.Analytical.Tas.Benchmark.dll (not in the payload before)
+2026-10-20T08:16:37.4725944Z 271 dependencies; 1 added; existing payload files left unchanged.
+2026-10-20T08:16:37.4731749Z --- benchmark-openstudio (Stage) ---
+2026-10-20T08:16:37.4749196Z RUN: msbuild D:\a\SAM_Deploy\SAM_Deploy\SAM_OpenStudio\benchmark\SAM.Analytical.OpenStudio.Benchmark\SAM.Analytical.OpenStudio.Benchmark.csproj /restore /t:Publish /m:1 /nr:false /v:m /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:BuildProjectReferences=false /p:PublishDir=D:\a\SAM_Deploy\SAM_Deploy\SAM_Installer\benchmark-producers\benchmark-openstudio\ /p:UseSharedCompilation=false /p:Platform=x64
+2026-10-20T08:16:37.5482035Z MSBuild version 17.14.60+43b635718 for .NET Framework
+2026-10-20T08:16:37.5773474Z 
+2026-10-20T08:16:38.0818180Z   Determining projects to restore...
+2026-10-20T08:16:39.4240844Z   Restored D:\a\SAM_Deploy\SAM_Deploy\SAM_OpenStudio\SAM_OpenStudio\SAM.Geometry.OpenStudio\SAM.Geometry.OpenStudio.csproj (in 659 ms).
+2026-10-20T08:16:39.4249976Z   Restored D:\a\SAM_Deploy\SAM_Deploy\SAM_OpenStudio\benchmark\SAM.Analytical.OpenStudio.Benchmark\SAM.Analytical.OpenStudio.Benchmark.csproj (in 659 ms).
+2026-10-20T08:16:39.4252861Z   Restored D:\a\SAM_Deploy\SAM_Deploy\SAM_OpenStudio\SAM_OpenStudio\SAM.Core.OpenStudio\SAM.Core.OpenStudio.csproj (in 658 ms).
+2026-10-20T08:16:39.4254374Z   Restored D:\a\SAM_Deploy\SAM_Deploy\SAM_OpenStudio\SAM_OpenStudio\SAM.Analytical.OpenStudio\SAM.Analytical.OpenStudio.csproj (in 659 ms).
+2026-10-20T08:16:43.0299879Z   SAM.Analytical.OpenStudio.Benchmark -> D:\a\SAM_Deploy\SAM_Deploy\SAM_OpenStudio\benchmark\SAM.Analytical.OpenStudio.Benchmark\bin\x64\Release\net8.0\win-x64\benchmark-openstudio.dll
+2026-10-20T08:16:43.2646667Z   SAM.Analytical.OpenStudio.Benchmark -> D:\a\SAM_Deploy\SAM_Deploy\SAM_Installer\benchmark-producers\benchmark-openstudio\
+2026-10-20T08:16:43.2898915Z published output: D:\a\SAM_Deploy\SAM_Deploy\SAM_Installer\benchmark-producers\benchmark-openstudio
+2026-10-20T08:16:43.3259278Z STAGED   78AAD32FA86F  benchmark-openstudio.exe
+2026-10-20T08:16:43.3280093Z STAGED   DCD9E3DE34EA  benchmark-openstudio.dll
+2026-10-20T08:16:43.3299659Z STAGED   D7A0BECA5383  benchmark-openstudio.runtimeconfig.json
+2026-10-20T08:16:43.3319016Z STAGED   B5C1D389162B  benchmark-openstudio.deps.json
+2026-10-20T08:16:43.3928996Z ADDED    SQLite.Interop.dll (not in the payload before)
+2026-10-20T08:16:43.3996466Z 204 dependencies; 1 added; existing payload files left unchanged.
+2026-10-20T08:16:43.4018262Z Benchmark producers payload Stage passed.
+
+## Assert Benchmark producers payload
+﻿2026-10-20T08:16:43.4624887Z ##[group]Run $ErrorActionPreference = 'Stop'
+2026-10-20T08:16:43.4668380Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-20T08:16:43.4668726Z env:
+2026-10-20T08:16:43.4668916Z   STRICT_UNCLASSIFIED_DRIFT: false
+2026-10-20T08:16:43.4669170Z   SAM_OCCT_SKIP_NATIVE_BUILD: true
+2026-10-20T08:16:43.4669406Z   SAMVersion: 2026.4.227.0
+2026-10-20T08:16:43.4669640Z   InformationalVersion: 2026.4.227.0+717533c
+2026-10-20T08:16:43.4669942Z   SAMSourceRevision: 717533c
+2026-10-20T08:16:43.4670171Z   DOTNET_ROOT: C:\Program Files\dotnet
+2026-10-20T08:16:43.4670415Z ##[endgroup]
+2026-10-20T08:16:43.8403392Z --- benchmark-tas (Assert) ---
+2026-10-20T08:16:43.8427829Z published output: D:\a\SAM_Deploy\SAM_Deploy\SAM_Installer\benchmark-producers\benchmark-tas
+2026-10-20T08:16:43.9043719Z RUNTIME  Microsoft.NETCore.App 8.0.31, Microsoft.WindowsDesktop.App 8.0.31
+2026-10-20T08:16:44.2938949Z NOTE     Microsoft.Win32.SystemEvents.dll differs from the producer's copy (payload version 8.0.0.0, published with 8.0.0.0)
+2026-10-20T08:16:44.3962937Z NOTE     System.Drawing.Common.dll differs from the producer's copy (payload version 8.0.0.0, published with 8.0.0.0)
+2026-10-20T08:16:44.5749944Z NOTE     NetTopologySuite.dll differs from the producer's copy (payload version 2.0.0.0, published with 2.0.0.0)
+2026-10-20T08:16:44.5840027Z 271 dependencies: 268 byte-identical, 3 other copies differ without an older version.
+2026-10-20T08:16:44.5902464Z STAMPED  benchmark-tas.dll 2026.4.227.0+717533c
+2026-10-20T08:16:44.6667218Z STARTS   benchmark-tas.exe --help exit 0 from the payload
+2026-10-20T08:16:44.6673005Z --- benchmark-openstudio (Assert) ---
+2026-10-20T08:16:44.6681241Z published output: D:\a\SAM_Deploy\SAM_Deploy\SAM_Installer\benchmark-producers\benchmark-openstudio
+2026-10-20T08:16:44.7036981Z RUNTIME  Microsoft.NETCore.App 8.0.31
+2026-10-20T08:16:44.7126877Z NOTE     Microsoft.VisualBasic.dll differs from the producer's copy (payload version 10.1.0.0, published with 10.0.0.0)
+2026-10-20T08:16:44.7685304Z NOTE     System.Drawing.dll differs from the producer's copy (payload version 8.0.0.0, published with 4.0.0.0)
+2026-10-20T08:16:45.0377867Z NOTE     WindowsBase.dll differs from the producer's copy (payload version 8.0.0.0, published with 4.0.0.0)
+2026-10-20T08:16:45.1608193Z NOTE     System.Drawing.Common.dll differs from the producer's copy (payload version 8.0.0.0, published with 7.0.0.0)
+2026-10-20T08:16:45.1677268Z NOTE     NetTopologySuite.dll differs from the producer's copy (payload version 2.0.0.0, published with 2.0.0.0)
+2026-10-20T08:16:45.4556129Z 204 dependencies: 199 byte-identical, 5 other copies differ without an older version.
+2026-10-20T08:16:45.4571490Z STAMPED  benchmark-openstudio.dll 2026.4.227.0+717533c
+2026-10-20T08:16:45.5297993Z STARTS   benchmark-openstudio.exe --help exit 0 from the payload
+2026-10-20T08:16:45.5409640Z SAM.Analytical.dll 2026.4.227.0+717533c: the producers report samCommit '717533c' (the SAM_Deploy commit) without SAM_COMMIT
+2026-10-20T08:16:45.5424062Z Benchmark producers payload Assert passed.
+
+## Audit payload versions (H12)
+2026-10-20T08:16:48.7180279Z Payload scanned: 1428 .dll/.gha/.rhp files under D:\a\SAM_Deploy\SAM_Deploy\SAM_Installer\build\SAM
+2026-10-20T08:16:48.7527828Z   SAM-owned managed        :  453 files
+2026-10-20T08:16:48.7533029Z   SAM-owned native         :    4 files
+2026-10-20T08:16:48.7539185Z   Third-party              :  863 files
+2026-10-20T08:16:48.7544840Z   Third-party (OCCT SDK)   :  108 files
+2026-10-20T08:16:48.8718569Z Report written: h12-audit-report.md
+2026-10-20T08:16:48.8724575Z CSV written:    h12-audit-report.csv
+2026-10-20T08:16:48.8730625Z No H12 violations found.
+
+## Package installer
+2026-10-20T08:20:14.5321776Z Successful compile (197.094 sec). Resulting Setup program filename is:
+2026-10-20T08:20:14.5322632Z D:\a\SAM_Deploy\SAM_Deploy\dist\SAM_Install_s06-smoke-candidate.exe
+
+## Downloaded artifact SAM_Install (id 12250162818)
+SAM_Install_s06-smoke-candidate.exe 264441155 bytes sha256 50ddbc61fe240cdcd989cebe58b0e282d7e233e8c0ae941446c968ddfbe37be5 (Inno Setup 6.7.1, ProductVersion s06-smoke-candidate)
