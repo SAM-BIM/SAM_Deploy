@@ -1,0 +1,18 @@
+== c4-both-embedded / 000000_SAM_AnalyticalModel_TasOpenStudio_20261020-054243_0850a579
+  status: Compared   started 2026-10-20T05:42:43.3272327Z finished 2026-10-20T05:43:11.4277726Z
+  snapshot: sha256:0c30db14a9b10f5e651248e70c942bf875ca93dcee9436998b9960e47c0a6d05
+  weather: Embedded sha256:5afbeb329bea4ce807f402f095fbc695f7fce8a2a29aa6c7b0d93a31a0063082
+  environment SAM_COMMIT: 62b5415697d1a5af143c6b581b7d42fbd6551ca8  RUNNER_COMMIT: not set
+  producer Tas: succeeded=True exit=0 20.5s error=
+    reported: state=Success samCommit=62b5415697d1a5af143c6b581b7d42fbd6551ca8 runnerCommit=e84aeff687033354e3f17891635fdf10d42ad68f engine=Tas 9.5.7.0 route=Native-TAS weather=sha256:5afbeb329bea4ce807f402f095fbc695f7fce8a2a29aa6c7b0d93a31a0063082 designDays=None
+    sourceFileHash=sha256:0c30db14a9b10f5e651248e70c942bf875ca93dcee9436998b9960e47c0a6d05 canonicalModelHash=sha256:05c1e334af00f339d36d5b97828692d3d7d27269d2168a945dfc4a35919c9500 canonicalization=1.0.0
+    executable sha256: sha256:07ab3e45b107bdd28a7d6b3622d05014b1edb95e015f86e5dc3e9c7a9ab3fbd2
+  producer OpenStudio: succeeded=True exit=0 7.0s error=
+    reported: state=Success samCommit=62b5415697d1a5af143c6b581b7d42fbd6551ca8 runnerCommit=d4216f3525c01ca762c1b3e9b6d099733d037f54 engine=EnergyPlus 25.1.0 route=Native-OpenStudio weather=sha256:5afbeb329bea4ce807f402f095fbc695f7fce8a2a29aa6c7b0d93a31a0063082 designDays=None
+    sourceFileHash=sha256:0c30db14a9b10f5e651248e70c942bf875ca93dcee9436998b9960e47c0a6d05 canonicalModelHash=sha256:05c1e334af00f339d36d5b97828692d3d7d27269d2168a945dfc4a35919c9500 canonicalization=1.0.0
+    executable sha256: sha256:644059197b0638bdbfcf7d41b3a7c375b40198a7f53336d907c3e727619a5e06
+  comparison.csv (LF-normalised): sha256:454e42dcde74cabf
+  comparison.md  (LF-normalised): sha256:8b18894da5619f4e
+  unknown: application.sourceRevision: this build's InformationalVersion '1.0.0' has no source revision after '+' (a local developer build); the component SHA-256 values identify the binaries
+  unknown: weather.originalPath: the weather is the model's embedded WeatherData, exported to EPW once for both producers; sha256 identifies the exported file
+  unknown: producers.Tas.reported.engine.sdkVersion: the producer reported none (null in its B1a document; its warnings and notes say why)

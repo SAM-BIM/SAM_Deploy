@@ -1,0 +1,38 @@
+--- benchmark-tas (Stage) ---
+RUN: msbuild C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Tas\benchmark\SAM.Analytical.Tas.Benchmark.Cli\SAM.Analytical.Tas.Benchmark.Cli.csproj /restore /t:Publish /m:1 /nr:false /v:m /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:BuildProjectReferences=false /p:PublishDir=C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Installer\benchmark-producers\benchmark-tas\ /p:UseSharedCompilation=false
+MSBuild version 18.10.1-1.26427.6+3cd27c13e for .NET Framework
+  Determining projects to restore...
+  Restored C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Tas\benchmark\SAM.Analytical.Tas.Benchmark\SAM.Analytical.Tas.Benchmark.csproj (in 635 ms).
+  Restored C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Tas\benchmark\SAM.Analytical.Tas.Benchmark.Cli\SAM.Analytical.Tas.Benchmark.Cli.csproj (in 667 ms).
+  Restored C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Tas\SAM_Tas\SAM.Core.Tas.UKBR\SAM.Core.Tas.UKBR.csproj (in 668 ms).
+  Restored C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Tas\SAM_Tas\SAM.Geometry.Tas\SAM.Geometry.Tas.csproj (in 668 ms).
+  Restored C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Tas\SAM_Tas\SAM.Analytical.Tas\SAM.Analytical.Tas.csproj (in 667 ms).
+  Restored C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Tas\SAM_Tas\SAM.Weather.Tas\SAM.Weather.Tas.csproj (in 668 ms).
+  Restored C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Tas\SAM_Tas\SAM.Core.Tas\SAM.Core.Tas.csproj (in 668 ms).
+  SAM.Analytical.Tas.Benchmark.Cli -> C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Tas\build\benchmark-tas.dll
+  SAM.Analytical.Tas.Benchmark.Cli -> C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Installer\benchmark-producers\benchmark-tas\
+published output: C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Installer\benchmark-producers\benchmark-tas
+STAGED   3381339CD02E  benchmark-tas.exe
+STAGED   51D4D511F65D  benchmark-tas.dll
+STAGED   D0EAC8FAC04C  benchmark-tas.runtimeconfig.json
+STAGED   D9534D04236F  benchmark-tas.deps.json
+ADDED    SAM.Analytical.Tas.Benchmark.dll (not in the payload before)
+271 dependencies; 1 added; existing payload files left unchanged.
+--- benchmark-openstudio (Stage) ---
+RUN: msbuild C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_OpenStudio\benchmark\SAM.Analytical.OpenStudio.Benchmark\SAM.Analytical.OpenStudio.Benchmark.csproj /restore /t:Publish /m:1 /nr:false /v:m /p:Configuration=Release /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:BuildProjectReferences=false /p:PublishDir=C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Installer\benchmark-producers\benchmark-openstudio\ /p:UseSharedCompilation=false /p:Platform=x64
+MSBuild version 18.10.1-1.26427.6+3cd27c13e for .NET Framework
+  Determining projects to restore...
+  Restored C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_OpenStudio\SAM_OpenStudio\SAM.Geometry.OpenStudio\SAM.Geometry.OpenStudio.csproj (in 658 ms).
+  Restored C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_OpenStudio\SAM_OpenStudio\SAM.Core.OpenStudio\SAM.Core.OpenStudio.csproj (in 658 ms).
+  Restored C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_OpenStudio\benchmark\SAM.Analytical.OpenStudio.Benchmark\SAM.Analytical.OpenStudio.Benchmark.csproj (in 657 ms).
+  Restored C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_OpenStudio\SAM_OpenStudio\SAM.Analytical.OpenStudio\SAM.Analytical.OpenStudio.csproj (in 658 ms).
+  SAM.Analytical.OpenStudio.Benchmark -> C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_OpenStudio\benchmark\SAM.Analytical.OpenStudio.Benchmark\bin\x64\Release\net8.0\win-x64\benchmark-openstudio.dll
+  SAM.Analytical.OpenStudio.Benchmark -> C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Installer\benchmark-producers\benchmark-openstudio\
+published output: C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Installer\benchmark-producers\benchmark-openstudio
+STAGED   EAD210E7F6D8  benchmark-openstudio.exe
+STAGED   8F0234F4D2F0  benchmark-openstudio.dll
+STAGED   D7A0BECA5383  benchmark-openstudio.runtimeconfig.json
+STAGED   522AF7D1B25A  benchmark-openstudio.deps.json
+ADDED    SQLite.Interop.dll (not in the payload before)
+204 dependencies; 1 added; existing payload files left unchanged.
+Benchmark producers payload Stage passed.

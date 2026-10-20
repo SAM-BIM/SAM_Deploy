@@ -1,0 +1,18 @@
+H12 payload audit
+  PayloadRoot           : C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Installer\build\SAM
+  RepoRoot              : C:\TasOut\s06\candidate-build\SAM_Deploy
+  SAMVersion            : 2026.4.0.0
+  InformationalVersion  : 2026.4.0.0+717533c
+  OCCT SDK identity     : version=8.0.0 (resolved from C:\OCCT\occt-8.0.0\opencascade-8.0.0-vc14-64\win64\vc14\bin (74 TK*.dll, TKernel.dll FileVersion))
+  Mode                  : ENFORCE
+Ownership map built from 24 pinned repos (207 non-test/test csproj files scanned): 221 distinct SAM-owned output names.
+Payload scanned: 1601 .dll/.gha/.rhp files under C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Installer\build\SAM
+  SAM-owned managed        :  453 files
+  SAM-owned native         :    1 files
+  Third-party              : 1073 files
+  Third-party (OCCT SDK)   :   74 files
+Report written: h12-audit-report.md
+CSV written:    h12-audit-report.csv
+::warning::H12 audit found 1 violation(s):
+::warning::  [MISMATCH] SAM.Occt.Native.dll (class=SAM-owned native, owner=UNATTRIBUTED) FileVersion= expected=2026.4.0.0
+::error::H12 audit FAILED in enforce mode - 1 violation(s). See h12-audit-report.md.

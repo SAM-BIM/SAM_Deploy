@@ -1,0 +1,1 @@
+﻿real %APPDATA%\SAM before the session: 2101 files; after the installed smoke: 2101 files; path/size/mtime differences: 0

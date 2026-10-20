@@ -1,0 +1,22 @@
+--- benchmark-tas (Assert) ---
+published output: C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Installer\benchmark-producers\benchmark-tas
+RUNTIME  Microsoft.NETCore.App 8.0.31, Microsoft.WindowsDesktop.App 8.0.31
+NOTE     Microsoft.Win32.SystemEvents.dll differs from the producer's copy (payload version 8.0.0.0, published with 8.0.0.0)
+NOTE     System.Drawing.Common.dll differs from the producer's copy (payload version 8.0.0.0, published with 8.0.0.0)
+NOTE     NetTopologySuite.dll differs from the producer's copy (payload version 2.0.0.0, published with 2.0.0.0)
+271 dependencies: 268 byte-identical, 3 other copies differ without an older version.
+STAMPED  benchmark-tas.dll 2026.4.0.0+717533c
+STARTS   benchmark-tas.exe --help exit 0 from the payload
+--- benchmark-openstudio (Assert) ---
+published output: C:\TasOut\s06\candidate-build\SAM_Deploy\SAM_Installer\benchmark-producers\benchmark-openstudio
+RUNTIME  Microsoft.NETCore.App 8.0.31
+NOTE     Microsoft.VisualBasic.dll differs from the producer's copy (payload version 10.1.0.0, published with 10.0.0.0)
+NOTE     System.Drawing.dll differs from the producer's copy (payload version 8.0.0.0, published with 4.0.0.0)
+NOTE     WindowsBase.dll differs from the producer's copy (payload version 8.0.0.0, published with 4.0.0.0)
+NOTE     System.Drawing.Common.dll differs from the producer's copy (payload version 8.0.0.0, published with 7.0.0.0)
+NOTE     NetTopologySuite.dll differs from the producer's copy (payload version 2.0.0.0, published with 2.0.0.0)
+204 dependencies: 199 byte-identical, 5 other copies differ without an older version.
+STAMPED  benchmark-openstudio.dll 2026.4.0.0+717533c
+STARTS   benchmark-openstudio.exe --help exit 0 from the payload
+SAM.Analytical.dll 2026.4.0.0+717533c: the producers report samCommit '717533c' (the SAM_Deploy commit) without SAM_COMMIT
+Benchmark producers payload Assert passed.

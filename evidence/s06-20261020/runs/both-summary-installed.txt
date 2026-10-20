@@ -1,0 +1,17 @@
+== i3-installed-both-embedded / 000000_SAM_AnalyticalModel_TasOpenStudio_20261020-075600_986de3a4
+  status: Compared   started 2026-10-20T07:56:00.0579085Z finished 2026-10-20T07:56:29.0321473Z
+  snapshot: sha256:0c30db14a9b10f5e651248e70c942bf875ca93dcee9436998b9960e47c0a6d05
+  weather: Embedded sha256:5afbeb329bea4ce807f402f095fbc695f7fce8a2a29aa6c7b0d93a31a0063082
+  environment SAM_COMMIT: not set  RUNNER_COMMIT: not set
+  producer Tas: succeeded=True exit=0 21.2s error=
+    reported: state=Success samCommit=717533c runnerCommit=717533c engine=Tas 9.5.7.0 route=Native-TAS weather=sha256:5afbeb329bea4ce807f402f095fbc695f7fce8a2a29aa6c7b0d93a31a0063082 designDays=None
+    sourceFileHash=sha256:0c30db14a9b10f5e651248e70c942bf875ca93dcee9436998b9960e47c0a6d05 canonicalModelHash=sha256:05c1e334af00f339d36d5b97828692d3d7d27269d2168a945dfc4a35919c9500 canonicalization=1.0.0
+    executable sha256: sha256:3381339cd02e313905ec19c2e07050039c2da8b6eeb56549e5ced78c606672e8
+  producer OpenStudio: succeeded=True exit=0 7.1s error=
+    reported: state=Success samCommit=717533c runnerCommit=717533c engine=EnergyPlus 25.1.0 route=Native-OpenStudio weather=sha256:5afbeb329bea4ce807f402f095fbc695f7fce8a2a29aa6c7b0d93a31a0063082 designDays=None
+    sourceFileHash=sha256:0c30db14a9b10f5e651248e70c942bf875ca93dcee9436998b9960e47c0a6d05 canonicalModelHash=sha256:05c1e334af00f339d36d5b97828692d3d7d27269d2168a945dfc4a35919c9500 canonicalization=1.0.0
+    executable sha256: sha256:ead210e7f6d8984fa789d6165a8c15610a227f20ec5dc9855cef84e9d1712d78
+  comparison.csv (LF-normalised): sha256:454e42dcde74cabf
+  comparison.md  (LF-normalised): sha256:150495c9255fa7a2
+  unknown: weather.originalPath: the weather is the model's embedded WeatherData, exported to EPW once for both producers; sha256 identifies the exported file
+  unknown: producers.Tas.reported.engine.sdkVersion: the producer reported none (null in its B1a document; its warnings and notes say why)

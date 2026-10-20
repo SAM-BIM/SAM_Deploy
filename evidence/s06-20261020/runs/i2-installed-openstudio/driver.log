@@ -1,0 +1,25 @@
+2026-10-20T07:54:50.1200785Z Scenario OpenStudio; app C:\TasOut\s06\candidate\AppData\SAM\SAM Analytical.exe; model C:\TasOut\s06\runs\i2-installed-openstudio\box-aperture.json; EPW 'C:\TasOut\s06\inputs\Budapest.epw'
+2026-10-20T07:54:50.1450730Z SAM_BENCHMARK_TAS= SAM_BENCHMARK_OPENSTUDIO= SAM_COMMIT=
+2026-10-20T07:54:50.1530834Z   before: evidence
+2026-10-20T07:54:50.1571003Z   before: box-aperture.json
+2026-10-20T07:54:50.1585725Z   before: driver-console.txt
+2026-10-20T07:54:50.1605856Z   before: environment.txt
+2026-10-20T07:54:50.2322124Z pid 56020
+2026-10-20T07:54:58.2083445Z Main window: SAM Analytical [000000_SAM_AnalyticalModel]
+2026-10-20T07:55:00.0849290Z Run Simulation > OpenStudio > Run
+2026-10-20T07:55:00.5638343Z Folder dialog: accepting the preset folder (the model folder)
+2026-10-20T07:55:00.7039068Z Weather: No, EPW C:\TasOut\s06\inputs\Budapest.epw
+2026-10-20T07:55:02.2179379Z EPW set: C:\TasOut\s06\inputs\Budapest.epw
+2026-10-20T07:55:02.6745130Z Progress window up
+2026-10-20T07:55:12.3053555Z   dialog 'OpenStudio Simulation': The OpenStudio/EnergyPlus simulation finished. The open model was not changed. |  | Run folder: C:\TasOut\s06\runs\i2-installed-openstudio\000000_SAM_AnalyticalModel_OpenStudio_20261020-075502_4ebf1798 | Result model: 000000_SAM_AnalyticalModel_OpenStudio.json (13 results) | Weather: File | EnergyPlus: exit code 0, 10 warnings, 0 severe, 0 fatal |  | Diagnostics: | - Warning SAM-OS-IC-001: Pollutant generation is not converted (EnergyPlus generic contaminant modelling is out of scope) |  | Open the run folder?
+2026-10-20T07:55:12.3118744Z   buttons: No, Yes
+2026-10-20T07:55:14.3652525Z Summary after 12 s
+2026-10-20T07:55:14.3828214Z Main window after: SAM Analytical [000000_SAM_AnalyticalModel] (before: SAM Analytical [000000_SAM_AnalyticalModel])
+2026-10-20T07:55:14.4523305Z   after: 000000_SAM_AnalyticalModel_OpenStudio_20261020-075502_4ebf1798 <dir>
+2026-10-20T07:55:14.4553351Z   after: evidence <dir>
+2026-10-20T07:55:14.4608475Z   after: box-aperture.json 507507
+2026-10-20T07:55:14.4643742Z   after: corehost-trace.txt 0
+2026-10-20T07:55:14.4672231Z   after: driver-console.txt 0
+2026-10-20T07:55:14.4692319Z   after: environment.txt 1028
+2026-10-20T07:55:29.8273504Z App exited (0)
+2026-10-20T07:55:29.8338680Z Done (driver status 0)
