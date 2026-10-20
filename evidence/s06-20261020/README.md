@@ -37,3 +37,9 @@ Added after review (2026-10-20):
 - `git diff --check` reports four whitespace findings, all in verbatim captures, which are left unmodified:
   - trailing whitespace on `installer-exe/hosted-run-227.txt` line 16 (an empty log line from the CI log) and on `runs/x1-installer-tas/message-box.txt` line 1 (the message box's empty title);
   - a trailing blank line at the end of `runs/x2-installer-openstudio/summary-dialog.txt` and of `runs/x3-installer-both-embedded/comparison.md`.
+
+Added at the repin (2026-10-20):
+- `repin/installer-run-228.txt`: installer run #228 at `b3b8e9e`, the repinned head. It records the stamp, the 24 checked-out pins, the producer Stage/Assert output, H12, and the artifact hashes.
+- `repin/payload-227.tsv` and `repin/payload-228.tsv`: full inventories of the genuinely installed #227 and #228 payloads, made with `tools/payload-inventory.ps1`. Each row is path, length, SHA-256, FileVersion, ProductVersion and the stamp-normalised text hash.
+- `repin/payload-equivalence-227-228.txt`: the output of `tools/compare-payloads.ps1`, with result PASS and 0 drift.
+- `repin/install-uninstall-227.txt` and `repin/install-uninstall-228.txt`: the isolated install and uninstall consoles. They show the owner's real folders unchanged.

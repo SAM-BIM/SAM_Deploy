@@ -1,14 +1,15 @@
 # Deploy: S06 early installed smoke candidate (PR record)
 
 Roadmap S06 (`SAM/documentation/SIMULATION_ROADMAP_Q4_2026.md`). Branch `feature/s06-installed-smoke-candidate` ->
-`sow/2026-Q4` (base `30624abd`). PR: SAM-BIM/SAM_Deploy#66. Supporting PR: SAM-BIM/SAM_OpenStudio#32 (unmerged).
-Validated content SHA: `717533c` (`717533c` is the full build, staging, gates and licensed smoke below). Record-only commits
-follow; the final PR head and its hosted checks are in the PR description.
+`sow/2026-Q4` (base `30624abd`). PR: SAM-BIM/SAM_Deploy#66. Supporting PRs: SAM-BIM/SAM_OpenStudio#32, merged `a9429f7c`, and SAM-BIM/SAM_Validation#16, merged `e9a83df0`.
+Validated content SHA: `717533c` (the full build, staging, gates and licensed smoke below). Repinned content: `b3b8e9e`
+(SAM_OpenStudio -> #32's merge `a9429f7c`; installer run #228; payload equivalent to #227, see the Repin section). Record-only
+commits follow; the final PR head and its hosted checks are in the PR description.
 Candidate build only. No tag, release, installer publication or deployment is authorised by this PR. Merge needs owner
 review. `PROJECT_PROGRESS.md` is not touched (post-merge closeout only).
 
 ## Status
-**Ready for owner merge approval.** Every check passes except check 9 (provenance labelling). On 2026-10-20 the owner
+**Ready to merge (owner approved merging on 2026-10-20). The repin gates passed and the licensed evidence carries forward.** Every check passes except check 9 (provenance labelling). On 2026-10-20 the owner
 accepted check 9 as an explicitly documented S06 limitation; it is recorded as that, not as PASS. The hosted installer EXE built from this
 commit (run #227, `publish_release=false`) was genuinely installed with Inno Setup into an isolated profile. From it, Tas,
 OpenStudio and Both ran on the S05 box model from the real ribbon on a licensed laptop: all three PASS, numerically identical
@@ -101,7 +102,7 @@ Changes (all minimal; no parallel deployment architecture, TAS COM untouched, no
   | SAM_Mollier | `fc73fd69` | `7f61916a` |
   | SAM_Multitasker | `45f6854d` | `1fe5598f` |
   | SAM_OCCT | `25801568` | `dc871f7e` |
-  | SAM_OpenStudio | `fb21e03f` | `1f4bf60c` (PR #32, unmerged) |
+  | SAM_OpenStudio | `fb21e03f` | `1f4bf60c` (PR #32 content, tested), repinned to `a9429f7c` (#32's merge commit) in `b3b8e9e` |
   | SAM_Psychrometrics | `e8b20498` | `83d53326` |
   | SAM_Revit | `192efab4` | `431d34ef` |
   | SAM_Revit_UI | `64d6d9fc` | `06cf245a` |
@@ -224,6 +225,46 @@ nevertheless logged "Run started". After 10 min the dialog was still open, and t
 `WM_ACTIVATE` + `BM_CLICK` (logged at `driver.log` line 9). The run then completed normally. The app behaviour is not
 affected; the intervention is in the harness only.
 
+## Repin to SAM_OpenStudio#32's merge commit and payload equivalence
+Done on 2026-10-20, after the owner approved the merge sequence in chat.
+- **Merges.**
+  - SAM-BIM/SAM_OpenStudio#32 was merged at approved head `3082dc6` as `a9429f7cea975a8f660bac4407779c3828e86627`
+    (parents `d4216f35`, `3082dc6a`). Its post-merge Build passed (run 39409026705), and the closeout is `7f21665`.
+  - SAM-BIM/SAM_Validation#16 was merged at approved head `ed7a878` as `e9a83df0c2e1162d0a22eb1e010a508044117e12`. Its
+    post-merge Build passed (run 39409164929), and the closeout is `2a3acfa`.
+- **Repin** (`b3b8e9e`): only the SAM_OpenStudio gitlink changed, `1f4bf60c` -> `a9429f7c`, the exact merge commit and
+  not the closeout tip. `git diff --stat 1f4bf60c a9429f7c` lists only
+  `documentation/S06-OpenStudio-Cli-Selection-PR.md`, so the executable source is unchanged. The other 23 gitlinks and
+  `.gitmodules` are unchanged, and SAM_Validation stays `68eded00`.
+- **Gates at `b3b8e9e`** (hosted):
+  - Validate passed (run 39409232293).
+  - Installer run #228 (39409260663, `publish_release=false`, release job skipped) passed:
+    - stamp `2026.4.228.0+b3b8e9e`;
+    - all 24 checked-out pins equal the `b3b8e9e` gitlinks;
+    - Stage: 271 and 204 dependencies, 1 added each;
+    - Assert: 268/271 and 199/204 byte-identical, the rest the same or a newer version; both producers start from the
+      payload;
+    - H12: 0 violations.
+  - Artifact: `SAM_Install_s06-repin-candidate.exe`, 264,387,711 bytes, sha256 `a9284962…f58c9`; zip digest
+    `19fdbd4b…`. See `repin/installer-run-228.txt`.
+- **Rebuilt-payload equivalence** (local, `repin/payload-equivalence-227-228.txt`). Both hosted EXEs (#227 and #228)
+  were installed for real, one after the other, each into its own isolated profile with `install-hosted-exe.ps1`.
+  Each was inventoried (`tools/payload-inventory.ps1`) and uninstalled, and the inventories were compared
+  (`tools/compare-payloads.ps1`). The owner's real folders were unchanged: 2518 entries, 0 differences, every time.
+  Of the same 1759 paths (Inno's per-install `unins000.dat` excluded):
+
+  | Class | Files |
+  |---|---|
+  | byte-identical: every third-party, .NET runtime and OpenStudio/EnergyPlus file, including `hostfxr`, `hostpolicy`, `coreclr`, `clrjit` and `System.Private.CoreLib` 8.0.31, `openstudiolib.dll`, and the three `runtimeconfig.json` files | 1104 |
+  | expected stamp, binary: same length; FileVersion `2026.4.227.0` -> `2026.4.228.0`; ProductVersion `+717533c` -> `+b3b8e9e` | 474 |
+  | expected stamp, text: the `deps.json` files, identical after normalising the stamp and SAM_OCCT's build-time `AssemblyVersion("1.0.*")` (days since 2000 . seconds/2, so `1.0.9789.14597` -> `1.0.9789.19474`) | 51 |
+  | `.pdb` debug symbols, reported separately: not executable, dependency or runtime content. A deterministic rebuild changes them with the stamp (the PDB ID in the header, and the compressed compilation metadata naming the re-stamped referenced assemblies); this explanation is inferred from where the bytes differ | 129 |
+  | the Inno uninstaller's own label (`s06-smoke-candidate` -> `s06-repin-candidate`) | 1 |
+  | other differences (drift) | **0** |
+
+  Result: no executable, dependency or runtime drift. The genuine-installed licensed results (x1 Tas, x2 OpenStudio, x3
+  Both, on #227) **carry forward to the repinned build**; the smoke cases were not repeated. Two installs of the #227 EXE
+  reproduce the committed `installer-exe/installed-manifest.tsv` exactly, except `unins000.dat`.
 ## Installed smoke on the mirrored payload (supporting, 2026-10-20)
 Environment:
 - `APPDATA`/`USERPROFILE` set to the isolated candidate profile.
@@ -296,7 +337,7 @@ differences. Installed SAM, Rhino, Grasshopper and Revit folders were not touche
 - `.github/scripts/benchmark-producers-payload.ps1` (new)
 - `.github/workflows/installer.yml` (+2 steps)
 - `BuildAll_Release.csproj` (order: per-entry batching, SAM_OCCT after SAM_Solver)
-- 24 gitlinks: 23 Q4-tip pins, plus the supporting SAM_OpenStudio content pin (`1f4bf60c`); `.gitmodules` unchanged
+- 24 gitlinks: 23 Q4-tip pins, plus the supporting SAM_OpenStudio pin (`1f4bf60c` while #32 was open, now #32's merge commit `a9429f7c`); `.gitmodules` unchanged
 - `DEPLOY_S06_SMOKE_CANDIDATE.md` (this record), `evidence/s06-20261020/` (redacted evidence and harness)
 
 ## Reproduce
@@ -322,30 +363,11 @@ Prerequisites, machine-local and not committed:
 - the S05/S01b drivers from SAM_UI.
 
 ## Next step
-**Owner approval is required before any merge.** After approval:
-1. Merge SAM-BIM/SAM_OpenStudio#32 at its approved head `3082dc6`. Record the immutable merge SHA, then do its
+Steps 1-5 of the owner-approved sequence are done (see the Repin section): #32 merged and closed out, #16 merged and
+closed out, SAM_OpenStudio repinned to `a9429f7c`, Validate and installer #228 green at `b3b8e9e`, and payload
+equivalence PASS, so the licensed evidence carries forward. Remaining:
+6. Merge this PR at its final head once its final-head Validate passes (owner approval given 2026-10-20), then do its
    `PROJECT_PROGRESS.md` closeout.
-2. Merge SAM-BIM/SAM_Validation#16 (documentation only) at its approved head, then do its closeout.
-3. **Repin only SAM_OpenStudio** on this branch, from `1f4bf60c` to #32's **exact merge commit**, never a later closeout
-   tip. `git diff --stat 1f4bf60c <merge>` must list only `documentation/S06-OpenStudio-Cli-Selection-PR.md`; stop if
-   executable content changed. Every other gitlink and `.gitmodules` stay as they are; SAM_Validation stays `68eded00`
-   (#16 ships no binary).
-4. At the new head, the following are mandatory:
-   - Validate;
-   - the non-publishing installer workflow (`publish_release=false`), with its producer Stage/Assert gates and H12.
-
-   Green CI on earlier heads does not cover the repinned head.
-5. **Carry the licensed evidence forward only after documenting equivalence**:
-   - **Source equivalence:** the gitlink diff above, and the build SHA and checked-out pins in the new run's log.
-   - **Rebuilt payload equivalence** against run #227: the file inventory (same paths), the hashes, and the
-     dependency/runtime inventory. This covers the producers' `deps.json` / `runtimeconfig.json`, the .NET runtime
-     version (8.0.31, `hostfxr`/`coreclr`), and the OpenStudio/EnergyPlus SDK native DLLs.
-   - **Expected differences** are limited to the stamp: FileVersion `2026.4.<run>.0`, InformationalVersion
-     `+<new SAM_Deploy SHA>`, and the bytes that carry them.
-
-   Any other executable, dependency or runtime drift means the affected genuine-installed smoke cases (x1 Tas, x2
-   OpenStudio, x3 Both) are repeated with the existing S06 criteria.
-6. Merge this PR only when its final gates and the owner's authorization are satisfied, then do its closeout.
 7. Close out S06 in the SAM roadmap through a reviewed docs PR: S06 Done, with the merge SHAs and the accepted limitation
-   (check 9 stays "Not PASS: accepted limitation"). Phase A then meets its S06 condition. Any release remains a separate
-   owner decision.
+   (check 9 stays "Not PASS: accepted limitation"). The roadmap PR needs its own review and merge authorization. Any
+   release remains a separate owner decision.

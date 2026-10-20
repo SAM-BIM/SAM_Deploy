@@ -1,0 +1,76 @@
+﻿A: payload-227.tsv (1759 files, 2026.4.227.0 +717533c); B: payload-228.tsv (1759 files, 2026.4.228.0 +b3b8e9e)
+byte-identical: 1104
+expected stamp difference, binary (same length; FileVersion 2026.4.227.0 -> 2026.4.228.0; ProductVersion +717533c -> +b3b8e9e): 474
+expected stamp difference, text (identical after stamp normalisation): 51
+    text: benchmark-openstudio.deps.json
+    text: benchmark-tas.deps.json
+    text: Revit 2025\SAM.Analytical.Grasshopper.Revit.deps.json
+    text: Revit 2025\SAM.Analytical.Revit.deps.json
+    text: Revit 2025\SAM.Analytical.Revit.UI.deps.json
+    text: Revit 2025\SAM.Architectural.Grasshopper.Revit.deps.json
+    text: Revit 2025\SAM.Architectural.Revit.deps.json
+    text: Revit 2025\SAM.Core.Grasshopper.Revit.deps.json
+    text: Revit 2025\SAM.Core.Revit.deps.json
+    text: Revit 2025\SAM.Geometry.Grasshopper.Revit.deps.json
+    text: Revit 2025\SAM.Geometry.Revit.deps.json
+    text: Revit 2026\SAM.Analytical.Grasshopper.Revit.deps.json
+    text: Revit 2026\SAM.Analytical.Revit.deps.json
+    text: Revit 2026\SAM.Analytical.Revit.UI.deps.json
+    text: Revit 2026\SAM.Architectural.Grasshopper.Revit.deps.json
+    text: Revit 2026\SAM.Architectural.Revit.deps.json
+    text: Revit 2026\SAM.Core.Grasshopper.Revit.deps.json
+    text: Revit 2026\SAM.Core.Revit.deps.json
+    text: Revit 2026\SAM.Geometry.Grasshopper.Revit.deps.json
+    text: Revit 2026\SAM.Geometry.Revit.deps.json
+    text: Revit 2027\SAM.Analytical.Grasshopper.Revit.deps.json
+    text: Revit 2027\SAM.Analytical.Revit.deps.json
+    text: Revit 2027\SAM.Analytical.Revit.UI.deps.json
+    text: Revit 2027\SAM.Architectural.Grasshopper.Revit.deps.json
+    text: Revit 2027\SAM.Architectural.Revit.deps.json
+    text: Revit 2027\SAM.Core.Grasshopper.Revit.deps.json
+    text: Revit 2027\SAM.Core.Revit.deps.json
+    text: Revit 2027\SAM.Geometry.Grasshopper.Revit.deps.json
+    text: Revit 2027\SAM.Geometry.Revit.deps.json
+    text: SAM Analytical Mollier.deps.json
+    text: SAM Analytical.deps.json
+    text: SAM Geometry.deps.json
+    text: SAM Weather.deps.json
+    text: SAM.Analytical.UI.deps.json
+    text: SAM.Analytical.UI.Grasshopper.deps.json
+    text: SAM.Analytical.UI.WPF.deps.json
+    text: SAM.Analytical.UI.WPF.Grasshopper.deps.json
+    text: SAM.Core.Mollier.UI.Grasshopper.deps.json
+    text: SAM.Core.Mollier.UI.WPF.deps.json
+    text: SAM.Core.UI.deps.json
+    text: SAM.Core.UI.WPF.deps.json
+    text: SAM.Geometry.UI.deps.json
+    text: SAM.Geometry.UI.WPF.deps.json
+    text: SAM.Weather.UI.deps.json
+    text: SAM.Weather.UI.Grasshopper.deps.json
+    text: SAM.Weather.UI.WPF.deps.json
+    text: SAMdependencies\SAM.Analytical.Windows.deps.json
+    text: SAMdependencies\SAM.Architectural.Windows.deps.json
+    text: SAMdependencies\SAM.Core.Windows.deps.json
+    text: SAMdependencies\SAM.Geometry.Windows.deps.json
+    text: SAMdependencies\SAM.Weather.Windows.deps.json
+debug symbols (.pdb, not executable/dependency/runtime content; differ as a consequence of the stamp): 129
+installer's own uninstaller label: unins000.exe (s06-smoke-candidate -> s06-repin-candidate)
+other differences (drift): 0
+runtime / dependency inventory (B):
+  hostfxr.dll: 8,0,3126,42015 @Commit: 1219a42122cf5190c7f512850557e38c422430dc 8.0.31 @Commit: 1219a42122cf5190c7f512850557e38c422430dc sha256 4F5A0500CD2A (identical)
+  hostpolicy.dll: 8,0,3126,42015 @Commit: 1219a42122cf5190c7f512850557e38c422430dc 8.0.31 @Commit: 1219a42122cf5190c7f512850557e38c422430dc sha256 24F18CCB306D (identical)
+  coreclr.dll: 8,0,3126,42015 @Commit: 1219a42122cf5190c7f512850557e38c422430dc 8,0,3126,42015 @Commit: 1219a42122cf5190c7f512850557e38c422430dc sha256 BBBCAEDB3696 (identical)
+  clrjit.dll: 8,0,3126,42015 @Commit: 1219a42122cf5190c7f512850557e38c422430dc 8,0,3126,42015 @Commit: 1219a42122cf5190c7f512850557e38c422430dc sha256 697C09AC310B (identical)
+  System.Private.CoreLib.dll: 8.0.3126.42015 8.0.31+1219a42122cf5190c7f512850557e38c422430dc sha256 99B168B84597 (identical)
+  PresentationFramework.dll: 8.0.3126.42109 8.0.31-servicing.26421.9+27c84022a86fcaa600315f4686cde97874615a24 sha256 F7881946BF26 (identical)
+  openstudiolib.dll:   sha256 549EB1A7492B (identical)
+  SAM Analytical.exe: 2026.4.228.0 2026.4.228.0+b3b8e9e sha256 314946C3475E (stamp only)
+  benchmark-tas.exe: 2026.4.228.0 2026.4.228.0+b3b8e9e sha256 A94CFD0C7CBC (stamp only)
+  benchmark-openstudio.exe: 2026.4.228.0 2026.4.228.0+b3b8e9e sha256 CEC9AD61F2FC (stamp only)
+  benchmark-tas.deps.json:   sha256 02E4A8C811C3 (stamp only)
+  benchmark-tas.runtimeconfig.json:   sha256 D0EAC8FAC04C (identical)
+  benchmark-openstudio.deps.json:   sha256 B925A72390B2 (stamp only)
+  benchmark-openstudio.runtimeconfig.json:   sha256 D7A0BECA5383 (identical)
+  SAM Analytical.runtimeconfig.json:   sha256 32ABD45AD228 (identical)
+  SAM Analytical.deps.json:   sha256 F8909173C148 (stamp only)
+Result: PASS - same files; every difference is the expected stamp

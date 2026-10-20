@@ -1,0 +1,15 @@
+﻿SHGetFolderPath in the isolated environment: APPDATA=C:\TasOut\s06\inv-227\Profile\AppData\Roaming PERSONAL=C:\TasOut\s06\inv-227\Profile\Documents
+Install exit code: 0
+owner's real folders: 2518 entries before, 2518 after, 0 differences
+HKCU uninstall key present: DisplayVersion=s06-smoke-candidate InstallLocation=C:\TasOut\s06\inv-227\Profile\AppData\Roaming\SAM\ AppPath=C:\TasOut\s06\inv-227\Profile\AppData\Roaming\SAM
+1760 files, 908.3 MB in {userappdata}\SAM
+  {userappdata}\Autodesk: 29 files
+  {userappdata}\Grasshopper: 32 files
+  {userappdata}\McNeel: 252 files
+  {userappdata}\Microsoft: 0 files
+  {userappdata}\SAM: 1760 files
+﻿SHGetFolderPath in the isolated environment: APPDATA=C:\TasOut\s06\inv-227\Profile\AppData\Roaming PERSONAL=C:\TasOut\s06\inv-227\Profile\Documents
+Uninstall exit code: 0
+owner's real folders: 2518 entries before, 2518 after, 0 differences
+HKCU uninstall key absent
+{userappdata}\SAM after uninstall: removed
