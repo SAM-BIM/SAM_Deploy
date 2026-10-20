@@ -143,34 +143,41 @@
     </CommonCIProps>
   </PropertyGroup>
 
-  <!-- Projects="%(Solution.Identity)" batches the MSBuild task on (solution, Properties), so each entry is
-       built on its own, in the order listed above. Batching on %(Solution.Properties) alone grouped the
-       solutions by that value: every Release|Any CPU solution, SAM_UI included, was built before
-       SAM_OpenStudio (Release|x64), whose x64 native output SAM_UI's build requires (SAM_UI#229).
-       Each call's Properties string is unchanged. -->
+  <!-- The Condition on %(Solution.Identity) batches the MSBuild task per solution entry, so the entries are
+       built one at a time in the order listed above. Batching on %(Solution.Properties) alone grouped them by
+       that value: every Release|Any CPU solution, SAM_UI included, was built before SAM_OpenStudio
+       (Release|x64), whose x64 native output SAM_UI's build requires (SAM_UI#229).
+       Each batch still passes the item itself, so its Properties metadata is what the MSBuild task applies,
+       exactly as before; note that item Properties metadata takes precedence over the task's Properties
+       parameter, so CommonCIProps does not reach the solutions (CI stamping comes from the SAMVersion /
+       InformationalVersion / SAMSourceRevision environment variables). Changing that is out of S06's scope. -->
   <Target Name="Clean">
-    <MSBuild Projects="%(Solution.Identity)"
+    <MSBuild Projects="@(Solution)"
+             Condition="'%(Solution.Identity)' != ''"
              BuildInParallel="false"
              Targets="Clean"
              Properties="%(Solution.Properties);$(CommonCIProps)" />
   </Target>
 
   <Target Name="Build">
-    <MSBuild Projects="%(Solution.Identity)"
+    <MSBuild Projects="@(Solution)"
+             Condition="'%(Solution.Identity)' != ''"
              BuildInParallel="false"
              Targets="Build"
              Properties="%(Solution.Properties);$(CommonCIProps)" />
   </Target>
 
   <Target Name="Rebuild">
-    <MSBuild Projects="%(Solution.Identity)"
+    <MSBuild Projects="@(Solution)"
+             Condition="'%(Solution.Identity)' != ''"
              BuildInParallel="false"
              Targets="Rebuild"
              Properties="%(Solution.Properties);$(CommonCIProps)" />
   </Target>
 
   <Target Name="Restore">
-    <MSBuild Projects="%(Solution.Identity)"
+    <MSBuild Projects="@(Solution)"
+             Condition="'%(Solution.Identity)' != ''"
              BuildInParallel="false"
              Targets="Restore"
              Properties="%(Solution.Properties);$(CommonCIProps)" />
