@@ -1,21 +1,26 @@
-﻿== cmp-os-s05c2-vs-d2.json: exactMatch=False numbers=45/45 differences=24
-  OK   reference fe0770e696de41dea63113367b8f3d5b: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_096AB397 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_7543594B; 3 fields equal=True; reference in source model=True
-  OK   reference 222f61676a2a431bae6e1f3c09885d8b: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_39348D9E -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_596C6F10; 3 fields equal=True; reference in source model=True
-  OK   reference eec9932b517045c8a02b4397ded78885: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_D36BCE55 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_92FE43D4; 3 fields equal=True; reference in source model=True
-  OK   reference bc9f12b198bd4551a266192d1cd113a0: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_998B7AC4 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_CCD6011C; 3 fields equal=True; reference in source model=True
-== cmp-os-d2-vs-i2.json: exactMatch=False numbers=45/45 differences=24
-  OK   reference bc9f12b198bd4551a266192d1cd113a0: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_CCD6011C -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_2200CCC6; 3 fields equal=True; reference in source model=True
-  OK   reference 222f61676a2a431bae6e1f3c09885d8b: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_596C6F10 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_6D9EA26F; 3 fields equal=True; reference in source model=True
-  OK   reference fe0770e696de41dea63113367b8f3d5b: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_7543594B -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_F435CEC1; 3 fields equal=True; reference in source model=True
-  OK   reference eec9932b517045c8a02b4397ded78885: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_92FE43D4 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_D066518C; 3 fields equal=True; reference in source model=True
-== cmp-os-s05c2-vs-x2.json: exactMatch=False numbers=45/45 differences=24
-  OK   reference fe0770e696de41dea63113367b8f3d5b: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_096AB397 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_B49A5FAF; 3 fields equal=True; reference in source model=True
-  OK   reference bc9f12b198bd4551a266192d1cd113a0: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_998B7AC4 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_1F3C2A21; 3 fields equal=True; reference in source model=True
-  OK   reference 222f61676a2a431bae6e1f3c09885d8b: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_39348D9E -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_93A6B552; 3 fields equal=True; reference in source model=True
-  OK   reference eec9932b517045c8a02b4397ded78885: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_D36BCE55 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_463A4EDA; 3 fields equal=True; reference in source model=True
-== cmp-os-i2-vs-x2.json: exactMatch=False numbers=45/45 differences=24
-  OK   reference bc9f12b198bd4551a266192d1cd113a0: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_2200CCC6 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_1F3C2A21; 3 fields equal=True; reference in source model=True
-  OK   reference eec9932b517045c8a02b4397ded78885: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_D066518C -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_463A4EDA; 3 fields equal=True; reference in source model=True
-  OK   reference 222f61676a2a431bae6e1f3c09885d8b: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_6D9EA26F -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_93A6B552; 3 fields equal=True; reference in source model=True
-  OK   reference fe0770e696de41dea63113367b8f3d5b: baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_F435CEC1 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_B49A5FAF; 3 fields equal=True; reference in source model=True
-Result: every difference is a generated subsurface name uniquely mapped by its source reference, with numerically equal values
+﻿Source model: box-aperture.json sha256 99ba2ab9; 6 Panel objects in AdjacencyCluster.Objects, 4 of them host apertures
+== cmp-os-s05c2-vs-d2.json: exactMatch=False numbers=45/45 differences=24 (as measured)
+  OK   reference fe0770e696de41dea63113367b8f3d5b -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_096AB397 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_7543594B; Area=2.6399999999999997, Surface Index=10, Zone Index=1
+  OK   reference 222f61676a2a431bae6e1f3c09885d8b -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_39348D9E -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_596C6F10; Area=6.9600000000000009, Surface Index=7, Zone Index=1
+  OK   reference eec9932b517045c8a02b4397ded78885 -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_D36BCE55 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_92FE43D4; Area=2.6399999999999997, Surface Index=9, Zone Index=1
+  OK   reference bc9f12b198bd4551a266192d1cd113a0 -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_998B7AC4 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_CCD6011C; Area=4.0799999999999983, Surface Index=8, Zone Index=1
+  references mapped: 4; aperture-hosting panels in the model: 4
+== cmp-os-d2-vs-i2.json: exactMatch=False numbers=45/45 differences=24 (as measured)
+  OK   reference bc9f12b198bd4551a266192d1cd113a0 -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_CCD6011C -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_2200CCC6; Area=4.0799999999999983, Surface Index=8, Zone Index=1
+  OK   reference 222f61676a2a431bae6e1f3c09885d8b -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_596C6F10 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_6D9EA26F; Area=6.9600000000000009, Surface Index=7, Zone Index=1
+  OK   reference fe0770e696de41dea63113367b8f3d5b -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_7543594B -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_F435CEC1; Area=2.6399999999999997, Surface Index=10, Zone Index=1
+  OK   reference eec9932b517045c8a02b4397ded78885 -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_92FE43D4 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_D066518C; Area=2.6399999999999997, Surface Index=9, Zone Index=1
+  references mapped: 4; aperture-hosting panels in the model: 4
+== cmp-os-s05c2-vs-x2.json: exactMatch=False numbers=45/45 differences=24 (as measured)
+  OK   reference fe0770e696de41dea63113367b8f3d5b -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_096AB397 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_B49A5FAF; Area=2.6399999999999997, Surface Index=10, Zone Index=1
+  OK   reference bc9f12b198bd4551a266192d1cd113a0 -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_998B7AC4 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_1F3C2A21; Area=4.0799999999999983, Surface Index=8, Zone Index=1
+  OK   reference 222f61676a2a431bae6e1f3c09885d8b -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_39348D9E -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_93A6B552; Area=6.9600000000000009, Surface Index=7, Zone Index=1
+  OK   reference eec9932b517045c8a02b4397ded78885 -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_D36BCE55 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_463A4EDA; Area=2.6399999999999997, Surface Index=9, Zone Index=1
+  references mapped: 4; aperture-hosting panels in the model: 4
+== cmp-os-i2-vs-x2.json: exactMatch=False numbers=45/45 differences=24 (as measured)
+  OK   reference bc9f12b198bd4551a266192d1cd113a0 -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_2200CCC6 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_1F3C2A21; Area=4.0799999999999983, Surface Index=8, Zone Index=1
+  OK   reference eec9932b517045c8a02b4397ded78885 -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_D066518C -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_463A4EDA; Area=2.6399999999999997, Surface Index=9, Zone Index=1
+  OK   reference 222f61676a2a431bae6e1f3c09885d8b -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_6D9EA26F -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_93A6B552; Area=6.9600000000000009, Surface Index=7, Zone Index=1
+  OK   reference fe0770e696de41dea63113367b8f3d5b -> Panel 'SIM_EXT_SLD' WallExternal, 1 aperture(s); baseline SAM_SUBSURFACE_SIM_EXT_GLZ_0_F435CEC1 -> candidate SAM_SUBSURFACE_SIM_EXT_GLZ_0_B49A5FAF; Area=2.6399999999999997, Surface Index=10, Zone Index=1
+  references mapped: 4; aperture-hosting panels in the model: 4
+Result: every difference is a generated subsurface name; each reference is the Guid of one aperture-hosting Panel (one aperture each) and maps 1:1 between runs; mapped values are numerically equal

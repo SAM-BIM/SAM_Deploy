@@ -30,7 +30,7 @@ in `SCHEMA.md`. S06 is marked Done only in the roadmap closeout after the approv
 | 5c | Both, real ribbon, embedded weather | **PASS**: `Compared`, both producers exit 0 (one harness intervention, see below) | `runs/x3-installer-both-embedded/` |
 | 6 | No `SAM_COMMIT` / `SAM_BENCHMARK_*`; executable resolution captured | **PASS**: all unset (`environment.txt`, manifest `environment`). The app and both producers ran from `{userappdata}\SAM`; .NET dotnet root = that folder; 0 developer-folder references in the host traces | `corehost-trace-summary.txt` per case |
 | 7 | OpenStudio 3.11 first on `PATH` → SDK-matching 3.10 CLI | **PASS**: `PATH` = ladybug 3.11.0 first, 3.10.0 second; manifest `engine.cli` = 3.10.0 (`46a80a3d`), SDK 3.10.0, EnergyPlus 25.1.0. Explicit CLI path: code path unchanged, unit test `ExplicitPath_IsUnchanged_AndNeverVersionChecked`. Neither the ribbon nor the producer takes a CLI path, so it was not exercised end to end | `runs/x2-installer-openstudio/openstudio-run.json` |
-| 8 | Numerical comparison with S05 | **PASS**: Tas 602/602 values equal S05 case 1. OpenStudio: the raw comparison against S05 case 2 reports `exactMatch: false` (45/45 numbers, 24 differences), kept as measured. Numeric equality was shown separately (`runs/os-subsurface-mapping.txt`, `tools/map-subsurface-refs.ps1`). Every difference is one of 4 run-generated subsurface names (3 fields each). Each name maps uniquely, by its stable source reference (the aperture GUID in the input model), to exactly one name on the other side, and the mapped values are exactly equal. Both: snapshot, embedded EPW, canonical hash and `comparison.csv` `454e42dc` equal S05 case 4 | `runs/cmp-*-x*.json`, `runs/os-subsurface-mapping.txt`, `runs/both-summary-installer.txt` |
+| 8 | Numerical comparison with S05 | **PASS**: Tas 602/602 values equal S05 case 1. OpenStudio: the raw comparison against S05 case 2 reports `exactMatch: false` (45/45 numbers, 24 differences), kept as measured. Numeric equality was shown separately (`runs/os-subsurface-mapping.txt`, `tools/map-subsurface-refs.ps1`). Every difference is one of 4 run-generated subsurface names (3 fields each). The result's `Reference` is the GUID of the Panel hosting the window: SAM_OpenStudio `Modify/AddResults.cs` (`LookupPanel`, `Referenced`) attaches each subsurface result to its host panel. The check confirms structurally that each of the 4 references is exactly one `Panel` object of the input model (`box-aperture.json` `99ba2ab9`), a `WallExternal` hosting exactly one aperture, so the fixture maps panel to window unambiguously. Through that reference each generated name maps 1:1 to one name on the other side, and the mapped values are exactly equal. The check fails on a missing or ambiguous mapping. The claim is scoped to these four comparisons; it is not a general result-identity rule. Both: snapshot, embedded EPW, canonical hash and `comparison.csv` `454e42dc` equal S05 case 4 | `runs/cmp-*-x*.json`, `runs/os-subsurface-mapping.txt`, `runs/both-summary-installer.txt` |
 | 9 | Provenance: SAM_Deploy commit not described as the SAM commit | **Not PASS: accepted limitation** (owner decision 2026-10-20: documented S06 exception, no new stamping; documented by SAM-BIM/SAM_Validation#16). As measured, the check fails: SAM_UI's manifest is right. Under `provenance.application`, `sourceRevision` = `717533c` (the extracted SHA), and `entryAssembly.informationalVersion` and every `components[].informationalVersion` = `2026.4.227.0+717533c` (the full stamp). `sourceRevisionOf` is explanatory text saying the revision is the SAM_Deploy installer stamp. The producers' B1a documents report `samCommit` = `runnerCommit` = `717533c`, the SAM_Deploy commit. SAM_Validation `docs/benchmark/SCHEMA.md` defines `samCommit` as "SAM source revision used for the run", and roadmap decision 6 as the SAM commit the producers were built from. `comparison.md` shows "SAM commit \| 717533c \| 717533c". S05 reported SAM `62b54156`, SAM_Tas `e84aeff6` and SAM_OpenStudio `d4216f3` in the same fields. The value is traceable (SAM_Deploy `717533c` pins SAM `df27563b`, SAM_Tas `e84aeff6`, SAM_OpenStudio `1f4bf60c`) but mislabelled | `runs/x3-installer-both-embedded/benchmark-*.json`, `comparison.md` |
 | 10 | Final-head CI and tests | **PASS**: see [Tests and checks](#tests-and-checks) | |
 
@@ -61,7 +61,7 @@ Dev baseline (BuildAll's own deployed app, developer producers, the S05 setup wi
 | Case | Result |
 |---|---|
 | Tas | PASS: `Succeeded`. 602/602 persisted values equal S05 case 1. |
-| OpenStudio | PASS: `Succeeded`, EnergyPlus 25.1.0. Raw comparison against S05 case 2: `exactMatch: false`, 45/45 numbers, 24 differences. All 24 are the 4 run-generated subsurface names, and they map uniquely by source reference with equal values (`runs/os-subsurface-mapping.txt`). |
+| OpenStudio | PASS: `Succeeded`, EnergyPlus 25.1.0. Raw comparison against S05 case 2: `exactMatch: false`, 45/45 numbers, 24 differences. All 24 are the 4 run-generated subsurface names, mapped 1:1 through their host-panel reference (one aperture per panel in this fixture), with equal values (`runs/os-subsurface-mapping.txt`). |
 | Both | PASS: `Compared`. Snapshot, post-F1 embedded EPW `5afbeb32`, canonical hash, producer exe hashes and `comparison.csv` (`454e42dc`) all equal S05 case 4. |
 
 ## Why the installed payload could not run Both, and what changed
@@ -212,7 +212,7 @@ Engines: TAS 9.5.7.0, OpenStudio 3.10.0 CLI, EnergyPlus 25.1.0-1c11a3d85f.
 | Case | Result | Executable resolution | Against S05 |
 |---|---|---|---|
 | x1 Tas (Run Simulation > Tas) | **PASS**: `Succeeded`, app exit 0; TBD, TSD and `box.tas-run.json` written | 1 apphost start, `{userappdata}\SAM\SAM Analytical.dll`; dotnet root = that folder; all 4 manifest components in the install; `sourceRevision` `717533c` | 602/602 values equal S05 case 1 (and the mirrored run i1) |
-| x2 OpenStudio (explicit `Budapest.epw` `472ffb4e`) | **PASS**: `Succeeded`, EnergyPlus exit 0, 10 warnings, 0 severe, 0 fatal; 13 results | CLI = 3.10.0 (`46a80a3d`) although 3.11.0 was first on `PATH`; SDK 3.10.0; `samOpenStudioVersion` `2026.4.227.0+717533c` | raw `exactMatch: false` against S05 case 2 (45/45 numbers, 24 differences). After uniquely mapping the 4 run-generated subsurface names by their source reference, all values are equal (`runs/os-subsurface-mapping.txt`) |
+| x2 OpenStudio (explicit `Budapest.epw` `472ffb4e`) | **PASS**: `Succeeded`, EnergyPlus exit 0, 10 warnings, 0 severe, 0 fatal; 13 results | CLI = 3.10.0 (`46a80a3d`) although 3.11.0 was first on `PATH`; SDK 3.10.0; `samOpenStudioVersion` `2026.4.227.0+717533c` | raw `exactMatch: false` against S05 case 2 (45/45 numbers, 24 differences). After uniquely mapping the 4 run-generated subsurface names through their host-panel reference (one aperture per panel in this fixture), all values are equal (`runs/os-subsurface-mapping.txt`) |
 | x3 Both (embedded weather) | **PASS**: `Compared`; Tas 21.9 s and OpenStudio 6.0 s producers, both exit 0 | 3 apphost starts: the app, `benchmark-tas.dll` and `benchmark-openstudio.dll`, all from `{userappdata}\SAM`; 0 developer-folder references | snapshot `0c30db14`, embedded EPW `5afbeb32` (post-F1), canonical hash `05c1e334` and `comparison.csv` `454e42dc` equal S05 case 4 |
 
 The Both comparison gate reads "Fail (numerical Fail, coverage Warn, provenance Pass, reconciliation Pass)", identical to
@@ -236,7 +236,7 @@ Engines: TAS 9.5.7.0 (`TBD.exe` `aa658fcd`); OpenStudio 3.10.0 CLI (`46a80a3d`);
 | Case | Expected | Result |
 |---|---|---|
 | Tas (Run Simulation > Tas) | Succeeded, valid outputs | **PASS**: `Succeeded`; TBD, TSD and `box.tas-run.json` written. `application.sourceRevision` = `717533c` (unknown on developer builds); every component path is in the candidate folder. Persisted results equal the dev baseline: 602/602 values. |
-| OpenStudio (explicit `Budapest.epw` `472ffb4e`) | Succeeded, valid outputs | **PASS**: `Succeeded`. The CLI that ran was **3.10.0** (`openStudioSdkVersion` 3.10.0, `energyPlusVersion` 25.1.0-1c11a3d85f) although 3.11 was first on `PATH`. Raw comparison against the dev baseline: `exactMatch: false` (45/45 numbers, 24 differences). All 24 are the 4 run-generated subsurface names, mapped uniquely by source reference, with equal values (`runs/os-subsurface-mapping.txt`). |
+| OpenStudio (explicit `Budapest.epw` `472ffb4e`) | Succeeded, valid outputs | **PASS**: `Succeeded`. The CLI that ran was **3.10.0** (`openStudioSdkVersion` 3.10.0, `energyPlusVersion` 25.1.0-1c11a3d85f) although 3.11 was first on `PATH`. Raw comparison against the dev baseline: `exactMatch: false` (45/45 numbers, 24 differences). All 24 are the 4 run-generated subsurface names, mapped 1:1 through their host-panel reference (one aperture per panel in this fixture), with equal values (`runs/os-subsurface-mapping.txt`). |
 | Both (embedded weather) | Both producers succeed, valid comparison | **PASS**: `Compared`. Producers taken from beside the app (`<candidate>\benchmark-*.exe`, the staged hashes); Tas 21.2 s and OpenStudio 7.1 s, both exit 0. `environment.SAM_COMMIT` not set; both report `samCommit` = `runnerCommit` = `717533c`. Weather: embedded, exported EPW `5afbeb32` (post-F1). Snapshot `0c30db14`, canonical hash `05c1e334`, `comparison.csv` `454e42dc`: identical to the dev baseline and S05 case 4. |
 
 .NET host trace for the installed Both run: 3 apphost starts (the app and two producers), dotnet root = the candidate folder, 0 references
@@ -289,7 +289,7 @@ differences. Installed SAM, Rhino, Grasshopper and Revit folders were not touche
   The hosted installer run is the authoritative staging and gate run.
 - **The 3.10 CLI used is a portable copy** under the workspace's `.icon-migration\runtime`, not a standard install. A machine with only ladybug's 3.11 would still run 3.11 (prefer, not refuse), visibly in the manifest.
 - **The explicit CLI-path override** is covered by code inspection and a unit test only (no UI or producer option sets it).
-- **The final SAM_Deploy merge will not be the tested commit:** before merge the SAM_OpenStudio gitlink must move to SAM_OpenStudio#32's merge commit. The tree is identical if `sow/2026-Q4` has not moved; the stamp will change.
+- **The final SAM_Deploy merge will not be the tested commit:** before merge, only the SAM_OpenStudio gitlink moves, to SAM_OpenStudio#32's exact merge commit. Its source differs from `1f4bf60c` only by #32's record document, as long as `sow/2026-Q4` has not moved, and the stamp will change. The new head's Validate, installer gates and payload-equivalence evidence decide whether the licensed results carry forward (Next step 3-5).
 - **In CI, the self-contained publish of `benchmark-tas` also writes into `SAM_Tas\build`** (its project fixes `OutputPath` and disables RID subfolders). That happens after the payload is staged and is harmless there; in a developer checkout it would mix runtime files into `SAM_Tas\build`. The script is meant for CI and the clean replay only.
 
 ## Files changed
@@ -323,15 +323,29 @@ Prerequisites, machine-local and not committed:
 
 ## Next step
 **Owner approval is required before any merge.** After approval:
-1. Merge SAM-BIM/SAM_OpenStudio#32, then its `PROJECT_PROGRESS.md` closeout.
-2. Merge SAM-BIM/SAM_Validation#16 (documentation only), then its closeout.
-3. On this branch, repoint the SAM_OpenStudio gitlink from `1f4bf60c` to #32's merge commit. Check that
-   `git diff --stat 1f4bf60c <merge>` lists only `documentation/S06-OpenStudio-Cli-Selection-PR.md`, which needs the base
-   `d4216f35` unchanged. Then the executable content does not change. This PR's SAM_Validation pin stays at
-   `68eded00`, because #16 ships no binary.
-4. Rerun Validate and the non-publishing installer workflow (`publish_release=false`) at the new head; both must pass,
-   including the producer gate and H12. No licensed rerun is needed while the executable content is unchanged.
-5. Merge this PR, then its closeout.
-6. SAM roadmap closeout: S06 Done, with the merge SHAs and the accepted limitation. This takes a reviewed docs PR on SAM,
-   as the roadmap requires for status changes after S00. Phase A then meets its S06 condition; any release remains a
-   separate owner decision.
+1. Merge SAM-BIM/SAM_OpenStudio#32 at its approved head `3082dc6`. Record the immutable merge SHA, then do its
+   `PROJECT_PROGRESS.md` closeout.
+2. Merge SAM-BIM/SAM_Validation#16 (documentation only) at its approved head, then do its closeout.
+3. **Repin only SAM_OpenStudio** on this branch, from `1f4bf60c` to #32's **exact merge commit**, never a later closeout
+   tip. `git diff --stat 1f4bf60c <merge>` must list only `documentation/S06-OpenStudio-Cli-Selection-PR.md`; stop if
+   executable content changed. Every other gitlink and `.gitmodules` stay as they are; SAM_Validation stays `68eded00`
+   (#16 ships no binary).
+4. At the new head, the following are mandatory:
+   - Validate;
+   - the non-publishing installer workflow (`publish_release=false`), with its producer Stage/Assert gates and H12.
+
+   Green CI on earlier heads does not cover the repinned head.
+5. **Carry the licensed evidence forward only after documenting equivalence**:
+   - **Source equivalence:** the gitlink diff above, and the build SHA and checked-out pins in the new run's log.
+   - **Rebuilt payload equivalence** against run #227: the file inventory (same paths), the hashes, and the
+     dependency/runtime inventory. This covers the producers' `deps.json` / `runtimeconfig.json`, the .NET runtime
+     version (8.0.31, `hostfxr`/`coreclr`), and the OpenStudio/EnergyPlus SDK native DLLs.
+   - **Expected differences** are limited to the stamp: FileVersion `2026.4.<run>.0`, InformationalVersion
+     `+<new SAM_Deploy SHA>`, and the bytes that carry them.
+
+   Any other executable, dependency or runtime drift means the affected genuine-installed smoke cases (x1 Tas, x2
+   OpenStudio, x3 Both) are repeated with the existing S06 criteria.
+6. Merge this PR only when its final gates and the owner's authorization are satisfied, then do its closeout.
+7. Close out S06 in the SAM roadmap through a reviewed docs PR: S06 Done, with the merge SHAs and the accepted limitation
+   (check 9 stays "Not PASS: accepted limitation"). Phase A then meets its S06 condition. Any release remains a separate
+   owner decision.
