@@ -23,15 +23,15 @@ in `SCHEMA.md`. S06 is marked Done only in the roadmap closeout after the approv
 |---|---|---|---|
 | 1 | Isolated Release build of `installer.yml` | **PASS**: hosted run #227 at `717533c`, every step green; local replay 20/20 steps | `installer-exe/hosted-run-227.txt`, `candidate-build/steps.txt` |
 | 2 | Staging and payload gates (producer dependencies, self-contained runtime, identical SAM assemblies, versions, producer start) | **PASS** (hosted): both producers start from the payload; 268/271 and 199/204 dependencies byte-identical (the rest same version, or newer framework facades); H12 0 violations; stamp `2026.4.227.0+717533c`. Local replay: PASS except its known unstamped `SAM.Occt.Native.dll` (local seed) | `installer-exe/hosted-run-227.txt`, `candidate-build/` |
-| 3 | Gitlinks = approved Q4/S05 baseline, apart from the reviewed OpenStudio fix | **PASS**: 23 pins equal today's `sow/2026-Q4` tips; 21 equal the S05 build (`SAM_UI/documentation/evidence/s05-20261020/build-revisions.txt`) exactly, and SAM `62b54156`→`df27563b` and SAM_UI `ade096d0`→`df24dffe` are docs-only; SAM_OpenStudio `1f4bf60c` = Q4 tip `d4216f35` + #32 | this section |
+| 3 | Gitlinks = approved Q4/S05 baseline, apart from the reviewed OpenStudio fix | **PASS**: this PR changes 24 gitlinks: 23 move to today's `sow/2026-Q4` tips, and the 24th is the supporting SAM_OpenStudio content pin. Of the 23, 21 equal the S05 build (`SAM_UI/documentation/evidence/s05-20261020/build-revisions.txt`) exactly, and SAM `62b54156`→`df27563b` and SAM_UI `ade096d0`→`df24dffe` are docs-only; SAM_OpenStudio `1f4bf60c` = Q4 tip `d4216f35` + #32 | this section |
 | 4 | Installed candidate, owner's installation untouched | **PASS (genuine installer)**: the hosted EXE installed silently into an isolated profile (exit 0; 1760 files in `{userappdata}\SAM`, plus the Grasshopper, Rhino-package and Revit-add-in files and `install.bat`) and uninstalled cleanly (exit 0, "Removed all? Yes"). The owner's real `%APPDATA%\SAM`, Grasshopper, Rhino packages, Revit add-ins and `Documents\SAM`: 2518 entries, 0 differences across both | `installer-exe/` |
 | 5a | Tas only, real ribbon | **PASS**: `Succeeded` | `runs/x1-installer-tas/` |
 | 5b | OpenStudio only, real ribbon, explicit EPW | **PASS**: `Succeeded`, EnergyPlus exit 0 | `runs/x2-installer-openstudio/` |
 | 5c | Both, real ribbon, embedded weather | **PASS**: `Compared`, both producers exit 0 (one harness intervention, see below) | `runs/x3-installer-both-embedded/` |
 | 6 | No `SAM_COMMIT` / `SAM_BENCHMARK_*`; executable resolution captured | **PASS**: all unset (`environment.txt`, manifest `environment`). The app and both producers ran from `{userappdata}\SAM`; .NET dotnet root = that folder; 0 developer-folder references in the host traces | `corehost-trace-summary.txt` per case |
 | 7 | OpenStudio 3.11 first on `PATH` → SDK-matching 3.10 CLI | **PASS**: `PATH` = ladybug 3.11.0 first, 3.10.0 second; manifest `engine.cli` = 3.10.0 (`46a80a3d`), SDK 3.10.0, EnergyPlus 25.1.0. Explicit CLI path: code path unchanged, unit test `ExplicitPath_IsUnchanged_AndNeverVersionChecked`. Neither the ribbon nor the producer takes a CLI path, so it was not exercised end to end | `runs/x2-installer-openstudio/openstudio-run.json` |
-| 8 | Numerical comparison with S05 | **PASS**: Tas 602/602 values equal S05 case 1. OpenStudio 45/45 equal S05 case 2: only the 12 run-generated subsurface keys differ, with equal values. Both: snapshot, embedded EPW, canonical hash and `comparison.csv` `454e42dc` equal S05 case 4 | `runs/cmp-*-x*.json`, `runs/both-summary-installer.txt` |
-| 9 | Provenance: SAM_Deploy commit not described as the SAM commit | **Not PASS: accepted limitation** (owner decision 2026-10-20: documented S06 exception, no new stamping; documented by SAM-BIM/SAM_Validation#16). As measured, the check fails: SAM_UI's manifest is right: `application.sourceRevision` = `717533c`, and `sourceRevisionOf` names the SAM_Deploy stamp. The producers' B1a documents report `samCommit` = `runnerCommit` = `717533c`, the SAM_Deploy commit. SAM_Validation `docs/benchmark/SCHEMA.md` defines `samCommit` as "SAM source revision used for the run", and roadmap decision 6 as the SAM commit the producers were built from. `comparison.md` shows "SAM commit \| 717533c \| 717533c". S05 reported SAM `62b54156`, SAM_Tas `e84aeff6` and SAM_OpenStudio `d4216f3` in the same fields. The value is traceable (SAM_Deploy `717533c` pins SAM `df27563b`, SAM_Tas `e84aeff6`, SAM_OpenStudio `1f4bf60c`) but mislabelled | `runs/x3-installer-both-embedded/benchmark-*.json`, `comparison.md` |
+| 8 | Numerical comparison with S05 | **PASS**: Tas 602/602 values equal S05 case 1. OpenStudio: the raw comparison against S05 case 2 reports `exactMatch: false` (45/45 numbers, 24 differences), kept as measured. Numeric equality was shown separately (`runs/os-subsurface-mapping.txt`, `tools/map-subsurface-refs.ps1`). Every difference is one of 4 run-generated subsurface names (3 fields each). Each name maps uniquely, by its stable source reference (the aperture GUID in the input model), to exactly one name on the other side, and the mapped values are exactly equal. Both: snapshot, embedded EPW, canonical hash and `comparison.csv` `454e42dc` equal S05 case 4 | `runs/cmp-*-x*.json`, `runs/os-subsurface-mapping.txt`, `runs/both-summary-installer.txt` |
+| 9 | Provenance: SAM_Deploy commit not described as the SAM commit | **Not PASS: accepted limitation** (owner decision 2026-10-20: documented S06 exception, no new stamping; documented by SAM-BIM/SAM_Validation#16). As measured, the check fails: SAM_UI's manifest is right. Under `provenance.application`, `sourceRevision` = `717533c` (the extracted SHA), and `entryAssembly.informationalVersion` and every `components[].informationalVersion` = `2026.4.227.0+717533c` (the full stamp). `sourceRevisionOf` is explanatory text saying the revision is the SAM_Deploy installer stamp. The producers' B1a documents report `samCommit` = `runnerCommit` = `717533c`, the SAM_Deploy commit. SAM_Validation `docs/benchmark/SCHEMA.md` defines `samCommit` as "SAM source revision used for the run", and roadmap decision 6 as the SAM commit the producers were built from. `comparison.md` shows "SAM commit \| 717533c \| 717533c". S05 reported SAM `62b54156`, SAM_Tas `e84aeff6` and SAM_OpenStudio `d4216f3` in the same fields. The value is traceable (SAM_Deploy `717533c` pins SAM `df27563b`, SAM_Tas `e84aeff6`, SAM_OpenStudio `1f4bf60c`) but mislabelled | `runs/x3-installer-both-embedded/benchmark-*.json`, `comparison.md` |
 | 10 | Final-head CI and tests | **PASS**: see [Tests and checks](#tests-and-checks) | |
 
 Gitlink check (2026-10-20): `git ls-tree` of this branch against `origin/sow/2026-Q4` of each sibling checkout, every
@@ -61,7 +61,7 @@ Dev baseline (BuildAll's own deployed app, developer producers, the S05 setup wi
 | Case | Result |
 |---|---|
 | Tas | PASS: `Succeeded`. 602/602 persisted values equal S05 case 1. |
-| OpenStudio | PASS: `Succeeded`, EnergyPlus 25.1.0. 45/45 values equal S05 case 2; the only differences are the 12 run-generated subsurface names. |
+| OpenStudio | PASS: `Succeeded`, EnergyPlus 25.1.0. Raw comparison against S05 case 2: `exactMatch: false`, 45/45 numbers, 24 differences. All 24 are the 4 run-generated subsurface names, and they map uniquely by source reference with equal values (`runs/os-subsurface-mapping.txt`). |
 | Both | PASS: `Compared`. Snapshot, post-F1 embedded EPW `5afbeb32`, canonical hash, producer exe hashes and `comparison.csv` (`454e42dc`) all equal S05 case 4. |
 
 ## Why the installed payload could not run Both, and what changed
@@ -88,7 +88,7 @@ Changes (all minimal; no parallel deployment architecture, TAS COM untouched, no
   - The SAM_OCCT entry moves to just after SAM_Solver.
   - A check confirms every cross-repo `..\SAM*\` reference of every non-test project in the 24 pins points to an earlier entry.
   - Each call is otherwise unchanged (see the finding on `CommonCIProps` below).
-- Gitlinks: the 23 `sow/2026-Q4` tips that S05 and the dev baseline were built from, all fast-forwards. SAM_OpenStudio points at SAM-BIM/SAM_OpenStudio#32's content `1f4bf60c` (base `d4216f35` + the CLI-selection fix).
+- Gitlinks: 24 change. 23 move to the `sow/2026-Q4` tips that S05 and the dev baseline were built from, all fast-forwards. The 24th, SAM_OpenStudio, is the supporting content pin: it points at SAM-BIM/SAM_OpenStudio#32's content `1f4bf60c` (base `d4216f35` + the CLI-selection fix).
 
   | Repo | was | now |
   |---|---|---|
@@ -129,7 +129,9 @@ Changes (all minimal; no parallel deployment architecture, TAS COM untouched, no
   **Owner decision (2026-10-20): accepted as an explicitly documented S06 limitation; no new stamping in S06.**
   - The documentation is SAM-BIM/SAM_Validation#16 (`docs/benchmark/SCHEMA.md`, "Revision fields in installer builds").
     In a SAM_Deploy installer build without overrides, both fields hold the SAM_Deploy build revision. The build's stamp
-    `<year>.<quarter>.<run>.0+<revision>` identifies such a build, and SAM_UI records it in `sourceRevisionOf`.
+    `<year>.<quarter>.<run>.0+<revision>` identifies such a build. SAM_UI's run manifest records it under
+    `provenance.application`: the full stamp in `entryAssembly.informationalVersion` and `components[].informationalVersion`,
+    and the extracted SHA in `sourceRevision`. `sourceRevisionOf` is explanatory text only.
   - **To obtain the actual source revisions**, read the gitlinks the stamped SAM_Deploy revision pins:
     `git ls-tree <revision> SAM SAM_Tas SAM_OpenStudio` in SAM-BIM/SAM_Deploy. For this candidate, `717533c` gives SAM
     `df27563b`, SAM_Tas `e84aeff6` and SAM_OpenStudio `1f4bf60c`. The merged commit's stamp resolves the same way.
@@ -210,7 +212,7 @@ Engines: TAS 9.5.7.0, OpenStudio 3.10.0 CLI, EnergyPlus 25.1.0-1c11a3d85f.
 | Case | Result | Executable resolution | Against S05 |
 |---|---|---|---|
 | x1 Tas (Run Simulation > Tas) | **PASS**: `Succeeded`, app exit 0; TBD, TSD and `box.tas-run.json` written | 1 apphost start, `{userappdata}\SAM\SAM Analytical.dll`; dotnet root = that folder; all 4 manifest components in the install; `sourceRevision` `717533c` | 602/602 values equal S05 case 1 (and the mirrored run i1) |
-| x2 OpenStudio (explicit `Budapest.epw` `472ffb4e`) | **PASS**: `Succeeded`, EnergyPlus exit 0, 10 warnings, 0 severe, 0 fatal; 13 results | CLI = 3.10.0 (`46a80a3d`) although 3.11.0 was first on `PATH`; SDK 3.10.0; `samOpenStudioVersion` `2026.4.227.0+717533c` | 45/45 equal S05 case 2; the 24 differences are the 12 run-generated subsurface keys on each side, with equal values |
+| x2 OpenStudio (explicit `Budapest.epw` `472ffb4e`) | **PASS**: `Succeeded`, EnergyPlus exit 0, 10 warnings, 0 severe, 0 fatal; 13 results | CLI = 3.10.0 (`46a80a3d`) although 3.11.0 was first on `PATH`; SDK 3.10.0; `samOpenStudioVersion` `2026.4.227.0+717533c` | raw `exactMatch: false` against S05 case 2 (45/45 numbers, 24 differences). After uniquely mapping the 4 run-generated subsurface names by their source reference, all values are equal (`runs/os-subsurface-mapping.txt`) |
 | x3 Both (embedded weather) | **PASS**: `Compared`; Tas 21.9 s and OpenStudio 6.0 s producers, both exit 0 | 3 apphost starts: the app, `benchmark-tas.dll` and `benchmark-openstudio.dll`, all from `{userappdata}\SAM`; 0 developer-folder references | snapshot `0c30db14`, embedded EPW `5afbeb32` (post-F1), canonical hash `05c1e334` and `comparison.csv` `454e42dc` equal S05 case 4 |
 
 The Both comparison gate reads "Fail (numerical Fail, coverage Warn, provenance Pass, reconciliation Pass)", identical to
@@ -234,7 +236,7 @@ Engines: TAS 9.5.7.0 (`TBD.exe` `aa658fcd`); OpenStudio 3.10.0 CLI (`46a80a3d`);
 | Case | Expected | Result |
 |---|---|---|
 | Tas (Run Simulation > Tas) | Succeeded, valid outputs | **PASS**: `Succeeded`; TBD, TSD and `box.tas-run.json` written. `application.sourceRevision` = `717533c` (unknown on developer builds); every component path is in the candidate folder. Persisted results equal the dev baseline: 602/602 values. |
-| OpenStudio (explicit `Budapest.epw` `472ffb4e`) | Succeeded, valid outputs | **PASS**: `Succeeded`. The CLI that ran was **3.10.0** (`openStudioSdkVersion` 3.10.0, `energyPlusVersion` 25.1.0-1c11a3d85f) although 3.11 was first on `PATH`. 45/45 values equal the dev baseline (the 24 listed differences are the 12 renamed subsurface keys on each side). |
+| OpenStudio (explicit `Budapest.epw` `472ffb4e`) | Succeeded, valid outputs | **PASS**: `Succeeded`. The CLI that ran was **3.10.0** (`openStudioSdkVersion` 3.10.0, `energyPlusVersion` 25.1.0-1c11a3d85f) although 3.11 was first on `PATH`. Raw comparison against the dev baseline: `exactMatch: false` (45/45 numbers, 24 differences). All 24 are the 4 run-generated subsurface names, mapped uniquely by source reference, with equal values (`runs/os-subsurface-mapping.txt`). |
 | Both (embedded weather) | Both producers succeed, valid comparison | **PASS**: `Compared`. Producers taken from beside the app (`<candidate>\benchmark-*.exe`, the staged hashes); Tas 21.2 s and OpenStudio 7.1 s, both exit 0. `environment.SAM_COMMIT` not set; both report `samCommit` = `runnerCommit` = `717533c`. Weather: embedded, exported EPW `5afbeb32` (post-F1). Snapshot `0c30db14`, canonical hash `05c1e334`, `comparison.csv` `454e42dc`: identical to the dev baseline and S05 case 4. |
 
 .NET host trace for the installed Both run: 3 apphost starts (the app and two producers), dotnet root = the candidate folder, 0 references
@@ -254,7 +256,10 @@ differences. Installed SAM, Rhino, Grasshopper and Revit folders were not touche
   - old: SAM_UI batched with SAM, ahead of SAM_OpenStudio;
   - new: the exact listed order, with both SAM_Revit years kept.
 - Hosted (GitHub):
-  - Validate PR passed at `717533c` (run 39386787081; full Release BuildAll) and at record head `1faa383` (run 39390296835);
+  - Validate PR passed at `717533c` (SAM_Deploy run 39386787081; full Release BuildAll), at record heads `1faa383` (run
+    39390296835), `2665546` (run 39396367650) and `bcc6735` (run 39399003022). Run 39398892361 is SAM_Validation#16's
+    Build (Windows) at `cb84fd9`, not a SAM_Deploy run; an earlier version of the PR description attributed it to
+    `bcc6735` by mistake. Later heads: see the PR description;
   - Build & Release SAM-BIM Installer run #227 (39389974089, `workflow_dispatch`, `publish_release=false`) passed at
     `717533c`, including the two new producer steps and H12 (0 violations).
   - The final record head's Validate run is in the PR description.
@@ -291,7 +296,7 @@ differences. Installed SAM, Rhino, Grasshopper and Revit folders were not touche
 - `.github/scripts/benchmark-producers-payload.ps1` (new)
 - `.github/workflows/installer.yml` (+2 steps)
 - `BuildAll_Release.csproj` (order: per-entry batching, SAM_OCCT after SAM_Solver)
-- 24 gitlinks
+- 24 gitlinks: 23 Q4-tip pins, plus the supporting SAM_OpenStudio content pin (`1f4bf60c`); `.gitmodules` unchanged
 - `DEPLOY_S06_SMOKE_CANDIDATE.md` (this record), `evidence/s06-20261020/` (redacted evidence and harness)
 
 ## Reproduce

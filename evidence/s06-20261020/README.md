@@ -31,3 +31,9 @@ Added 2026-10-20 (genuine installer acceptance, the S06 acceptance run):
   - `installed-manifest.tsv` (path, size and SHA-256 of every installed `{userappdata}\SAM` file).
 - `runs/x1-installer-tas`, `runs/x2-installer-openstudio`, `runs/x3-installer-both-embedded`: the three licensed real-UI cases from the genuine install. For Both the folder also holds the producers' B1a documents, `comparison.md` and `comparison.csv`.
 - `runs/cmp-*-x*.json`, `runs/both-summary-installer.txt`: the comparisons against S05 and the mirrored runs.
+
+Added after review (2026-10-20):
+- `tools/map-subsurface-refs.ps1` and `runs/os-subsurface-mapping.txt`. The four `runs/cmp-os-*.json` comparisons are kept as measured (`exactMatch: false`). This check shows that each of their 24 differences belongs to one of 4 run-generated OpenStudio subsurface names. Each name maps uniquely, by its stable source reference (the aperture GUID, present in the input model `box-aperture.json` `99ba2ab9`), to one name on the other side, and the mapped values are exactly equal.
+- `git diff --check` reports four whitespace findings, all in verbatim captures, which are left unmodified:
+  - trailing whitespace on `installer-exe/hosted-run-227.txt` line 16 (an empty log line from the CI log) and on `runs/x1-installer-tas/message-box.txt` line 1 (the message box's empty title);
+  - a trailing blank line at the end of `runs/x2-installer-openstudio/summary-dialog.txt` and of `runs/x3-installer-both-embedded/comparison.md`.
