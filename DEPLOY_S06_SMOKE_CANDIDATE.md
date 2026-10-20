@@ -8,14 +8,15 @@ Candidate build only. No tag, release, installer publication or deployment is au
 review. `PROJECT_PROGRESS.md` is not touched (post-merge closeout only).
 
 ## Status
-**Blocked on one owner decision (provenance labelling); every other check passes.** The hosted installer EXE built from this
+**Ready for owner merge approval.** Every check passes except check 9 (provenance labelling). On 2026-10-20 the owner
+accepted check 9 as an explicitly documented S06 limitation; it is recorded as that, not as PASS. The hosted installer EXE built from this
 commit (run #227, `publish_release=false`) was genuinely installed with Inno Setup into an isolated profile. From it, Tas,
 OpenStudio and Both ran on the S05 box model from the real ribbon on a licensed laptop: all three PASS, numerically identical
 to S05, with no `SAM_COMMIT`/`SAM_BENCHMARK_*`, no developer folder, OpenStudio 3.11 first on `PATH` and the SDK-matching
 3.10 CLI selected. The uninstaller then removed everything. Hosted Validate passed at `717533c` and at the record heads.
-The failing check: in an installed build both producers report `samCommit` = `runnerCommit` = the **SAM_Deploy** commit
-(`717533c`) in fields defined as the SAM and runner source revisions, and `comparison.md` prints it as "SAM commit" (check 9
-below). S06 is **not** marked Done and Phase A is not declared complete.
+The accepted limitation: in an installed build both producers report `samCommit` = `runnerCommit` = the **SAM_Deploy**
+commit (`717533c`), and `comparison.md` prints it as "SAM commit" (check 9 below). SAM-BIM/SAM_Validation#16 documents this
+in `SCHEMA.md`. S06 is marked Done only in the roadmap closeout after the approved merges.
 
 ## Acceptance matrix (2026-10-20)
 | # | Check | Result | Evidence |
@@ -30,7 +31,7 @@ below). S06 is **not** marked Done and Phase A is not declared complete.
 | 6 | No `SAM_COMMIT` / `SAM_BENCHMARK_*`; executable resolution captured | **PASS**: all unset (`environment.txt`, manifest `environment`). The app and both producers ran from `{userappdata}\SAM`; .NET dotnet root = that folder; 0 developer-folder references in the host traces | `corehost-trace-summary.txt` per case |
 | 7 | OpenStudio 3.11 first on `PATH` → SDK-matching 3.10 CLI | **PASS**: `PATH` = ladybug 3.11.0 first, 3.10.0 second; manifest `engine.cli` = 3.10.0 (`46a80a3d`), SDK 3.10.0, EnergyPlus 25.1.0. Explicit CLI path: code path unchanged, unit test `ExplicitPath_IsUnchanged_AndNeverVersionChecked`. Neither the ribbon nor the producer takes a CLI path, so it was not exercised end to end | `runs/x2-installer-openstudio/openstudio-run.json` |
 | 8 | Numerical comparison with S05 | **PASS**: Tas 602/602 values equal S05 case 1. OpenStudio 45/45 equal S05 case 2: only the 12 run-generated subsurface keys differ, with equal values. Both: snapshot, embedded EPW, canonical hash and `comparison.csv` `454e42dc` equal S05 case 4 | `runs/cmp-*-x*.json`, `runs/both-summary-installer.txt` |
-| 9 | Provenance: SAM_Deploy commit not described as the SAM commit | **FAIL** (owner decision). SAM_UI's manifest is right: `application.sourceRevision` = `717533c`, and `sourceRevisionOf` names the SAM_Deploy stamp. The producers' B1a documents report `samCommit` = `runnerCommit` = `717533c`, the SAM_Deploy commit. SAM_Validation `docs/benchmark/SCHEMA.md` defines `samCommit` as "SAM source revision used for the run", and roadmap decision 6 as the SAM commit the producers were built from. `comparison.md` shows "SAM commit \| 717533c \| 717533c". S05 reported SAM `62b54156`, SAM_Tas `e84aeff6` and SAM_OpenStudio `d4216f3` in the same fields. The value is traceable (SAM_Deploy `717533c` pins SAM `df27563b`, SAM_Tas `e84aeff6`, SAM_OpenStudio `1f4bf60c`) but mislabelled | `runs/x3-installer-both-embedded/benchmark-*.json`, `comparison.md` |
+| 9 | Provenance: SAM_Deploy commit not described as the SAM commit | **Not PASS: accepted limitation** (owner decision 2026-10-20: documented S06 exception, no new stamping; documented by SAM-BIM/SAM_Validation#16). As measured, the check fails: SAM_UI's manifest is right: `application.sourceRevision` = `717533c`, and `sourceRevisionOf` names the SAM_Deploy stamp. The producers' B1a documents report `samCommit` = `runnerCommit` = `717533c`, the SAM_Deploy commit. SAM_Validation `docs/benchmark/SCHEMA.md` defines `samCommit` as "SAM source revision used for the run", and roadmap decision 6 as the SAM commit the producers were built from. `comparison.md` shows "SAM commit \| 717533c \| 717533c". S05 reported SAM `62b54156`, SAM_Tas `e84aeff6` and SAM_OpenStudio `d4216f3` in the same fields. The value is traceable (SAM_Deploy `717533c` pins SAM `df27563b`, SAM_Tas `e84aeff6`, SAM_OpenStudio `1f4bf60c`) but mislabelled | `runs/x3-installer-both-embedded/benchmark-*.json`, `comparison.md` |
 | 10 | Final-head CI and tests | **PASS**: see [Tests and checks](#tests-and-checks) | |
 
 Gitlink check (2026-10-20): `git ls-tree` of this branch against `origin/sow/2026-Q4` of each sibling checkout, every
@@ -123,15 +124,20 @@ Changes (all minimal; no parallel deployment architecture, TAS COM untouched, no
   `SAM.Analytical.dll`'s (`samCommit`) and their own assembly's (`runnerCommit`) InformationalVersion. A SAM_Deploy build
   stamps every assembly with SAMVersion + the **SAM_Deploy** commit (`installer.yml` "Compute SAMVersion";
   `Directory.Build.props`), so both report `717533c`. The value is real and traceable through this commit's gitlinks, but
-  the B1a fields and `comparison.md` call it the SAM / runner commit: **check 9 FAIL**. Not introduced by this PR (the
-  stamping and the producers' fallback predate S06; S03 flagged it), and not fixable in S06 without a stamping or schema
-  change. Smallest fixes, for the owner to choose:
-  1. **Document it** (smallest, docs only): SAM_Validation `SCHEMA.md` and the roadmap state that in a SAM_Deploy build
-     `samCommit`/`runnerCommit` are the SAM_Deploy commit that pins every repository. No code change; S06 can then pass.
-  2. **Stamp per repository** (follow-up PR): `BuildAll_Release` passes each solution
-     `InformationalVersion=$(SAMVersion)+<that repository's gitlink>`, keeps the SAM_Deploy commit as assembly metadata,
-     and the H12 and producer-payload stamp checks and SAM_UI's `sourceRevisionOf` wording follow. Then `samCommit` = SAM,
-     `runnerCommit` = SAM_Tas / SAM_OpenStudio, as in S05.
+  the B1a fields and `comparison.md` call it the SAM / runner commit (check 9). This predates S06: the stamping and the
+  producers' fallback come from earlier work, and S03 flagged it.
+  **Owner decision (2026-10-20): accepted as an explicitly documented S06 limitation; no new stamping in S06.**
+  - The documentation is SAM-BIM/SAM_Validation#16 (`docs/benchmark/SCHEMA.md`, "Revision fields in installer builds").
+    In a SAM_Deploy installer build without overrides, both fields hold the SAM_Deploy build revision. The build's stamp
+    `<year>.<quarter>.<run>.0+<revision>` identifies such a build, and SAM_UI records it in `sourceRevisionOf`.
+  - **To obtain the actual source revisions**, read the gitlinks the stamped SAM_Deploy revision pins:
+    `git ls-tree <revision> SAM SAM_Tas SAM_OpenStudio` in SAM-BIM/SAM_Deploy. For this candidate, `717533c` gives SAM
+    `df27563b`, SAM_Tas `e84aeff6` and SAM_OpenStudio `1f4bf60c`. The merged commit's stamp resolves the same way.
+  - **Existing records keep their meaning; no historical value is redefined.** S05 and earlier developer runs with
+    `SAM_COMMIT` hold repository revisions.
+  - Per-repository stamping, or a field naming the revision kind, remains possible future work and is not part of S06.
+    That work would mean: `BuildAll_Release` passes each solution `InformationalVersion=$(SAMVersion)+<gitlink>`, and the
+    H12 and producer stamp checks and SAM_UI's wording change with it.
 
   The S03 developer-build rule is unchanged: a developer-built producer still needs `SAM_COMMIT`.
 - **OpenStudio CLI:** SAM_OpenStudio#32 prefers, among the CLIs found (`PATH`, direct installs, ladybug_tools), the first whose `--version` equals the in-process SDK. With none matching, the first found is kept, as before. This is prefer, not refuse; refusing would be an owner decision. A remaining mismatch stays visible in the S03 manifest (`engine.openStudioSdkVersion`, `energyPlusVersion`, `cli`). No OpenStudio or EnergyPlus binary is packaged: the CLI stays a user installation, and the SDK native DLLs ship through the existing NuGet route.
@@ -259,7 +265,7 @@ differences. Installed SAM, Rhino, Grasshopper and Revit folders were not touche
 ## Findings not fixed here (owner decisions)
 - **`CommonCIProps` never reaches the solutions.** When the MSBuild task's items carry `Properties` metadata, the task ignores its own `Properties` parameter (probe). So `TreatWarningsAsErrors=true` and the other `CommonCIProps` were never applied; CI stamping works through the `SAMVersion` / `InformationalVersion` / `SAMSourceRevision` environment variables. Making it effective turns NuGet NU1504 (a duplicate `System.Text.Json` PackageReference in 7 SAM_Revit projects) and probably many compiler warnings into errors. That needs a separate PR.
 - **`BuildAll_Debug.csproj`** was not changed. `BuildAlls_v5` is the local Debug path.
-- **`samCommit`/`runnerCommit` in installed builds are the SAM_Deploy commit** (check 9 FAIL; two fixes above).
+- **`samCommit`/`runnerCommit` in installed builds are the SAM_Deploy commit**. This is check 9, an owner-accepted and documented limitation (SAM_Validation#16).
 - **`drive-both.ps1` (SAM_UI S05 harness) answers the weather MessageBox without `WM_ACTIVATE`**; it should use
   `Click-DialogButton`. Harness only.
 - **SAM_UI's "locate producer" hint** (`SimulateBothEngines`) still names developer folders. It is not reached when the producers are installed.
@@ -311,10 +317,16 @@ Prerequisites, machine-local and not committed:
 - the S05/S01b drivers from SAM_UI.
 
 ## Next step
-1. Owner decision on check 9: option 1 (document the SAM_Deploy-commit meaning; docs PR on SAM_Validation and SAM), or
-   option 2 (per-repository stamping as a separate follow-up PR before S06 passes).
-2. Owner (GPT-6) review of SAM_OpenStudio#32 and this PR.
-3. Merge order: SAM_OpenStudio#32 first. Then on this branch repoint the SAM_OpenStudio gitlink from `1f4bf60c` to #32's
-   merge commit (same tree if `sow/2026-Q4` has not moved), rerun Validate and the non-publishing installer, and merge this
-   PR. The SAM_OpenStudio closeout follows its merge; this PR's closeout follows its own.
-4. Owner acceptance of S06 once check 9 is resolved. Phase A also needs it, and any release remains a separate owner decision.
+**Owner approval is required before any merge.** After approval:
+1. Merge SAM-BIM/SAM_OpenStudio#32, then its `PROJECT_PROGRESS.md` closeout.
+2. Merge SAM-BIM/SAM_Validation#16 (documentation only), then its closeout.
+3. On this branch, repoint the SAM_OpenStudio gitlink from `1f4bf60c` to #32's merge commit. Check that
+   `git diff --stat 1f4bf60c <merge>` lists only `documentation/S06-OpenStudio-Cli-Selection-PR.md`, which needs the base
+   `d4216f35` unchanged. Then the executable content does not change. This PR's SAM_Validation pin stays at
+   `68eded00`, because #16 ships no binary.
+4. Rerun Validate and the non-publishing installer workflow (`publish_release=false`) at the new head; both must pass,
+   including the producer gate and H12. No licensed rerun is needed while the executable content is unchanged.
+5. Merge this PR, then its closeout.
+6. SAM roadmap closeout: S06 Done, with the merge SHAs and the accepted limitation. This takes a reviewed docs PR on SAM,
+   as the roadmap requires for status changes after S00. Phase A then meets its S06 condition; any release remains a
+   separate owner decision.
