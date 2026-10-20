@@ -11,15 +11,6 @@
     <Solution Include="SAM\SAM.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
-    <!-- OCCT engine: managed assemblies + Grasshopper components. References SAM\build\*.dll
-         so it must build after SAM. The native SAM.Occt.Native.dll + OpenCASCADE runtime are
-         produced separately (see installer.yml "OCCT native" steps), not by this .sln.
-         SAM_OCCT_SKIP_NATIVE_BUILD=true is set on this entry so EVERY caller of this project
-         (installer.yml, local dev) skips the OCCT Grasshopper project's
-         pre-build native step, which needs the OCCT SDK/vcpkg and otherwise fails. -->
-    <Solution Include="SAM_OCCT\SAM_OCCT.sln" Condition="Exists('SAM_OCCT\SAM_OCCT.sln')">
-      <Properties>Configuration=Release;Platform=Any CPU;SAM_OCCT_SKIP_NATIVE_BUILD=true</Properties>
-    </Solution>
     <Solution Include="SAM_Psychrometrics\SAM_Psychrometrics.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
     </Solution>
@@ -55,6 +46,16 @@
     </Solution>
     <Solution Include="SAM_Solver\SAM_Solver.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
+    </Solution>
+    <!-- OCCT engine: managed assemblies + Grasshopper components. References SAM\build\*.dll and,
+         since the Q4 panel solver, SAM_Solver\build\SAM.Geometry.Solver*.dll, so it must build after SAM and
+         SAM_Solver (its only other consumer, SAM_Revit_UI, is built later by installer.yml). The native SAM.Occt.Native.dll + OpenCASCADE runtime are
+         produced separately (see installer.yml "OCCT native" steps), not by this .sln.
+         SAM_OCCT_SKIP_NATIVE_BUILD=true is set on this entry so EVERY caller of this project
+         (installer.yml, local dev) skips the OCCT Grasshopper project's
+         pre-build native step, which needs the OCCT SDK/vcpkg and otherwise fails. -->
+    <Solution Include="SAM_OCCT\SAM_OCCT.sln" Condition="Exists('SAM_OCCT\SAM_OCCT.sln')">
+      <Properties>Configuration=Release;Platform=Any CPU;SAM_OCCT_SKIP_NATIVE_BUILD=true</Properties>
     </Solution>
     <Solution Include="SAM_SolarCalculator\SAM_SolarCalculator.sln">
       <Properties>Configuration=Release;Platform=Any CPU</Properties>
