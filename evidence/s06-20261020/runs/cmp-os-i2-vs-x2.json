@@ -1,0 +1,140 @@
+{
+    "criterion":  "Exact equality of every numeric leaf of persisted simulation parameters, aligned by result type/name/load type and surface reference. No tolerance. Run-generated identities and timestamps are metadata.",
+    "baseline":  "C:\\TasOut\\s06\\runs\\i2-installed-openstudio\\000000_SAM_AnalyticalModel_OpenStudio_20261020-075502_4ebf1798\\000000_SAM_AnalyticalModel_OpenStudio.json",
+    "candidate":  "C:\\TasOut\\s06\\runs\\x2-installer-openstudio\\000000_SAM_AnalyticalModel_OpenStudio_20261020-083334_d5051989\\000000_SAM_AnalyticalModel_OpenStudio.json",
+    "baselineCounts":  {
+                           "SAM.Analytical.SurfaceSimulationResult":  10,
+                           "SAM.Analytical.SpaceSimulationResult":  2,
+                           "SAM.Analytical.AnalyticalModelSimulationResult":  1
+                       },
+    "candidateCounts":  {
+                            "SAM.Analytical.SurfaceSimulationResult":  10,
+                            "SAM.Analytical.SpaceSimulationResult":  2,
+                            "SAM.Analytical.AnalyticalModelSimulationResult":  1
+                        },
+    "baselineNumbers":  45,
+    "candidateNumbers":  45,
+    "exactMatch":  false,
+    "differences":  [
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_1F3C2A21//bc9f12b198bd4551a266192d1cd113a0/Area",
+                            "baseline":  null,
+                            "candidate":  4.0799999999999983
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_1F3C2A21//bc9f12b198bd4551a266192d1cd113a0/Surface Index",
+                            "baseline":  null,
+                            "candidate":  8
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_1F3C2A21//bc9f12b198bd4551a266192d1cd113a0/Zone Index",
+                            "baseline":  null,
+                            "candidate":  1
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_2200CCC6//bc9f12b198bd4551a266192d1cd113a0/Area",
+                            "baseline":  4.0799999999999983,
+                            "candidate":  null
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_2200CCC6//bc9f12b198bd4551a266192d1cd113a0/Surface Index",
+                            "baseline":  8,
+                            "candidate":  null
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_2200CCC6//bc9f12b198bd4551a266192d1cd113a0/Zone Index",
+                            "baseline":  1,
+                            "candidate":  null
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_463A4EDA//eec9932b517045c8a02b4397ded78885/Area",
+                            "baseline":  null,
+                            "candidate":  2.6399999999999997
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_463A4EDA//eec9932b517045c8a02b4397ded78885/Surface Index",
+                            "baseline":  null,
+                            "candidate":  9
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_463A4EDA//eec9932b517045c8a02b4397ded78885/Zone Index",
+                            "baseline":  null,
+                            "candidate":  1
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_6D9EA26F//222f61676a2a431bae6e1f3c09885d8b/Area",
+                            "baseline":  6.9600000000000009,
+                            "candidate":  null
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_6D9EA26F//222f61676a2a431bae6e1f3c09885d8b/Surface Index",
+                            "baseline":  7,
+                            "candidate":  null
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_6D9EA26F//222f61676a2a431bae6e1f3c09885d8b/Zone Index",
+                            "baseline":  1,
+                            "candidate":  null
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_93A6B552//222f61676a2a431bae6e1f3c09885d8b/Area",
+                            "baseline":  null,
+                            "candidate":  6.9600000000000009
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_93A6B552//222f61676a2a431bae6e1f3c09885d8b/Surface Index",
+                            "baseline":  null,
+                            "candidate":  7
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_93A6B552//222f61676a2a431bae6e1f3c09885d8b/Zone Index",
+                            "baseline":  null,
+                            "candidate":  1
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_B49A5FAF//fe0770e696de41dea63113367b8f3d5b/Area",
+                            "baseline":  null,
+                            "candidate":  2.6399999999999997
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_B49A5FAF//fe0770e696de41dea63113367b8f3d5b/Surface Index",
+                            "baseline":  null,
+                            "candidate":  10
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_B49A5FAF//fe0770e696de41dea63113367b8f3d5b/Zone Index",
+                            "baseline":  null,
+                            "candidate":  1
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_D066518C//eec9932b517045c8a02b4397ded78885/Area",
+                            "baseline":  2.6399999999999997,
+                            "candidate":  null
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_D066518C//eec9932b517045c8a02b4397ded78885/Surface Index",
+                            "baseline":  9,
+                            "candidate":  null
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_D066518C//eec9932b517045c8a02b4397ded78885/Zone Index",
+                            "baseline":  1,
+                            "candidate":  null
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_F435CEC1//fe0770e696de41dea63113367b8f3d5b/Area",
+                            "baseline":  2.6399999999999997,
+                            "candidate":  null
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_F435CEC1//fe0770e696de41dea63113367b8f3d5b/Surface Index",
+                            "baseline":  10,
+                            "candidate":  null
+                        },
+                        {
+                            "path":  "SAM.Analytical.SurfaceSimulationResult/SAM_SUBSURFACE_SIM_EXT_GLZ_0_F435CEC1//fe0770e696de41dea63113367b8f3d5b/Zone Index",
+                            "baseline":  1,
+                            "candidate":  null
+                        }
+                    ]
+}

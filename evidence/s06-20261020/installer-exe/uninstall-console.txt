@@ -1,0 +1,5 @@
+SHGetFolderPath in the isolated environment: APPDATA=C:\TasOut\s06\installer-exe\Profile\AppData\Roaming PERSONAL=C:\TasOut\s06\installer-exe\Profile\Documents
+Uninstall exit code: 0
+owner's real folders: 2518 entries before, 2518 after, 0 differences
+HKCU uninstall key absent
+{userappdata}\SAM after uninstall: removed

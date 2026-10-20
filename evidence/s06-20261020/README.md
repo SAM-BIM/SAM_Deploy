@@ -21,3 +21,13 @@ the staged and installed candidate, full build logs, full .NET host traces).
 - `runs/both-summary-*.txt`: dev, installed and S05 case 4 Both summaries.
 - `runs/cmp-*.json`: persisted-result comparisons: S05 case 1 against dev Tas, dev Tas against installed Tas, S05 case 2 against dev OpenStudio, and dev OpenStudio against installed OpenStudio.
 - `runs/real-appdata-unchanged.txt`: the user's real `%APPDATA%\SAM`, compared before and after the session.
+
+Added 2026-10-20 (genuine installer acceptance, the S06 acceptance run):
+- `tools/install-hosted-exe.ps1`: installs (or uninstalls) the unmodified hosted Inno Setup EXE silently into an isolated profile (`USERPROFILE`/`APPDATA`/`LOCALAPPDATA`/`TEMP` redirected). It refuses to run unless a native `SHGetFolderPath` probe resolves into that profile, and lists the owner's real folders before and after.
+- `tools/run-s06-case.ps1 -Candidate installer`: the licensed cases from that installed profile. `tools/compare-persisted.ps1` is the persisted-result comparison used for `runs/cmp-*.json`.
+- `installer-exe/`:
+  - `hosted-run-227.txt`: stamp, producer staging and gate output, H12 and the artifact hash;
+  - the install and uninstall console output and log excerpts;
+  - `installed-manifest.tsv` (path, size and SHA-256 of every installed `{userappdata}\SAM` file).
+- `runs/x1-installer-tas`, `runs/x2-installer-openstudio`, `runs/x3-installer-both-embedded`: the three licensed real-UI cases from the genuine install. For Both the folder also holds the producers' B1a documents, `comparison.md` and `comparison.csv`.
+- `runs/cmp-*-x*.json`, `runs/both-summary-installer.txt`: the comparisons against S05 and the mirrored runs.

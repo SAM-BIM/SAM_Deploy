@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory)] [string] $Name,
     [Parameter(Mandatory)] [ValidateSet('TasRunSimulation', 'OpenStudio', 'Both')] [string] $Kind,
-    [Parameter(Mandatory)] [ValidateSet('dev', 'installed')] [string] $Candidate,
+    [Parameter(Mandatory)] [ValidateSet('dev', 'installed', 'installer')] [string] $Candidate,
     [string] $Model = 'C:\TasOut\s06\inputs\box-aperture.json',
     [string] $EpwPath = '',
     [int] $TimeoutMinutes = 20
@@ -12,6 +12,8 @@ param(
 #   installed = the staged S06 candidate installed into an isolated profile: no SAM_BENCHMARK_*, no SAM_COMMIT, ladybug's
 #               OpenStudio 3.11 deliberately FIRST on PATH (3.10 second), .NET host tracing on to show where every assembly
 #               of the app and the producers resolves from.
+#   installer = as installed, but the profile is the one the genuine Inno Setup EXE (hosted run) installed into with
+#               install-hosted-exe.ps1: {userappdata} = installer-exe\Profile\AppData\Roaming.
 $ErrorActionPreference = 'Stop'
 $S06 = 'C:\TasOut\s06'
 $R = Join-Path $S06 "runs\$Name"
@@ -34,10 +36,16 @@ if ($Candidate -eq 'dev') {
     $env:PATH = "$os310;" + $env:PATH
     if ($Kind -eq 'Both') { $env:SAM_COMMIT = ($p | Select-String '^samCommit=').ToString().Substring(10) }
 } else {
-    $env:APPDATA = "$S06\candidate\AppData"
-    $env:USERPROFILE = "$S06\candidate\Profile"
-    $env:LOCALAPPDATA = "$S06\candidate\LocalAppData"
-    $env:SAM_APP_EXE = "$S06\candidate\AppData\SAM\SAM Analytical.exe"
+    if ($Candidate -eq 'installed') {
+        $env:APPDATA = "$S06\candidate\AppData"
+        $env:USERPROFILE = "$S06\candidate\Profile"
+        $env:LOCALAPPDATA = "$S06\candidate\LocalAppData"
+    } else {
+        $env:USERPROFILE = "$S06\installer-exe\Profile"
+        $env:APPDATA = "$S06\installer-exe\Profile\AppData\Roaming"
+        $env:LOCALAPPDATA = "$S06\installer-exe\Profile\AppData\Local"
+    }
+    $env:SAM_APP_EXE = "$env:APPDATA\SAM\SAM Analytical.exe"
     # No developer folder may be on PATH; only the two OpenStudio runtimes are added (3.11 first on purpose).
     $env:PATH = (@($os311, $os310) + @($env:PATH -split ';' | Where-Object { $_ -and $_ -notmatch 'GitHub\\SAM-BIM' })) -join ';'
     $env:COREHOST_TRACE = '1'
