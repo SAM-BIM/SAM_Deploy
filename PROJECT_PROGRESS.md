@@ -1,5 +1,80 @@
 # Project Progress - SAM_Deploy (2026-Q4)
 
+## S06 installed smoke candidate closeout (SAM_Deploy#66) - 2026-10-20
+
+**Status:** SAM-BIM/SAM_Deploy#66 merged into `sow/2026-Q4` as `1657bb53c7b1d1a82f0c5d9c57c7d7a02705cd31`.
+- Parents: base `30624abd` and approved head `f14f71ef1f5425e5f9a224bc8a7b67b4007333b9`; merged with
+  `gh pr merge 66 --merge --match-head-commit f14f71ef...`, no auto-merge or bypass.
+- Owner approval was given in chat on 2026-10-20. Immediately before the merge: not draft, MERGEABLE/CLEAN, Validate
+  green at `f14f71e` (run 39413488727), no reviews or review comments, `sow/2026-Q4` unprotected.
+- Roadmap S06 is complete here. The roadmap closeout follows in a reviewed SAM docs PR.
+
+**Not a release.** No tag, GitHub release, installer publication or deployment to the owner's installation.
+
+**Work completed**
+- **Producers in the payload.** `.github/scripts/benchmark-producers-payload.ps1` (new) publishes `benchmark-tas` and
+  `benchmark-openstudio` self-contained (`win-x64`) beside `SAM Analytical.exe`, and gates them. The gate checks
+  dependencies, the self-contained runtime config, byte-identical SAM assemblies and runtime host, the stamp, and that
+  `--help` starts from the payload. `installer.yml` has two new steps for this.
+- **`BuildAll_Release.csproj`.** Solutions are batched per entry, so they build in their listed order; SAM_OCCT now
+  builds after SAM_Solver.
+- **Gitlinks.** 24 changed: 23 moved to the Q4 tips (S05 baseline), and SAM_OpenStudio points at SAM_OpenStudio#32's
+  merge `a9429f7c`, via tested content `1f4bf60c`. `.gitmodules` is unchanged.
+- **Record and evidence.** `DEPLOY_S06_SMOKE_CANDIDATE.md` and `evidence/s06-20261020/` (redacted). The evidence holds the
+  harness, the manifests, the comparisons and the repin payload inventories.
+
+**Acceptance and validation**
+- **Hosted, at `717533c`:** Validate and installer run #227 (39389974089) passed: producer gate, H12 0 violations, stamp
+  `2026.4.227.0+717533c`.
+- **Genuine installer, local:** the #227 EXE was installed silently into an isolated profile and uninstalled cleanly.
+  The owner's `%APPDATA%\SAM`, Grasshopper, Rhino, Revit add-in and `Documents\SAM` folders were unchanged (2518
+  entries) across every install.
+- **Licensed real-ribbon runs from that install** (TAS 9.5.7, OpenStudio 3.10 CLI with 3.11 first on `PATH`, no
+  `SAM_COMMIT`/`SAM_BENCHMARK_*`):
+  - Tas PASS: 602/602 values equal S05.
+  - OpenStudio PASS: the raw comparison reports `exactMatch: false`. Its only differences are 4 run-generated subsurface
+    names; each maps 1:1 through its host-panel reference (one aperture each in this fixture), with equal values.
+  - Both PASS: `comparison.csv` `454e42dc` equals S05.
+- **Repin, after #32 merged** (`b3b8e9e`; diff `1f4bf60c..a9429f7c` = #32's record document only):
+  - Validate 39409232293 passed.
+  - Installer #228 (39409260663, `publish_release=false`) passed: 24 checked-out pins equal the gitlinks, the
+    producer Stage/Assert gates pass, H12 0 violations, stamp `2026.4.228.0+b3b8e9e`.
+  - Artifact: EXE sha256 `a92849624e9ff194ef58f53ff34e185a0bf3d80c81be50e50be842a9cebf58c9`, zip digest
+    `19fdbd4b...`.
+- **Payload equivalence, local:** the #227 and #228 EXEs were genuinely installed into isolated profiles and
+  inventoried. Across 1759 paths: 1104 byte-identical (every runtime, third-party and OpenStudio file); 474 binaries
+  and 51 `deps.json` differing only by the stamp or SAM_OCCT's `1.0.*` build-time version; 129 `.pdb`; 1 Inno label;
+  **0 drift**. The licensed evidence therefore carries forward without rerunning the licensed cases.
+- **Final head:** Validate 39413488727 passed at `f14f71e`. No workflow runs on a push to `sow/2026-Q4` here
+  (Validate is PR-only; the installer runs on dispatch or tag).
+
+**Decisions and accepted limitation**
+- **Provenance check 9: Not PASS, accepted limitation** (owner, 2026-10-20). Installed producers report the
+  SAM_Deploy build revision as `samCommit`/`runnerCommit`. Recover the repository revisions with
+  `git ls-tree <revision> SAM SAM_Tas SAM_OpenStudio`. This is documented in SAM_Validation#16 (`e9a83df0`). No new
+  stamping was added.
+- The OpenStudio CLI matching the SDK is preferred, not required (SAM_OpenStudio#32).
+
+**Findings not fixed (separate owner decisions):**
+- `CommonCIProps` never reaches the solutions; making it effective would surface NU1504 in SAM_Revit.
+- `BuildAll_Debug` is unchanged.
+- The SAM_UI producer-locate hint names developer folders.
+- `drive-both.ps1` answers the weather MessageBox without `WM_ACTIVATE` (harness only).
+- The benchmark-tas publish writes into `SAM_Tas\build` (CI and replay only).
+
+**Not covered:**
+- Rhino, Grasshopper and Revit were installed but not started.
+- The explicit OpenStudio CLI-path override is unit-tested only.
+- The 3.10 CLI used is a portable copy.
+
+**Cleanup:** remote `feature/s06-installed-smoke-candidate` was deleted with a lease on `f14f71ef`, after confirming
+it was fully merged and that no open PR used it; the ref is now absent. The local branch was deleted after the
+fast-forward to `1657bb53`. No worktree or other branch was touched.
+
+**Exact next step:** owner review and merge authorization of the SAM roadmap S06 closeout docs PR. Any release is a
+separate owner decision; S07 needs its own owner start. Machine-local evidence, including the full run folders, logs
+and installer EXEs, is in `C:\TasOut\s06`.
+
 ## Final GenOpt deployment closeout (SAM_Deploy#64 + evidence record #65) - 2026-10-13
 
 **Status:** SAM-BIM/SAM_Deploy#64 merged into `sow/2026-Q4` as `520161d13a3bd19b4abdac47211774d58c37b264` (parents `b56a367f` and approved head `1ad04290`; tested content head `d24561185e6a831249dab72545b1936fe2d7fa94`; final-head Validate PR run 38295393294 success). Its manual acceptance evidence record, SAM-BIM/SAM_Deploy#65 (docs only: `RELEASE_VALIDATION.md`, `DEPLOY_GENOPT_FINAL.md`), merged as `c459e4f6ce7cefd5a12197961d61679ec5d7d4f0` (approved head `bf3e8a105ac6013c5233a6c0c10277be0aa0f248`, hosted `build` run 38402407798 success). **The installer is NOT release-accepted and not all Q4 modules are shipped.** Documentation baseline closed by owner decision (2026-10-13) with the exceptions below.
