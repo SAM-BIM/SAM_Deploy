@@ -143,32 +143,39 @@
     </CommonCIProps>
   </PropertyGroup>
 
+  <!-- The solutions are built one at a time in the order listed above. Each keeps its own
+       Configuration/Platform as Properties metadata, and the CI properties are added per item as
+       AdditionalProperties. Batching the MSBuild task on %(Solution.Properties) instead groups the
+       solutions by that value, so every Release|Any CPU solution (SAM_UI included) was built before
+       SAM_OpenStudio (Release|x64), whose x64 native output SAM_UI's build requires (SAM_UI#229). -->
+  <ItemGroup>
+    <OrderedSolution Include="@(Solution)">
+      <AdditionalProperties>$(CommonCIProps)</AdditionalProperties>
+    </OrderedSolution>
+  </ItemGroup>
+
   <Target Name="Clean">
-    <MSBuild Projects="@(Solution)"
+    <MSBuild Projects="@(OrderedSolution)"
              BuildInParallel="false"
-             Targets="Clean"
-             Properties="%(Solution.Properties);$(CommonCIProps)" />
+             Targets="Clean" />
   </Target>
 
   <Target Name="Build">
-    <MSBuild Projects="@(Solution)"
+    <MSBuild Projects="@(OrderedSolution)"
              BuildInParallel="false"
-             Targets="Build"
-             Properties="%(Solution.Properties);$(CommonCIProps)" />
+             Targets="Build" />
   </Target>
 
   <Target Name="Rebuild">
-    <MSBuild Projects="@(Solution)"
+    <MSBuild Projects="@(OrderedSolution)"
              BuildInParallel="false"
-             Targets="Rebuild"
-             Properties="%(Solution.Properties);$(CommonCIProps)" />
+             Targets="Rebuild" />
   </Target>
 
   <Target Name="Restore">
-    <MSBuild Projects="@(Solution)"
+    <MSBuild Projects="@(OrderedSolution)"
              BuildInParallel="false"
-             Targets="Restore"
-             Properties="%(Solution.Properties);$(CommonCIProps)" />
+             Targets="Restore" />
   </Target>
 
   <Target Name="RestoreCleanRebuild"
